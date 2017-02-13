@@ -51,7 +51,7 @@ class DB
      */
     private function __construct($config)
     {
-        $this->logger = new Debug\Log("WASP.DB.DB");
+        $this->logger = Debug\Logger::getLogger("WASP.DB.DB");
         $this->config = $config;
         if ($this->config->dget('sql', 'lazy', true) == false)
             $this->connect();

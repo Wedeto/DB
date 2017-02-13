@@ -30,7 +30,7 @@ use WASP\DB\Table\Column\Column;
 use WASP\DB\Table\Index;
 use WASP\DB\Table\ForeignKey;
 
-use WASP\Debug\Log;
+use WASP\Debug\Logger;
 
 class Table implements \Serializable, \JSONSerializable
 {
@@ -75,7 +75,7 @@ class Table implements \Serializable, \JSONSerializable
             elseif ($arg instanceof ForeignKey)
                 $this->addForeignKey($arg);
             else
-                throw new DBException("Invalid argument: " . Log::str($arg));
+                throw new DBException("Invalid argument: " . Logger::str($arg));
         }
 
         TableRepository::putTable($this);

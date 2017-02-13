@@ -33,7 +33,7 @@ use WASP\DB\Table\Index;
 use WASP\DB\Table\ForeignKey;
 use WASP\DB\Table\Column\Column;
 
-use WASP\Debug\Log;
+use WASP\Debug\Logger;
 
 use PDO;
 use PDOException;
@@ -56,7 +56,7 @@ abstract class Driver
             throw new DBException("The driver needs a DB or PDO object to work with");
 
         $this->db = $db;
-        $this->logger = new Log($this);
+        $this->logger = Logger::getLogger($this);
     }
 
     /**
