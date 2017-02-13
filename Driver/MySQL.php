@@ -123,7 +123,7 @@ class MySQL extends Driver
         $q .= implode(", ", $parts);
         $q .= $this->getWhere(array($idfield => $id), $col_idx, $params);
 
-        $this->logger->info("Preparing update query {}", $q);
+        $this->logger->info("Preparing update query {0}", [$q]);
         $st = $this->db->prepare($q);
         $st->execute($params);
 
@@ -152,7 +152,7 @@ class MySQL extends Driver
     
         $st = $this->db->prepare($q);
 
-        $this->logger->info("Executing insert query with params {}", $q);
+        $this->logger->info("Executing insert query with params {0}", [$q]);
         $st->execute($params);
         $record[$idfield] = $this->db->lastInsertId();
 
@@ -196,7 +196,7 @@ class MySQL extends Driver
     
         $st = $this->db->prepare($q);
 
-        $this->logger->info("Executing upsert query with params {}", $params);
+        $this->logger->info("Executing upsert query with params {0}", [$params]);
         $st->execute($params);
         $record[$idfield] = $this->db->lastInsertId();
 
@@ -210,7 +210,7 @@ class MySQL extends Driver
         $params = array();
         $q .= $this->getWhere($where, $col_idx, $params);
 
-        $this->logger->info("Model.DAO", "Preparing delete query {}", $q);
+        $this->logger->info("Model.DAO", "Preparing delete query {0}", [$q]);
         $st = $this->db->prepare($q);
         $st->execute($params);
 

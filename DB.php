@@ -90,7 +90,7 @@ class DB
         if (!$dsn)
         {
             $dsn = $this->qdriver->generateDSN($this->config->getArray('sql'));
-            Debug\info("WASP.DB", "Generated DSN: {}", $dsn);
+            Debug\info("WASP.DB", "Generated DSN: {0}", [$dsn]);
             $this->config->set('sql', 'dsn', $dsn);
         }
             
@@ -157,9 +157,9 @@ class DB
             $this->connect();
 
         if ($func === "exec")
-            $this->logger->info("Executing query: {}", $args[0]);
+            $this->logger->info("Executing query: {0}", [$args[0]]);
         elseif ($func === "prepare")
-            $this->logger->info("Preparing query: {}", $args[0]);
+            $this->logger->info("Preparing query: {0}", [$args[0]]);
             
         return call_user_func_array(array($this->pdo, $func), $args);
     }

@@ -152,7 +152,7 @@ class PGSQL extends Driver
     
         $st = $this->db->prepare($q);
 
-        $this->logger->info("Executing insert query with params {}", $q);
+        $this->logger->info("Executing insert query with params {0}", [$q]);
         $st->execute($params);
         $record[$idfield] = $st->fetchColumn(0);
 
@@ -204,7 +204,7 @@ class PGSQL extends Driver
         $q .= " RETURNING " . $this->identQuote($idfield);
         $st = $this->db->prepare($q);
 
-        $this->logger->info("Executing upsert query with params {}", $params);
+        $this->logger->info("Executing upsert query with params {0}", [$params]);
         $st->execute($params);
         $record[$idfield] = $st->fetchColumn(0);
 
@@ -218,7 +218,7 @@ class PGSQL extends Driver
         $params = array();
         $q .= $this->getWhere($where, $col_idx, $params);
 
-        $this->logger->info("Model.DAO", "Preparing delete query {}", $q);
+        $this->logger->info("Model.DAO", "Preparing delete query {0}", [$q]);
         $st = $this->db->prepare($q);
         $st->execute($params);
 
