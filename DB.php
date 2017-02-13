@@ -27,8 +27,8 @@ namespace WASP\DB;
 
 use WASP\Config;
 use WASP\Dictionary;
-use WASP\Debug;
 use PDO;
+use WASP\Debug\LoggerAwareStaticTrait;
 
 /**
  * The DB class wraps a PDO allowing for lazy connecting.
@@ -40,7 +40,8 @@ use PDO;
  */
 class DB
 {
-    private $logger;
+    use LoggerAwareStaticTrait;
+
     private static $default_db = null;
     private $pdo;
     private $qdriver;
@@ -51,7 +52,6 @@ class DB
      */
     private function __construct($config)
     {
-        $this->logger = Debug\Logger::getLogger("WASP.DB.DB");
         $this->config = $config;
         if ($this->config->dget('sql', 'lazy', true) == false)
             $this->connect();
@@ -157,10 +157,14 @@ class DB
             $this->connect();
 
         if ($func === "exec")
-            $this->logger->info("Executing query: {0}", [$args[0]]);
+            self::logger->info("Executing query: {0}", [$args[0]]);
         elseif ($func === "prepare")
-            $this->logger->info("Preparing query: {0}", [$args[0]]);
+            self::logger->info("Preparing query: {0}", [$args[0]]);
             
         return call_user_func_array(array($this->pdo, $func), $args);
     }
 }
+
+// @codeCoverageIgnoreStart
+DB::setLogger();
+// @codeCoverageIgnoreEnd

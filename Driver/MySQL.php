@@ -25,6 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Driver;
 
+use WASP\Debug\LoggerAwareStaticTrait;
+
 use WASP\DB\DB;
 use WASP\DB\TableNotExists;
 use WASP\DB\DBException;
@@ -41,6 +43,8 @@ use PDOException;
 
 class MySQL extends Driver
 {
+    use LoggerAwareStaticTrait;
+
     protected $iquotechar = '`';
 
     protected $mapping = array(
@@ -643,3 +647,7 @@ class MySQL extends Driver
         return $q->fetchAll();
     }
 }
+
+// @codeCoverageIgnoreStart
+MySQL::setLogger();
+// @codeCoverageIgnoreEnd

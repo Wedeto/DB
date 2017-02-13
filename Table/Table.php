@@ -31,9 +31,12 @@ use WASP\DB\Table\Index;
 use WASP\DB\Table\ForeignKey;
 
 use WASP\Debug\Logger;
+use WASP\Debug\LoggerAwareStaticTrait;
 
 class Table implements \Serializable, \JSONSerializable
 {
+    use LoggerAwareStaticTrait;
+
     protected $name;
     protected $columns = array();
     protected $indexes = array();
@@ -338,3 +341,5 @@ class Table implements \Serializable, \JSONSerializable
 
     }
 }
+
+Table::setLogger();

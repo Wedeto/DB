@@ -25,6 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Driver;
 
+use WASP\DB\LoggerAwareStaticTrait;
+
 use WASP\DB\DB;
 use WASP\DB\TableNotExists;
 use WASP\DB\DBException;
@@ -39,6 +41,8 @@ use PDOException;
 
 class PGSQL extends Driver
 {
+    use LoggerAwareStaticTrait;
+
     protected $iquotechar = '"';
 
     protected $mapping = array(
@@ -666,3 +670,7 @@ class PGSQL extends Driver
         return $constraints;
     }
 }
+
+// @codeCoverageIgnoreStart
+PGSQL::setLogger();
+// @codeCoverageIgnoreEnd

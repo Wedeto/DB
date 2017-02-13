@@ -40,7 +40,6 @@ use PDOException;
 
 abstract class Driver
 {
-    protected $logger;
     protected $db;
     protected $table_prefix = "";
 
@@ -56,7 +55,6 @@ abstract class Driver
             throw new DBException("The driver needs a DB or PDO object to work with");
 
         $this->db = $db;
-        $this->logger = Logger::getLogger($this);
     }
 
     /**
