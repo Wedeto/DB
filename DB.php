@@ -157,9 +157,9 @@ class DB
             $this->connect();
 
         if ($func === "exec")
-            self::logger->info("Executing query: {0}", [$args[0]]);
+            self::$logger->info("Executing query: {0}", [$args[0]]);
         elseif ($func === "prepare")
-            self::logger->info("Preparing query: {0}", [$args[0]]);
+            self::$logger->info("Preparing query: {0}", [$args[0]]);
             
         return call_user_func_array(array($this->pdo, $func), $args);
     }
