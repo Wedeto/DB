@@ -29,6 +29,7 @@ use WASP\Config;
 use WASP\Dictionary;
 use PDO;
 use WASP\Debug\LoggerAwareStaticTrait;
+use WASP\System;
 
 /**
  * The DB class wraps a PDO allowing for lazy connecting.
@@ -112,7 +113,7 @@ class DB
             if (self::$default_db)
                 return self::$default_db;
 
-            $config = Config::getConfig();
+            $config = System::config();
             $default = true;
         }
 
