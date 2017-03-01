@@ -35,6 +35,8 @@ use WASP\DB\Table\Column\Column;
 
 use WASP\Debug\Logger;
 
+use WASP\DB\SQL\Select;
+
 use PDO;
 use PDOException;
 
@@ -150,7 +152,7 @@ abstract class Driver
     abstract public function generateDSN(array $config);
 
     // CRUD
-    abstract public function select($table, $where, $order, array $params);
+    abstract public function select(Select $query);
     abstract public function update($table, $idfield, array $record);
     abstract public function insert($table, $idfield, array &$record);
     abstract public function delete($table, $where);

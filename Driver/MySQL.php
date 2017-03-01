@@ -87,18 +87,13 @@ class MySQL extends Driver
         return "mysql:host=" . $config['hostname'] . ";dbname=" . $config['database'] . $port . ";charset=utf8";
     }
 
-    public function select($table, $where, $order, array $params)
+    public function select(Select $query)
     {
-        $q = "SELECT * FROM " . $this->getName($table);
-        
-        $col_idx = 0;
-        $q .= $this->getWhere($where, $col_idx, $params);
-        $q .= $this->getOrder($order);
+        $parameters = new Parameters($this);
+        $sql = $query->toSQL($parameters);
 
-        $st = $this->db->prepare($q);
-
-        $st->execute($params);
-        return $st;
+        $st = $this->db->prepare($sql);
+        return $st->execute($parameters->getParameters());
     }
 
     public function update($table, $idfield, array $record)

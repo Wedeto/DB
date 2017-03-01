@@ -28,6 +28,8 @@ namespace WASP\DB;
 use WASP\Debug;
 use PDOException;
 
+use WASP\DB\SQL\QueryBuilder as QB;
+
 class DAO
 {
     /** A mapping between class identifier and full, namespaced class name */
@@ -137,22 +139,25 @@ class DAO
         return $list;
     }
 
-    protected static function fetchSingle($where = array(), $order = array(), array $params = array())
+    protected static function fetchSingle()
     {
-        $st = static::select($where, $order, $params);
+        $select = static::select(func_get_args());
         return $st->fetch();
     }
 
-    protected static function fetchAll($where = array(), $order = array(), array $params = array())
+    protected static function fetchAll()
     {
-        $st = static::select($where, $order, $params);
+        $select = static::select(func_get_args());
         return $st->fetchAll();
     }
 
-    protected static function select($where = array(), $order = array(), array $params = array())
+    protected static function select()
     {
+        $select = Q::select(func_get_args());
+        $select->add(new TableClause(static::tablename()));
+
         $db = DB::get()->driver();
-        return $db->select(static::tablename(), $where, $order, $params);
+        return $db->execute($query, $parameters);
     }
 
     protected static function update(array $record)

@@ -91,7 +91,7 @@ class DB
         if (!$dsn)
         {
             $dsn = $this->qdriver->generateDSN($this->config->getArray('sql'));
-            Debug\info("WASP.DB", "Generated DSN: {0}", [$dsn]);
+            self::$logger->info("Generated DSN: {0}", [$dsn]);
             $this->config->set('sql', 'dsn', $dsn);
         }
             

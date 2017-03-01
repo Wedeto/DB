@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Driver;
 
-use WASP\DB\LoggerAwareStaticTrait;
+use WASP\Debug\LoggerAwareStaticTrait;
 
 use WASP\DB\DB;
 use WASP\DB\TableNotExists;
@@ -35,6 +35,9 @@ use WASP\DB\Table\Table;
 use WASP\DB\Table\Index;
 use WASP\DB\Table\ForeignKey;
 use WASP\DB\Table\Column\Column;
+
+use WASP\DB\SQL\Parameters;
+use WASP\DB\SQL\Select;
 
 use PDO;
 use PDOException;
@@ -88,17 +91,13 @@ class PGSQL extends Driver
         return $this;
     }
 
-    public function select($table, $where, $order, array $params)
+    public function select(Select $query)
     {
-        $q = "SELECT * FROM " . $this->getName($table);
-        
-        $col_idx = 0;
-        $q .= $this->getWhere($where, $col_idx, $params);
-        $q .= $this->getOrder($order);
-        $st = $this->db->prepare($q);
+        $parameters = new Parameters($this);
+        $sql = $query->toSQL($parameters);
 
-        $st->execute($params);
-        return $st;
+        $st = $this->db->prepare($sql);
+        return $st->execute($parameters->getParameters());
     }
 
     public function update($table, $idfield, array $record)
