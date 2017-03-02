@@ -23,59 +23,22 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
-use WASP\DB\Driver\Driver;
+use InvalidArgumentException;
 
-class Parameters
+abstract class Clause
 {
-    protected $params = array();
-    protected $tables = array();
-    protected $column_counter = 0;
-    protected $table_counter = 0;
-
-    public function __construct(Driver $database)
+    public function toExpression($var, bool $constant)
     {
-        $this->db = $database;
+        if (is_scalar($var) || is_null($var))
+            return $constant ? new ConstantExpression($var) : new FieldExpression($var);
+        elseif ($var instanceof Expression)
+            return $var;
+        else
+            throw new InvalidArgumentException($var);
     }
 
-    public function getDB()
-    {
-        return $this->db;
-    }
-
-    public function assign($value)
-    {
-        $key = $this->getNextKey();
-        $this->params[$key] = $value;
-        return $key;
-    }
-
-    public function getNextKey()
-    {
-        return "c" . $this->column_counter++;
-    }
-
-    public function getParameters()
-    {
-        return $this->params;
-    }
-
-    public function getNextTableKey()
-    {
-        return "t" . $this->table_counter++;
-    }
-
-    public function addTable(string $table)
-    {
-        $key = $this->getNextTableKey();
-        $this->table[$table] = $key;
-        return $key;
-    }
-
-    public function getTable(string $table)
-    {
-        return $this->tables[$table];
-    }
+    abstract public function registerTables(Parameters $parameters);
+    abstract public function toSQL(Parameters $parameters);
 }
-

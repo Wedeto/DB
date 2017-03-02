@@ -23,25 +23,25 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
-class OffsetClause extends Clause
+class WhereClause extends Clause
 {
-    protected $number;
+    protected $operand;
 
-    public function __construct($value)
+    public function __construct(Expression $operand)
     {
-        if (is_int($value))
-            $this->number = new ConstantExpression($value);
-        elseif ($value instanceof ConstantExpression)
-            $this->number = $value;
-        else
-            throw new InvalidArgumentException($value);
+        $this->operand = $operand; 
     }
 
-    public function toSQL(Parameters $params)
+    public function registerTables(Parameters $parameters)
     {
-        return "OFFSET " . $this->number->toSQL($params);
+        $this->operand->registerTables($parameters);
+    }
+
+    public function toSQL(Parameters $parameters)
+    {
+        return "WHERE " . $this->operand->toSQL($parameters);
     }
 }
 

@@ -23,27 +23,31 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
-class OrderClause extends Clause
+class AnyExpression extends Expression
 {
-    protected $clauses = array();
+    protected $values = array();
 
-    public function addClause(Direction $clause)
+    public function __construct()
     {
-        $this->clauses[] = $clause;
+        $args = \WASP\flatten_array(func_get_args());
+        foreach ($args as $arg)
+        {
+            if (!is_scalar($arg))
+                throw new InvalidArgumentException("Not a scalar: " . $arg);
+            $this->values[] = $arg;
+        }
     }
+
+    public function registerTables(Parameters $parameters)
+    {}
 
     public function toSQL(Parameters $parameters)
     {
-        $strs = array();
-        foreach ($this->clauses as $clause)
-            $strs[] = $clause->toSQL($parameters);
-
-        if (count($strs) === 0)
-            return;
-
-        return "ORDER BY " . implode(", ", $strs);
+        $val = "{" . implode(",", $this->values) . "}";
+        $name = $parameters->assign($val);
+        return 'ANY(:' . $name . ')';
     }
 }
 

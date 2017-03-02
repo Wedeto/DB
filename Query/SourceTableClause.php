@@ -23,22 +23,26 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
-class UnaryOperator extends Expression
+use WASP\DB\DB;
+
+class SourceTableClause extends TableClause
 {
-    public function __construct($op, $rhs)
-    {
-        if ($op !== "NOT")
-            throw new InvalidArgumentException($op);
+    protected $name;
+    protected $alias;
 
-        $this->rhs = $this->toExpression($rhs);
-        $this->op = $op;
+    public function __construct(string $name, $alias = null)
+    {
+        $this->name = $name;
+        $this->alias = $alias;
     }
 
-    public function toSQL(Parameters $params)
+    public function toSQL(Parameters $parameters)
     {
-        return "(" . $this->op . " (" . $this->rhs->toSQL($parameters) . "))";
+        $parameters->resolveTable($this->name, $this->alias);
+        if ($this->name && $this->alias && $this->name !== $this->alias)
+            return $parameters->getDB()->getName($this->name) . " AS " . $parameters->getDB()->identQuote($this->alias);
+        return $parameters->getDB()->getName($this->name);
     }
 }
-

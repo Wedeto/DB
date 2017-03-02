@@ -23,26 +23,33 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
-use WASP\DB\DB;
-
-class TableClause extends Clause
+class Direction extends Clause
 {
-    protected $name;
-    protected $alias;
+    protected $direction;
+    protected $operand;
 
-    public function __construct(string $name, string $alias = "")
+    protected static $valid_directions = array("ASC", "ASC NULLS FIRST", "ASC NULLS LAST", "DESC", "DESC NULLS FIRST", "DESC NULLS LAST");
+
+    public function __construct(string $direction, $operand)
     {
-        $this->name = $name;
-        $this->alias = $alias;
+        $direction = strtoupper($direction);
+        if (!in_array($direction, self::$valid_directions))
+            throw new InvalidArgumentException($direction);
+
+        $this->direction = $direction;
+        $this->operand = $this->toExpression($operand, false);
+    }
+
+    public function registerTables(Parameters $parameters)
+    {
+        $this->operand->registerTables($parameters);
     }
 
     public function toSQL(Parameters $parameters)
     {
-        list($name, $alias) = $parameters->resolveTable($this->name, $this->alias);
-        if ($name && $alias)
-            return $parameters->getDB()->getName($this->name) . " AS " . $parameters->getDB()->getIdentQuote($this->alias);
-        return $parameters->getDB()->getName($this->name);
+        return $this->operand->toSQL($parameters) . " " . $this->direction;
     }
 }
+

@@ -23,33 +23,9 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
-class FunctionExpression extends Expression
+abstract class Query
 {
-    protected $func;
-    protected $arguments = array();
-
-    public function __construct($func)
-    {
-        $this->func = $func;
-    }
-
-    public function addArgument(Expression $argument)
-    {
-        $this->arguments[] = Expression::toExpression($argument);
-        return $this;
-    }
-
-    public function toSQL(Parameters $parameters)
-    {
-        if ($this->func === "COUNT")
-            return 'COUNT(*)';
-
-        $parts = array();
-        foreach ($this->arguments as $arg)
-            $parts[] = $arg->toSQL($parameters);
-
-        return $func . '(' . implode(', ', $parts) . ')';
-    }
+    abstract public function toSQL(Parameters $parameters);
 }

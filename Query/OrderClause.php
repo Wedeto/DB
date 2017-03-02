@@ -23,23 +23,33 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
-class BinaryOperator extends Expression
+class OrderClause extends Clause
 {
-    public function __construct($op, $lhs, $rhs)
-    {
-        if ($op !== "AND" && $op !== "OR")
-            throw new InvalidArgumentException($op);
+    protected $clauses = array();
 
-        $this->lhs = $this->toExpression($lhs, false);
-        $this->rhs = $this->toExpression($rhs, false);
-        $this->op = $op;
+    public function addClause(Direction $clause)
+    {
+        $this->clauses[] = $clause;
+    }
+
+    public function registerTables(Parameters $parameters)
+    {
+        foreach ($this->clauses as $clause)
+            $clause->registerTables($parameters);
     }
 
     public function toSQL(Parameters $parameters)
     {
-        return "(" . $this->lhs->toSQL($parameters) . " " . $this->op . " " . $this->rhs->toSQL($parameters) . ")";
+        $strs = array();
+        foreach ($this->clauses as $clause)
+            $strs[] = $clause->toSQL($parameters);
+
+        if (count($strs) === 0)
+            return;
+
+        return "ORDER BY " . implode(", ", $strs);
     }
 }
 

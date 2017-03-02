@@ -23,28 +23,44 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
-class Direction extends Clause
+class FunctionExpression extends Expression
 {
-    protected $direction;
-    protected $operand;
+    protected $func;
+    protected $arguments = array();
 
-    protected static $valid_directions = array("ASC", "ASC NULLS FIRST", "ASC NULLS LAST", "DESC", "DESC NULLS FIRST", "DESC NULLS LAST");
-
-    public function __construct(string $direction, $operand)
+    public function __construct($func)
     {
-        $direction = strtoupper($direction);
-        if (!in_array($direction, self::$valid_directions))
-            throw new InvalidArgumentException($direction);
+        $this->func = $func;
+    }
 
-        $this->direction = $direction;
-        $this->operand = $this->toExpression($operand, false);
+    public function addArgument(Expression $argument)
+    {
+        $this->arguments[] = Expression::toExpression($argument);
+        return $this;
+    }
+
+    public function registerTables(Parameters $parameters)
+    {
+        foreach($this->arguments as $arg)
+            $arg->registerTables($parameters);
     }
 
     public function toSQL(Parameters $parameters)
     {
-        return $this->operand->toSQL($parameters) . " " . $this->direction;
+        if ($this->func === "COUNT")
+            return 'COUNT(*)';
+
+        $parts = array();
+        foreach ($this->arguments as $arg)
+            $parts[] = $arg->toSQL($parameters);
+
+        return $func . '(' . implode(', ', $parts) . ')';
+    }
+
+    public function getFunction()
+    {
+        return $this->func;
     }
 }
-

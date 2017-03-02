@@ -35,7 +35,7 @@ use WASP\DB\Table\Column\Column;
 
 use WASP\Debug\Logger;
 
-use WASP\DB\SQL\Select;
+use WASP\DB\Query\Select;
 
 use PDO;
 use PDOException;

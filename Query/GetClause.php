@@ -23,20 +23,50 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
-class WhereClause extends Clause
+use InvalidArgumentException;
+
+class GetClause extends Clause
 {
-    protected $operand;
+    protected $expression;
+    protected $alias;
 
-    public function __construct(Expression $operand)
+    public function __construct($exp, $alias)
     {
-        $this->operand = $operand; 
+        $this->expression = $this->toExpression($exp, false);
+        $this->alias = $alias;
+    }
+
+    public function registerTables(Parameters $parameters)
+    {
+        $this->expression->registerTables($parameters);
     }
 
     public function toSQL(Parameters $parameters)
     {
-        return "WHERE " . $this->operand->toSQL($parameters);
+        $sql = $this->expression->toSQL($parameters);
+        if (empty($this->alias))
+        {
+            if ($this->expression instanceof FieldExpression)
+            {
+                $table = $this->expression->getTable();
+                if ($table !== null)
+                {
+                    $prefix = $table->getPrefix();
+                    $this->alias = $prefix . '_' . $this->expression->getField();
+                }
+            }
+            elseif ($this->expression instanceof FunctionExpression)
+            {
+                $func = $this->expression->getFunction();
+                $this->alias = strtolower($func);
+            }
+        }
+
+        if ($this->alias)
+            return $sql . ' AS ' . $parameters->getDB()->identQuote($this->alias);
+        else
+            return $sql;
     }
 }
-

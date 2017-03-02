@@ -23,17 +23,40 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
-abstract class Expression extends Clause
+use InvalidArgumentException;
+
+class ComparisonOperator extends Expression
 {
-    protected $lhs;
-    protected $rhs;
-    protected $op;
+    protected static $valid_operators = array('<', '>', '<=', '>=', '=', '!=', 'LIKE', 'ILIKE');
 
-    public function isNull()
+    public function __construct($op, $lhs, $rhs)
     {
-        return false;
+        if (!in_array($op, self::$valid_operators))
+            throw new InvalidArgumentException($op);
+
+        $this->op = $op;
+        $this->lhs = $this->toExpression($lhs, false);
+        $this->rhs = $this->toExpression($rhs, true);
+        if ($this->rhs->isNull())
+        {
+            if ($this->op === "=")
+                $this->op = "IS";
+            elseif ($this->op === "!=")
+                $this->op = "IS NOT";
+        }
+    }
+
+    public function registerTables(Parameters $parameters)
+    {
+        $this->lhs->registerTables($parameters);
+        $this->rhs->registerTables($parameters);
+    }
+
+    public function toSQL(Parameters $parameters)
+    {
+        return '(' . $this->lhs->toSQL($parameters) . ' ' . $this->op . ' ' . $this->rhs->toSQL($parameters) . ')';
     }
 }
 

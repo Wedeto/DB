@@ -23,25 +23,17 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
-class LimitClause extends Clause
+abstract class Expression extends Clause
 {
-    protected $number;
+    protected $lhs;
+    protected $rhs;
+    protected $op;
 
-    public function __construct($value)
+    public function isNull()
     {
-        if (is_int($value))
-            $this->number = new ConstantExpression($value);
-        elseif ($value instanceof ConstantExpression)
-            $this->number = $value;
-        else
-            throw new InvalidArgumentException($value);
-    }
-
-    public function toSQL(Parameters $params)
-    {
-        return "LIMIT " . $this->number->toSQL($params);
+        return false;
     }
 }
 

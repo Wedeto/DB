@@ -23,20 +23,27 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
-class FieldExpression extends Expression
+class UnaryOperator extends Expression
 {
-    protected $field;
-
-    public function __construct($name)
+    public function __construct($op, $rhs)
     {
-        $this->field = $name;
+        if ($op !== "NOT")
+            throw new InvalidArgumentException($op);
+
+        $this->rhs = $this->toExpression($rhs);
+        $this->op = $op;
     }
 
-    public function toSQL(Parameters $parameters)
+    public function registerTables(Parameters $parameters)
     {
-        return $parameters->getDB()->identQuote($this->field);
+        $this->rhs->registerTables($parameters);
+    }
+
+    public function toSQL(Parameters $params)
+    {
+        return "(" . $this->op . " (" . $this->rhs->toSQL($parameters) . "))";
     }
 }
 

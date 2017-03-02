@@ -23,9 +23,29 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
-abstract class Query
+class BinaryOperator extends Expression
 {
-    abstract public function toSQL(Parameters $parameters);
+    public function __construct($op, $lhs, $rhs)
+    {
+        if ($op !== "AND" && $op !== "OR")
+            throw new InvalidArgumentException($op);
+
+        $this->lhs = $this->toExpression($lhs, false);
+        $this->rhs = $this->toExpression($rhs, false);
+        $this->op = $op;
+    }
+
+    public function registerTables(Parameters $parameters)
+    {
+        $this->lhs->registerTables($parameters);
+        $this->rhs->registerTables($parameters);
+    }
+
+    public function toSQL(Parameters $parameters)
+    {
+        return "(" . $this->lhs->toSQL($parameters) . " " . $this->op . " " . $this->rhs->toSQL($parameters) . ")";
+    }
 }
+

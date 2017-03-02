@@ -23,9 +23,9 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
-class QueryBuilder
+class Builder
 {
     public static function select()
     {
@@ -157,9 +157,14 @@ class QueryBuilder
         return $cl;
     }
 
-    public static function field($field)
+    public static function get($expression, $alias = null)
     {
-        return new FieldExpression($field);
+        return new GetClause($expression, $alias);
+    }
+
+    public static function field($field, $table = null)
+    {
+        return new FieldExpression($field, $table);
     }
 
     public static function func($func)
@@ -167,9 +172,19 @@ class QueryBuilder
         return new FunctionExpression($func);
     }
 
-    public static function from($table)
+    public static function table($table, $alias = null)
     {
-        return new TableClause($table);
+        return new TableClause($table, $alias);
+    }
+
+    public static function from($table, $alias = null)
+    {
+        return new SourceTableClause($table, $alias);
+    }
+
+    public static function with($table, $alias = null)
+    {
+        return new SourceTableClause($table, $alias);
     }
 
     public static function limit($count)
@@ -180,5 +195,25 @@ class QueryBuilder
     public static function offset($offset)
     {
         return new OffsetClause($offset);
+    }
+
+    public static function join($table, $condition)
+    {
+        return new JoinClause("LEFT", $table, $condition);
+    }
+
+    public static function on(Expression $expression)
+    {
+        return $expression; 
+    }
+
+    public static function t($table_alias)
+    {
+        return new TableClause(null, $table_alias);
+    }
+
+    public static function any()
+    {
+        return new AnyExpression(func_get_args());
     }
 }

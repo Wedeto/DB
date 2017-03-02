@@ -36,8 +36,8 @@ use WASP\DB\Table\Index;
 use WASP\DB\Table\ForeignKey;
 use WASP\DB\Table\Column\Column;
 
-use WASP\DB\SQL\Parameters;
-use WASP\DB\SQL\Select;
+use WASP\DB\Query\Parameters;
+use WASP\DB\Query\Select;
 
 use PDO;
 use PDOException;

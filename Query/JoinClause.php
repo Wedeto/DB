@@ -23,7 +23,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
 class JoinClause extends Clause
 {
@@ -38,17 +38,32 @@ class JoinClause extends Clause
         if (!in_array($type, self::$valid_types))
             throw new InvalidArgumentException("Invalid join type: " . $type);
 
+        $this->type = $type;
         if (is_string($table))
-            $this->table = new TableClause($table);
-        elseif ($table instanceof TableClause)
+        {
+            $this->table = new SourceTableClause($table);
+        }
+        elseif ($table instanceof SourceTableClause)
+        {
             $this->table = $table;
+        }
         else
+        {
             throw new DomainException("Invalid table type: " . $table);
+        }
+
+        $this->condition = $expression;
+    }
+
+    public function registerTables(Parameters $parameters)
+    {
+        $this->table->registerTables($parameters);
+        $this->condition->registerTables($parameters);
     }
 
     public function toSQL(Parameters $parameters)
     {
-        return $this->type . " JOIN " . $parameters->getName($this->table) . " ON " . $this->condition->toSQL($parameters);
+        return $this->type . " JOIN " . $this->table->toSQL($parameters) . " ON " . $this->condition->toSQL($parameters);
     }
 }
 

@@ -23,34 +23,46 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
-use InvalidArgumentException;
-
-class ComparisonOperator extends Expression
+class FieldExpression extends Expression
 {
-    protected static $valid_operators = array('<', '>', '<=', '>=', '=', '!=', 'LIKE', 'ILIKE');
+    protected $field;
+    protected $table;
 
-    public function __construct($op, $lhs, $rhs)
+    public function __construct($name, $table = null)
     {
-        if (!in_array($op, self::$valid_operators))
-            throw new InvalidArgumentException($op);
+        $this->field = $name;
+        if (is_string($table))
+            $this->table = new TableClause($field);
+        elseif ($table instanceof TableClause)
+            $this->table = $table;
+    }
 
-        $this->op = $op;
-        $this->lhs = $this->toExpression($lhs, false);
-        $this->rhs = $this->toExpression($rhs, true);
-        if ($this->rhs->isNull())
-        {
-            if ($this->op === "=")
-                $this->op = "IS";
-            elseif ($this->op === "!=")
-                $this->op = "IS NOT";
-        }
+    public function registerTables(Parameters $parameters)
+    {
+        if ($this->table)
+            $this->table->registerTables($parameters);
     }
 
     public function toSQL(Parameters $parameters)
     {
-        return '(' . $this->lhs->toSQL($parameters) . ' ' . $this->op . ' ' . $this->rhs->toSQL($parameters) . ')';
+        if ($this->table === null)
+            $this->table = $parameters->getDefaultTable();
+
+        if (!empty($this->table))
+            return $this->table->toSQL($parameters) . '.' . $parameters->getDB()->identQuote($this->field);
+        return $parameters->getDB()->identQuote($this->field);
+    }
+
+    public function getTable()
+    {
+        return $this->table;
+    }
+
+    public function getField()
+    {
+        return $this->field;
     }
 }
 

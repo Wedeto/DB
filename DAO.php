@@ -28,7 +28,7 @@ namespace WASP\DB;
 use WASP\Debug;
 use PDOException;
 
-use WASP\DB\SQL\QueryBuilder as QB;
+use WASP\DB\Query\Builder as QB;
 
 class DAO
 {
@@ -153,7 +153,7 @@ class DAO
 
     protected static function select()
     {
-        $select = Q::select(func_get_args());
+        $select = QB::select(func_get_args());
         $select->add(new TableClause(static::tablename()));
 
         $db = DB::get()->driver();

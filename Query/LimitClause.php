@@ -23,21 +23,28 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
-use InvalidArgumentException;
-
-abstract class Clause
+class LimitClause extends Clause
 {
-    public function toExpression($var, bool $constant)
+    protected $number;
+
+    public function __construct($value)
     {
-        if (is_scalar($var) || is_null($var))
-            return $constant ? new ConstantExpression($var) : new FieldExpression($var);
-        elseif ($var instanceof Expression)
-            return $var;
+        if (is_int($value))
+            $this->number = new ConstantExpression($value);
+        elseif ($value instanceof ConstantExpression)
+            $this->number = $value;
         else
-            throw new InvalidArgumentException($var);
+            throw new InvalidArgumentException($value);
     }
 
-    abstract public function toSQL(Parameters $parameters);
+    public function registerTables(Parameters $parameters)
+    {}
+
+    public function toSQL(Parameters $params)
+    {
+        return "LIMIT " . $this->number->toSQL($params);
+    }
 }
+

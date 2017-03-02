@@ -38,6 +38,9 @@ use WASP\DB\Table\Column\Column;
 
 use WASP\Config;
 
+use WASP\DB\Query\Select;
+use WASP\DB\Query\Parameters;
+
 use PDO;
 use PDOException;
 

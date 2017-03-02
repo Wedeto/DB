@@ -23,7 +23,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\SQL;
+namespace WASP\DB\Query;
 
 use DomainException;
 
@@ -31,6 +31,7 @@ class Select extends Query
 {
     protected $fields = array();
     protected $table;
+    protected $joins = array();
     protected $where;
     protected $order;
     protected $limit;
@@ -39,8 +40,9 @@ class Select extends Query
     public static function countQuery(Select $query)
     {
         $cq = new Select;
-        $cq->fields = array(new FunctionExpression("COUNT"));
+        $cq->fields = array(new getClause(new FunctionExpression("COUNT"), null));
         $cq->table = $query->table;
+        $cq->joins = $query->joins;
         $cq->where = $query->where;
         return $cq;
     }
@@ -51,8 +53,10 @@ class Select extends Query
             $this->where = $clause;
         elseif ($clause instanceof TableClause)
             $this->table = $clause;
-        elseif ($clause instanceof FieldClause)
+        elseif ($clause instanceof GetClause)
             $this->fields[] = $clause;
+        elseif ($clause instanceof JoinClause)
+            $this->joins[] = $clause;
         elseif ($clause instanceof OrderClause)
             $this->order = $clause;
         elseif ($clause instanceof LimitClause)
@@ -95,11 +99,26 @@ class Select extends Query
         return $offset;
     }
 
+    public function registerTables(Parameters $parameters)
+    {
+        foreach ($this->fields as $f)
+            $f->registerTables($parameters);
+        if ($this->table)
+            $this->table->registerTables($parameters);
+        foreach ($this->joins as $join)
+            $join->registerTables($parameters);
+        if ($this->where)
+            $this->where->registerTables($parameters);
+        if ($this->order)
+            $this->order->registerTables($parameters);
+    }
+
     public function toSQL(Parameters $parameters)
     {
+        $this->registerTables($parameters);
         $query = array();
 
-        $query[] = "SELECT ";
+        $query[] = "SELECT";
         if (!empty($this->fields))
         {
             $parts = array();
@@ -112,6 +131,9 @@ class Select extends Query
 
         if ($this->table)
             $query[] = "FROM " . $this->table->toSQL($parameters);
+
+        foreach ($this->joins as $join)
+            $query[] = $join->toSQL($parameters);
 
         if ($this->where)
             $query[] = $this->where->toSQL($parameters);
