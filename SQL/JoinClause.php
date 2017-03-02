@@ -25,24 +25,30 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\SQL;
 
-use WASP\DB\DB;
-
-class TableClause extends Clause
+class JoinClause extends Clause
 {
-    protected $name;
-    protected $alias;
+    protected $table;
+    protected $condition;
+    protected $type;
 
-    public function __construct(string $name, string $alias = "")
+    protected static $valid_types = array('LEFT', 'RIGHT', 'OUTER', 'INNER', 'CROSS');
+
+    public function __construct(string $type, $table, Expression $expression)
     {
-        $this->name = $name;
-        $this->alias = $alias;
+        if (!in_array($type, self::$valid_types))
+            throw new InvalidArgumentException("Invalid join type: " . $type);
+
+        if (is_string($table))
+            $this->table = new TableClause($table);
+        elseif ($table instanceof TableClause)
+            $this->table = $table;
+        else
+            throw new DomainException("Invalid table type: " . $table);
     }
 
     public function toSQL(Parameters $parameters)
     {
-        list($name, $alias) = $parameters->resolveTable($this->name, $this->alias);
-        if ($name && $alias)
-            return $parameters->getDB()->getName($this->name) . " AS " . $parameters->getDB()->getIdentQuote($this->alias);
-        return $parameters->getDB()->getName($this->name);
+        return $this->type . " JOIN " . $parameters->getName($this->table) . " ON " . $this->condition->toSQL($parameters);
     }
 }
+

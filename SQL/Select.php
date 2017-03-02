@@ -111,7 +111,7 @@ class Select extends Query
             $query[] = "*";
 
         if ($this->table)
-            $query[] = $this->table->toSQL($parameters);
+            $query[] = "FROM " . $this->table->toSQL($parameters);
 
         if ($this->where)
             $query[] = $this->where->toSQL($parameters);
