@@ -38,7 +38,7 @@ class SourceTableClause extends TableClause
         $this->alias = $alias;
     }
 
-    public function toSQL(Parameters $parameters)
+    public function toSQL(Parameters $parameters, bool $enclose)
     {
         $parameters->resolveTable($this->name, $this->alias);
         if ($this->name && $this->alias && $this->name !== $this->alias)

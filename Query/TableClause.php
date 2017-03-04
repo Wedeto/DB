@@ -43,7 +43,7 @@ class TableClause extends Clause
         $parameters->registerTable($this->name, $this->alias);
     }
 
-    public function toSQL(Parameters $parameters)
+    public function toSQL(Parameters $parameters, bool $enclose)
     {
         $parameters->resolveTable($this->name, $this->alias);
         if ($this->alias)

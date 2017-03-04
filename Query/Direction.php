@@ -47,9 +47,9 @@ class Direction extends Clause
         $this->operand->registerTables($parameters);
     }
 
-    public function toSQL(Parameters $parameters)
+    public function toSQL(Parameters $parameters, bool $enclose)
     {
-        return $this->operand->toSQL($parameters) . " " . $this->direction;
+        return $this->operand->toSQL($parameters, true) . " " . $this->direction;
     }
 }
 

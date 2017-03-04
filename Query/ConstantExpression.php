@@ -37,7 +37,7 @@ class ConstantExpression extends Expression
     public function registerTables(Parameters $parameters)
     {}
 
-    public function toSQL(Parameters $parameters)
+    public function toSQL(Parameters $parameters, bool $enclose)
     {
         if ($this->value === null)
             return "NULL";

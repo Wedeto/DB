@@ -25,31 +25,25 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-class BinaryOperator extends Expression
+class Subquery extends Expression
 {
-    protected static $valid_operators = array('AND', 'OR');
+    protected $query;
 
-    public function __construct($op, $lhs, $rhs)
+    public function __construct(Select $select)
     {
-        if (!in_array($op, static::$valid_operators))
-            throw new InvalidArgumentException($op);
-
-        $this->lhs = $this->toExpression($lhs, false);
-        $this->rhs = $this->toExpression($rhs, false);
-        $this->op = $op;
+        $this->query = $query;
     }
-
-    public function registerTables(Parameters $parameters)
+    
+    public function registerTables(Parameters $params)
     {
-        $this->lhs->registerTables($parameters);
-        $this->rhs->registerTables($parameters);
+        $this->query->registerTables($params);
     }
 
     public function toSQL(Parameters $parameters, bool $enclose)
     {
-        $sql = $this->lhs->toSQL($parameters, true) . " " . $this->op . " " . $this->rhs->toSQL($parameters, true);
+        $sql = $this->query->toSQL($parameters);
         if ($enclose)
-            $sql = '(' . $sql . ')';
+            return '(' . $sql . ')';
         return $sql;
     }
 }

@@ -42,7 +42,7 @@ class OffsetClause extends Clause
     public function registerTables(Parameters $parameters)
     {}
 
-    public function toSQL(Parameters $params)
+    public function toSQL(Parameters $params, bool $enclose)
     {
         return "OFFSET " . $this->number->toSQL($params);
     }

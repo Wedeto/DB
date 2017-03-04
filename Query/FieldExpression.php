@@ -45,13 +45,13 @@ class FieldExpression extends Expression
             $this->table->registerTables($parameters);
     }
 
-    public function toSQL(Parameters $parameters)
+    public function toSQL(Parameters $parameters, bool $enclose)
     {
         if ($this->table === null)
             $this->table = $parameters->getDefaultTable();
 
         if (!empty($this->table))
-            return $this->table->toSQL($parameters) . '.' . $parameters->getDB()->identQuote($this->field);
+            return $this->table->toSQL($parameters, false) . '.' . $parameters->getDB()->identQuote($this->field);
         return $parameters->getDB()->identQuote($this->field);
     }
 

@@ -43,9 +43,9 @@ class GetClause extends Clause
         $this->expression->registerTables($parameters);
     }
 
-    public function toSQL(Parameters $parameters)
+    public function toSQL(Parameters $parameters, bool $enclose)
     {
-        $sql = $this->expression->toSQL($parameters);
+        $sql = $this->expression->toSQL($parameters, true);
         if (empty($this->alias))
         {
             if ($this->expression instanceof FieldExpression)

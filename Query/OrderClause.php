@@ -40,11 +40,11 @@ class OrderClause extends Clause
             $clause->registerTables($parameters);
     }
 
-    public function toSQL(Parameters $parameters)
+    public function toSQL(Parameters $parameters, bool $enclose)
     {
         $strs = array();
         foreach ($this->clauses as $clause)
-            $strs[] = $clause->toSQL($parameters);
+            $strs[] = $clause->toSQL($parameters, false);
 
         if (count($strs) === 0)
             return;

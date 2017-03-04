@@ -40,5 +40,5 @@ abstract class Clause
     }
 
     abstract public function registerTables(Parameters $parameters);
-    abstract public function toSQL(Parameters $parameters);
+    abstract public function toSQL(Parameters $parameters, bool $enclose);
 }

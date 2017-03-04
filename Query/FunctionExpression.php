@@ -47,7 +47,7 @@ class FunctionExpression extends Expression
             $arg->registerTables($parameters);
     }
 
-    public function toSQL(Parameters $parameters)
+    public function toSQL(Parameters $parameters, bool $enclose)
     {
         if ($this->func === "COUNT")
             return 'COUNT(*)';

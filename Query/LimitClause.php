@@ -42,7 +42,7 @@ class LimitClause extends Clause
     public function registerTables(Parameters $parameters)
     {}
 
-    public function toSQL(Parameters $params)
+    public function toSQL(Parameters $params, bool $enclose)
     {
         return "LIMIT " . $this->number->toSQL($params);
     }

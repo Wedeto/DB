@@ -41,9 +41,10 @@ class UnaryOperator extends Expression
         $this->rhs->registerTables($parameters);
     }
 
-    public function toSQL(Parameters $params)
+    public function toSQL(Parameters $params, bool $enclose)
     {
-        return "(" . $this->op . " (" . $this->rhs->toSQL($parameters) . "))";
+        $sql = $this->op . " " . $this->rhs->toSQL($parameters, true);
+        return $enclose ? '(' . $sql . ')' : $sql;
     }
 }
 

@@ -36,4 +36,3 @@ abstract class Expression extends Clause
         return false;
     }
 }
-

@@ -43,7 +43,7 @@ class AnyExpression extends Expression
     public function registerTables(Parameters $parameters)
     {}
 
-    public function toSQL(Parameters $parameters)
+    public function toSQL(Parameters $parameters, bool $enclose)
     {
         $val = "{" . implode(",", $this->values) . "}";
         $name = $parameters->assign($val);

@@ -61,9 +61,9 @@ class JoinClause extends Clause
         $this->condition->registerTables($parameters);
     }
 
-    public function toSQL(Parameters $parameters)
+    public function toSQL(Parameters $parameters, bool $enclose)
     {
-        return $this->type . " JOIN " . $this->table->toSQL($parameters) . " ON " . $this->condition->toSQL($parameters);
+        return $this->type . " JOIN " . $this->table->toSQL($parameters) . " ON " . $this->condition->toSQL($parameters, true);
     }
 }
 

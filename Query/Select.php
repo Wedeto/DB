@@ -123,29 +123,29 @@ class Select extends Query
         {
             $parts = array();
             foreach ($this->fields as $field)
-                $parts[] = $field->toSQL($parameters);
+                $parts[] = $field->toSQL($parameters, false);
             $query[] = implode(", ", $parts);
         }
         else
             $query[] = "*";
 
         if ($this->table)
-            $query[] = "FROM " . $this->table->toSQL($parameters);
+            $query[] = "FROM " . $this->table->toSQL($parameters, false);
 
         foreach ($this->joins as $join)
             $query[] = $join->toSQL($parameters);
 
         if ($this->where)
-            $query[] = $this->where->toSQL($parameters);
+            $query[] = $this->where->toSQL($parameters, false);
         
         if ($this->order)
-            $query[] = $this->order->toSQL($parameters);
+            $query[] = $this->order->toSQL($parameters, false);
 
         if ($this->limit)
-            $query[] = $this->limit->toSQL($parameters);
+            $query[] = $this->limit->toSQL($parameters, false);
 
         if ($this->offset)
-            $query[] = $this->offset->toSQL($parameters);
+            $query[] = $this->offset->toSQL($parameters. false);
         
         return implode(" ", $query);
     }
