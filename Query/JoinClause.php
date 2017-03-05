@@ -62,7 +62,7 @@ class JoinClause extends Clause
 
     public function getCondition()
     {
-        return $this->getCondition();
+        return $this->condition;
     }
 
     public function getType()

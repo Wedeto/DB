@@ -36,7 +36,7 @@ class OrderClause extends Clause
 
     public function getClauses()
     {
-        return $this->clauses();
+        return $this->clauses;
     }
 }
 

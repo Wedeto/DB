@@ -32,7 +32,7 @@ abstract class Clause
     public function toExpression($var, bool $constant)
     {
         if (is_scalar($var) || is_null($var))
-            return $constant ? new ConstantExpression($var) : new FieldExpression($var);
+            return $constant ? new ConstantValue($var) : new FieldName($var);
         elseif ($var instanceof Expression)
             return $var;
         else

@@ -36,10 +36,10 @@ class ComparisonOperator extends Operator
         parent::__construct($op, $lhs, $rhs);
         if ($this->rhs->isNull())
         {
-            if ($this->op === "=")
-                $this->op = "IS";
-            elseif ($this->op === "!=")
-                $this->op = "IS NOT";
+            if ($this->operator === "=")
+                $this->operator = "IS";
+            elseif ($this->operator === "!=")
+                $this->operator = "IS NOT";
         }
     }
 }

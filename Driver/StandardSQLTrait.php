@@ -26,21 +26,26 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace WASP\DB\Driver;
 
 use WASP\DB\Query\Clause;
-use WASP\DB\Query\Query;
-use WASP\DB\Query\Select;
+use WASP\DB\Query\ConstantValue;
+use WASP\DB\Query\Direction;
+use WASP\DB\Query\FieldName;
 use WASP\DB\Query\GetClause;
-use WASP\DB\Query\TableClause;
 use WASP\DB\Query\JoinClause;
-use WASP\DB\Query\WhereClause;
 use WASP\DB\Query\LimitClause;
 use WASP\DB\Query\OffsetClause;
-use WASP\DB\Query\SubQuery;
 use WASP\DB\Query\Operator;
-use WASP\DB\Query\FieldName;
-use WASP\DB\Query\ConstantValue;
+use WASP\DB\Query\OrderClause;
+use WASP\DB\Query\Query;
+use WASP\DB\Query\Select;
+use WASP\DB\Query\SourceTableClause;
 use WASP\DB\Query\SQLFunction;
+use WASP\DB\Query\SubQuery;
+use WASP\DB\Query\Parameters;
+use WASP\DB\Query\TableClause;
+use WASP\DB\Query\WhereClause;
+use WASP\DB\Query\Wildcard;
 
-trait StandardSQL
+trait StandardSQLTrait
 {
     /**
      * Write an query clause as SQL query syntax
@@ -68,6 +73,9 @@ trait StandardSQL
         if ($clause instanceof OrderClause)
             return $this->orderToSQL($params, $clause);
 
+        if ($clause instanceof Direction)
+            return $this->directionToSQL($params, $clause);
+
         if ($clause instanceof LimitClause)
             return $this->limitToSQL($params, $clause);
 
@@ -89,6 +97,9 @@ trait StandardSQL
         if ($clause instanceof FieldName)
             return $this->fieldToSQL($params, $clause);
 
+        if ($clause instanceof Wildcard)
+            return "*";
+
         throw new \InvalidArgumentException("Unknown clause: " . get_class($clause));
     }
 
@@ -107,7 +118,7 @@ trait StandardSQL
         $rhs = $this->toSQL($params, $expression->getRHS(), true);
 
         $op = $expression->getOperator();
-        $lhs !== null && $inner_clause)
+        if ($lhs !== null && $inner_clause)
             return '(' . $lhs . ' ' . $op . ' ' . $rhs . ')';
         
         return $op . ' ' . $rhs;
@@ -138,13 +149,21 @@ trait StandardSQL
     {
         $field = $expression->getField();
         $table = $expression->getTable();
-        list($table, $alias) = $params->resolveTable($table);
-        if ($alias)
-            $table_ref = $this->identQuote($alias);
-        else
-            $table_ref = $this->getName($table);
+        if (empty($table))
+            $table = $params->getDefaultTable();
 
-        return $table_ref . '.' . $this->identQuote($field);
+        if (!empty($table))
+        {
+            list($table, $alias) = $params->resolveTable($table->getPrefix());
+            if ($alias)
+                $table_ref = $this->identQuote($alias);
+            else
+                $table_ref = $this->getName($table);
+
+            return $table_ref . '.' . $this->identQuote($field);
+        }
+
+        return $this->identQuote($field);
     }
 
     /**
@@ -160,7 +179,7 @@ trait StandardSQL
         
         $args = array();
         foreach ($arguments as $arg)
-            $arg[] = $this->toSQL($params, $arg, false);
+            $args[] = $this->toSQL($params, $arg, false);
 
         return $func . '(' . implode(', ', $args) . ')';
     }
@@ -238,42 +257,43 @@ trait StandardSQL
         $source = array();
 
         if ($table = $query->getTable())
-            $source[] = "FROM " . $this->tableToSQL($table);
+            $source[] = "FROM " . $this->tableToSQL($params, $table);
 
-        foreach ($this->joins as $join)
-            $source[] = $join->toSQL($params);
+        foreach ($query->getJoins() as $join)
+            $source[] = $this->joinToSQL($params, $join);
 
         // Now build the start of the query, all tables should be known
-        $query = array();
+        $parts = array();
 
-        $query[] = "SELECT";
-        if (!empty($this->fields))
+        $parts[] = "SELECT";
+        $fields = $query->getFields();
+        if (!empty($fields))
         {
-            $parts = array();
-            foreach ($this->fields as $field)
-                $parts[] = $field->toSQL($params);
-            $query[] = implode(", ", $parts);
+            $field_parts = array();
+            foreach ($fields as $field)
+                $field_parts[] = $this->toSQL($params, $field);
+            $parts[] = implode(", ", $field_parts);
         }
         else
-            $query[] = "*";
+            $parts[] = "*";
 
         // Add the source tables and joins to the query
         foreach ($source as $part)
-            $query[] = $part;
+            $parts[] = $part;
 
-        if ($this->where)
-            $query[] = $this->where->toSQL($params);
+        if ($where = $query->getWhere())
+            $parts[] = $this->whereToSQL($params, $where);
         
-        if ($this->order)
-            $query[] = $this->order->toSQL($params);
+        if ($order = $query->getOrder())
+            $parts[] = $this->orderToSQL($params, $order);
 
-        if ($this->limit)
-            $query[] = $this->limit->toSQL($params);
-
-        if ($this->offset)
-            $query[] = $this->offset->toSQL($params);
+        if ($limit = $query->getLimit())
+            $parts[] = $this->limitToSQL($params, $limit);
         
-        return implode(" ", $query);
+        if ($offset = $query->getOffset())
+            $parts[] = $this->offsetToSQL($params, $offset);
+        
+        return implode(" ", $parts);
     }
 
     /**
@@ -344,12 +364,12 @@ trait StandardSQL
                 if (!empty($table))
                 {
                     $prefix = $table->getPrefix();
-                    $this->alias = $prefix . '_' . $this->expression->getField();
+                    $this->alias = $prefix . '_' . $expr->getField();
                 }
             }
             elseif ($expr instanceof FunctionExpression)
             {
-                $func = $this->expression->getFunction();
+                $func = $expr->getFunction();
                 $alias = strtolower($func);
             }
         }
@@ -379,7 +399,7 @@ trait StandardSQL
      */
     public function offsetToSQL(Parameters $params, OffsetClause $offset)
     {
-        return "OFFSET " . $this->toSQL($params, $offset->getLimit());
+        return "OFFSET " . $this->toSQL($params, $offset->getOffset());
     }
 
     /**

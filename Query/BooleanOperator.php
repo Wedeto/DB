@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-class BooleanOperator extends OperatorExpression
+class BooleanOperator extends Operator
 {
-    protected static $valid_types = array('AND', 'OR');
+    protected static $valid_operators = array('AND', 'OR');
 }

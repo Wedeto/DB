@@ -40,7 +40,9 @@ class Select extends Query
     public static function countQuery(Select $query)
     {
         $cq = new Select;
-        $cq->fields = array(new getClause(new FunctionExpression("COUNT"), null));
+        $count_func = new SQLFunction("COUNT");
+        $count_func->addArgument(new Wildcard());
+        $cq->fields = array(new getClause($count_func));
         $cq->table = $query->table;
         $cq->joins = $query->joins;
         $cq->where = $query->where;
@@ -79,6 +81,11 @@ class Select extends Query
         return $this->table;
     }
 
+    public function getJoins()
+    {
+        return $this->joins;
+    }
+
     public function getWhere()
     {
         return $this->where;
@@ -91,11 +98,11 @@ class Select extends Query
 
     public function getLimit()
     {
-        return $limit;
+        return $this->limit;
     }
 
     public function getOffset()
     {
-        return $offset;
+        return $this->offset;
     }
 }

@@ -157,32 +157,32 @@ class Builder
         return $cl;
     }
 
-    public static function get($expression, $alias = null)
+    public static function get($expression, $alias = "")
     {
         return new GetClause($expression, $alias);
     }
 
     public static function field($field, $table = null)
     {
-        return new FieldExpression($field, $table);
+        return new FieldName($field, $table);
     }
 
     public static function func($func)
     {
-        return new FunctionExpression($func);
+        return new SQLFunction($func);
     }
 
-    public static function table($table, $alias = null)
+    public static function table($table, $alias = "")
     {
         return new TableClause($table, $alias);
     }
 
-    public static function from($table, $alias = null)
+    public static function from($table, $alias = "")
     {
         return new SourceTableClause($table, $alias);
     }
 
-    public static function with($table, $alias = null)
+    public static function with($table, $alias = "")
     {
         return new SourceTableClause($table, $alias);
     }
@@ -209,11 +209,16 @@ class Builder
 
     public static function t($table_alias)
     {
-        return new TableClause(null, $table_alias);
+        return new TableClause($table_alias);
     }
 
     public static function any()
     {
         return new ConstantArray(func_get_args());
+    }
+
+    public static function wildcard()
+    {
+        return new Wildcard();
     }
 }

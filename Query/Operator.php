@@ -25,23 +25,25 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
+use InvalidArgumentException;
+
 class Operator extends Expression
 {
     protected $lhs = null;
     protected $rhs;
-    protected $op;
+    protected $operator;
 
     protected static $valid_operators = array();
 
     public function __construct($operator, $lhs, $rhs)
     {
-        if (in_array($operator, static::$valid_operators))
-            throw new InvalidArgumentException($op);
+        if (!in_array($operator, static::$valid_operators, true))
+            throw new InvalidArgumentException($operator);
 
         if ($lhs !== null)
             $this->lhs = $this->toExpression($lhs, false);
         $this->rhs = $this->toExpression($rhs, false);
-        $this->op = $operator;
+        $this->operator = $operator;
     }
 
     public function registerTables(Parameters $parameters)
@@ -62,7 +64,7 @@ class Operator extends Expression
 
     public function getOperator()
     {
-        return $this->op;
+        return $this->operator;
     }
 }
 

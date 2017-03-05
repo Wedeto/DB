@@ -117,24 +117,22 @@ class Parameters
         }
     }
 
-    public function resolveTable($name, $alias)
+    public function resolveTable($name)
     {
-        if (!empty($alias) && is_string($alias))
-        {
-            if (!isset($this->aliases[$alias]))
-                throw new InvalidArgumentException("Unknown table alias $alias");
-            return $alias;
-        }
-
         if (!empty($name) && is_string($name))
         {
-            if (!isset($this->tables[$name]))
-                throw new InvalidArgumentException("Unknown source table $name");
+            if (isset($this->aliases[$name]))
+                return array($this->aliases[$name], $name);
 
-            if (count($this->tables[$name]) > 1)
+            if (isset($this->tables[$name]))
+            {
+                if (count($this->tables[$name]) === 1)
+                    return array($name, null);
+
                 throw new InvalidArgumentException("Multiple references to $name, use the appropriate alias");
-            
-            return $name;
+            }
+
+            throw new InvalidArgumentException("Unknown source table $name");
         }
 
         throw new InvalidArgumentException("No table identifier provided");
@@ -152,9 +150,9 @@ class Parameters
         $alias = $akeys[0];
 
         if ($alias === $first)
-            return new TableClause($first, null);
+            return new TableClause($first);
         else
-            return new TableClause(null, $alias);
+            return new TableClause($alias);
     }
 }
 

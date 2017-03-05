@@ -32,8 +32,8 @@ class OffsetClause extends Clause
     public function __construct($value)
     {
         if (is_int($value))
-            $this->number = new ConstantExpression($value);
-        elseif ($value instanceof ConstantExpression)
+            $this->number = new ConstantValue($value);
+        elseif ($value instanceof ConstantValue)
             $this->number = $value;
         else
             throw new InvalidArgumentException($value);

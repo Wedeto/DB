@@ -38,5 +38,10 @@ class ConstantValue extends Expression
     {
         return $this->value === null;
     }
+
+    public function getValue()
+    {
+        return $this->value;
+    }
 }
 

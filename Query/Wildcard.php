@@ -25,29 +25,5 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-class SQLFunction extends Expression
-{
-    protected $func;
-    protected $arguments = array();
-
-    public function __construct(string $func)
-    {
-        $this->func = $func;
-    }
-
-    public function addArgument(Expression $argument)
-    {
-        $this->arguments[] = Expression::toExpression($argument, true);
-        return $this;
-    }
-
-    public function getFunction()
-    {
-        return $this->func;
-    }
-
-    public function getArguments()
-    {
-        return $this->arguments; 
-    }
-}
+class Wildcard extends Expression
+{}
