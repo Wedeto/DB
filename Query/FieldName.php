@@ -34,7 +34,7 @@ class FieldName extends Expression
     {
         $this->field = $name;
         if (is_string($table))
-            $this->table = new TableClause($field);
+            $this->table = new TableClause($table);
         elseif ($table instanceof TableClause)
             $this->table = $table;
     }
