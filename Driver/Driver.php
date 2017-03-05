@@ -84,7 +84,7 @@ abstract class Driver
      * @param $name string The name to quote
      * @return string The quoted name
      */
-    public function identQuote($name)
+    public function identQuote(string $name)
     {
         return $this->iquotechar . str_replace($this->iquotechar, $this->iquotechar . $this->iquotechar, $name) . $this->iquotechar;
     }

@@ -25,24 +25,30 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
+use InvalidArgumentException;
+
 class ConstantArray extends ConstantValue
 {
-    protected $values = array();
-
-    public function __construct()
+    public function __construct($value, ...$values)
     {
+        $this->value = array();
+        $this->setValue(func_get_args());
+    }
+
+    public function setValue($value)
+    {
+        if (!is_array($value))
+            throw new InvalidArgumentException("Cannot assign non-array to ConstantArray");
+
         $args = \WASP\flatten_array(func_get_args());
         foreach ($args as $arg)
         {
             if (!is_scalar($arg))
                 throw new InvalidArgumentException("Not a scalar: " . $arg);
-            $this->values[] = $arg;
+            $this->value[] = $arg;
         }
-    }
 
-    public function getValues()
-    {
-        return $this->values;
+        if (!empty($this->formatter))
+            $this->update();
     }
 }
-

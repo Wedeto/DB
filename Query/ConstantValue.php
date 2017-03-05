@@ -28,6 +28,9 @@ namespace WASP\DB\Query;
 class ConstantValue extends Expression
 {
     protected $value;
+    protected $target_key = null;
+    protected $parameters = null;
+    protected $formatter = null;
 
     public function __construct($value)
     {
@@ -42,6 +45,37 @@ class ConstantValue extends Expression
     public function getValue()
     {
         return $this->value;
+    }
+
+    public function getKey()
+    {
+        return $this->target_key;
+    }
+
+    public function setValue($value)
+    {
+        $this->value = $value;
+        $this->update();
+        return $this;
+    }
+
+    public function bind(Parameters $params, string $key, $formatter)
+    {
+        $this->parameters = $params;
+        if (!empty($formatter))
+        {
+            if (!is_callable($formatter))
+                throw new \InvalidArgumentException("Formatter must be callable");
+            $this->formatter = $formatter;
+        }
+        $this->target_key = $key;
+        $this->update();
+    }
+
+    protected function update()
+    {
+        $value = empty($this->formatter) ? $this->value : $this->formatter($this->value);
+        $this->parameters->set($this->target_key, $value);
     }
 }
 

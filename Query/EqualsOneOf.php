@@ -25,46 +25,25 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-use InvalidArgumentException;
-
-class Operator extends Expression
+class EqualsOneOf extends Expression
 {
-    protected $lhs = null;
-    protected $rhs;
-    protected $operator;
+    protected $field;
+    protected $list;
 
-    protected static $valid_operators = array();
-
-    public function __construct($operator, $lhs, $rhs)
+    public function __construct(string $field, ...$values)
     {
-        if (!in_array($operator, static::$valid_operators, true))
-            throw new InvalidArgumentException($operator);
-
-        if ($lhs !== null)
-            $this->lhs = $this->toExpression($lhs, false);
-        $this->rhs = $this->toExpression($rhs, true);
-        $this->operator = $operator;
+        $this->field = $field instanceof FieldName ? $field : new FieldName($field);
+        $this->list = new ConstantArray($values);
     }
 
-    public function registerTables(Parameters $parameters)
+    public function getList()
     {
-        $this->lhs->registerTables($parameters);
-        $this->rhs->registerTables($parameters);
+        return $this->list;
     }
 
-    public function getLHS()
+    public function getField()
     {
-        return $this->lhs;
-    }
-
-    public function getRHS()
-    {
-        return $this->rhs;
-    }
-
-    public function getOperator()
-    {
-        return $this->operator;
+        return $this->field;
     }
 }
 

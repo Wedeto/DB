@@ -212,9 +212,9 @@ class Builder
         return new TableClause($table_alias);
     }
 
-    public static function any()
+    public static function any($field, ...$params)
     {
-        return new ConstantArray(func_get_args());
+        return new EqualsOneOf($field, $params);
     }
 
     public static function wildcard()

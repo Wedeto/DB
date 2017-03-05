@@ -36,6 +36,7 @@ use WASP\DB\Table\Index;
 use WASP\DB\Table\ForeignKey;
 use WASP\DB\Table\Column\Column;
 
+use WASP\DB\Query;
 use WASP\DB\Query\Parameters;
 use WASP\DB\Query\Select;
 
@@ -90,6 +91,30 @@ class PGSQL extends Driver
         $this->schema = $schema !== null ? $schema : "public";
 
         return $this;
+    }
+
+    public function matchMultipleValues(Query\FieldName $field, Query\ConstantArray $list)
+    {
+        $operator = "=";
+
+        $func = new Query\SQLFunction("ANY");
+        $func->addArgument($list);
+
+        return new Query\ComparisonOperator("=", $field, $func);
+    }
+
+    public function formatArray(array $values)
+    {
+        $vals = array();
+        foreach ($values as $val)
+        {
+            if (is_string($val))
+                $vals[] = str_replace('"', '\\"', str_replace('\\', '\\\\', $val));
+            elseif (!is_scalar($val))
+                throw new InvalidArgumentException("All list elements must be scalars");
+            $vals[] = $val;
+        }
+        return '{' . implode('","', $values) . '}';
     }
 
     public function select(Select $query)

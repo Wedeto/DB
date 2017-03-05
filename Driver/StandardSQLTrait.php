@@ -28,6 +28,7 @@ namespace WASP\DB\Driver;
 use WASP\DB\Query\Clause;
 use WASP\DB\Query\ConstantValue;
 use WASP\DB\Query\Direction;
+use WASP\DB\Query\EqualsOneOf;
 use WASP\DB\Query\FieldName;
 use WASP\DB\Query\GetClause;
 use WASP\DB\Query\JoinClause;
@@ -44,6 +45,8 @@ use WASP\DB\Query\Parameters;
 use WASP\DB\Query\TableClause;
 use WASP\DB\Query\WhereClause;
 use WASP\DB\Query\Wildcard;
+
+use OutOfRangeException;
 
 trait StandardSQLTrait
 {
@@ -97,6 +100,9 @@ trait StandardSQLTrait
         if ($clause instanceof FieldName)
             return $this->fieldToSQL($params, $clause);
 
+        if ($clause instanceof EqualsOneOf)
+            return $this->equalsOneOfToSQL($params, $clause, $inner_clause);
+
         if ($clause instanceof Wildcard)
             return "*";
 
@@ -118,8 +124,13 @@ trait StandardSQLTrait
         $rhs = $this->toSQL($params, $expression->getRHS(), true);
 
         $op = $expression->getOperator();
-        if ($lhs !== null && $inner_clause)
-            return '(' . $lhs . ' ' . $op . ' ' . $rhs . ')';
+        if ($lhs !== null)
+        {
+            $sql = $lhs . ' ' . $op . ' ' . $rhs;
+            if ($inner_clause)
+                return '(' . $sql . ')';
+            return $sql;
+        }
         
         return $op . ' ' . $rhs;
     }
@@ -135,7 +146,22 @@ trait StandardSQLTrait
         if ($expression instanceof ConstantArray)
             return $this->constantArrayToSQL($params, $expression);
 
-        $key = $params->assign($expression->getValue());
+        if ($key = $expression->getKey())
+        {
+            try
+            {
+                $v = $params->get($key);
+            }
+            catch (OutOfRangeException $e)
+            {
+                $key = null;
+            }
+        }
+
+        if ($key === null)
+            $key = $params->assign($expression->getValue());
+        $expression->bind($params, $key, null);
+
         return ':' . $key;
     }
 
@@ -296,6 +322,12 @@ trait StandardSQLTrait
         return implode(" ", $parts);
     }
 
+    public function equalsOneOfToSQL(Parameters $params, EqualsOneOf $matcher, bool $inner_clause)
+    {
+        $comparator = $this->matchMultipleValues($matcher->getField(), $matcher->getList());
+        return $this->toSQL($params, $comparator, $inner_clause);
+    }
+
     /**
      * Write a constant array clause as SQL query syntax
      * @param Parameters $params The query parameters: tables and placeholder values
@@ -304,11 +336,25 @@ trait StandardSQLTrait
      */
     public function constantArrayToSQL(Parameters $params, ConstantArray $list)
     {
-        $values = $list->getValues();
-        $value = '{' . implode(',', $values) . '}';
+        if ($key = $list->getKey())
+        {
+            try
+            {
+                $key = $params->get($key);
+            }
+            catch (OutOfRangeException $e)
+            {
+                // Not a valid key, replace
+                $key = null;
+            }
+        }
 
-        $key = $params->assign($value);
-        return 'ANY(:' . $key . ')';
+        if (!$key)
+            $key = $params->assign(null);
+
+        // Rebind, to be sure
+        $list->bind($params, $key, array($this, 'formatArray'));
+        return ':' . $key;
     }
 
     /**

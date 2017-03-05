@@ -38,6 +38,7 @@ use WASP\DB\Table\Column\Column;
 
 use WASP\Config;
 
+use WASP\DB\Query;
 use WASP\DB\Query\Select;
 use WASP\DB\Query\Parameters;
 
@@ -85,10 +86,32 @@ class MySQL extends Driver
         if (!isset($config['hostname']))
             throw new DBException("Required field missing: socket or hostname");
 
-        if (isset($config['port']))
-            $port = ";port=" . $config['port'];
+        $port = isset($config['port']) ? ";port=" . $config['port'] : "";
 
         return "mysql:host=" . $config['hostname'] . ";dbname=" . $config['database'] . $port . ";charset=utf8";
+    }
+
+    public function matchMultipleValues(Query\FieldName $field, Query\ConstantArray $list)
+    {
+        $func = new Query\SQLFunction("FIND_IN_SET");
+        $func->addArgument($field);
+        $func->addArgument($list);
+
+        return $func;
+    }
+
+    public function formatArray(array $values)
+    {
+        $vals = array();
+        foreach ($values as $val)
+        {
+            if (strpos($val, ',') !== false)
+                throw new InvalidArgumentException("MySQL does not support escaping in set literals");
+            elseif (!is_scalar($val))
+                throw new InvalidArgumentException("All list elements must be scalars");
+            $vals[] = $val;
+        }
+        return implode(',', $values);
     }
 
     public function select(Select $query)

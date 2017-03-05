@@ -30,7 +30,7 @@ class FieldName extends Expression
     protected $field;
     protected $table;
 
-    public function __construct($name, $table = null)
+    public function __construct(string $name, $table = null)
     {
         $this->field = $name;
         if (is_string($table))

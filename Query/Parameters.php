@@ -27,6 +27,7 @@ namespace WASP\DB\Query;
 
 use WASP\DB\Driver\Driver;
 use InvalidArgumentException;
+use OutOfRangeException;
 
 class Parameters
 {
@@ -53,26 +54,28 @@ class Parameters
         return $key;
     }
 
+    public function get($key)
+    {
+        if (!array_key_exists($key, $this->params))
+            throw new OutOfRangeException("Invalid key: $key");
+
+        return $this->params[$key];
+    }
+
+    public function set($key, $value)
+    {
+        $this->params[$key] = $value;
+        return $this;
+    }
+
     public function getNextKey()
     {
         return "c" . $this->column_counter++;
     }
 
-    public function getParameters()
+    public function &getParameters()
     {
         return $this->params;
-    }
-
-    public function getNextTableKey()
-    {
-        return "t" . $this->table_counter++;
-    }
-
-    public function addTable(string $table)
-    {
-        $key = $this->getNextTableKey();
-        $this->table[$table] = $key;
-        return $key;
     }
 
     public function getTable(string $table)
