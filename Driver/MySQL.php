@@ -47,6 +47,7 @@ use PDOException;
 class MySQL extends Driver
 {
     use LoggerAwareStaticTrait;
+    use StandardSQLTrait;
 
     protected $iquotechar = '`';
 

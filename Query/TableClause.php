@@ -32,27 +32,24 @@ class TableClause extends Clause
     protected $name;
     protected $alias;
 
-    public function __construct($name, $alias)
+    public function __construct(string $name)
     {
         $this->name = $name;
-        $this->alias = $alias;
-    }
-
-    public function registerTables(Parameters $parameters)
-    {
-        $parameters->registerTable($this->name, $this->alias);
-    }
-
-    public function toSQL(Parameters $parameters)
-    {
-        $parameters->resolveTable($this->name, $this->alias);
-        if ($this->alias)
-            return $parameters->getDB()->identQuote($this->alias);
-        return $parameters->getDB()->getName($this->name);
+        $this->alias = null;
     }
 
     public function getPrefix()
     {
         return $this->alias ?: $this->name;
+    }
+
+    public function getTable()
+    {
+        return $this->name;
+    }
+
+    public function getAlias()
+    {
+        return $this->alias;
     }
 }

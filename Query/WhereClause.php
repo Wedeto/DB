@@ -39,9 +39,9 @@ class WhereClause extends Clause
         $this->operand->registerTables($parameters);
     }
 
-    public function toSQL(Parameters $parameters)
+    public function getOperand()
     {
-        return "WHERE " . $this->operand->toSQL($parameters);
+        return $this->operand;
     }
 }
 

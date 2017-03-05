@@ -34,22 +34,9 @@ class OrderClause extends Clause
         $this->clauses[] = $clause;
     }
 
-    public function registerTables(Parameters $parameters)
+    public function getClauses()
     {
-        foreach ($this->clauses as $clause)
-            $clause->registerTables($parameters);
-    }
-
-    public function toSQL(Parameters $parameters)
-    {
-        $strs = array();
-        foreach ($this->clauses as $clause)
-            $strs[] = $clause->toSQL($parameters);
-
-        if (count($strs) === 0)
-            return;
-
-        return "ORDER BY " . implode(", ", $strs);
+        return $this->clauses();
     }
 }
 

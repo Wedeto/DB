@@ -45,6 +45,7 @@ use PDOException;
 class PGSQL extends Driver
 {
     use LoggerAwareStaticTrait;
+    use StandardSQLTrait;
 
     protected $iquotechar = '"';
 

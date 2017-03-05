@@ -38,7 +38,4 @@ abstract class Clause
         else
             throw new InvalidArgumentException($var);
     }
-
-    abstract public function registerTables(Parameters $parameters);
-    abstract public function toSQL(Parameters $parameters);
 }

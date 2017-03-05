@@ -25,27 +25,18 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-class BinaryOperator extends Expression
+class ConstantValue extends Expression
 {
-    public function __construct($op, $lhs, $rhs)
-    {
-        if ($op !== "AND" && $op !== "OR")
-            throw new InvalidArgumentException($op);
+    protected $value;
 
-        $this->lhs = $this->toExpression($lhs, false);
-        $this->rhs = $this->toExpression($rhs, false);
-        $this->op = $op;
+    public function __construct($value)
+    {
+        $this->value = $value;
     }
 
-    public function registerTables(Parameters $parameters)
+    public function isNull()
     {
-        $this->lhs->registerTables($parameters);
-        $this->rhs->registerTables($parameters);
-    }
-
-    public function toSQL(Parameters $parameters)
-    {
-        return "(" . $this->lhs->toSQL($parameters) . " " . $this->op . " " . $this->rhs->toSQL($parameters) . ")";
+        return $this->value === null;
     }
 }
 

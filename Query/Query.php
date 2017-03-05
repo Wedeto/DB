@@ -25,7 +25,5 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-abstract class Query
-{
-    abstract public function toSQL(Parameters $parameters);
-}
+abstract class Query extends Clause
+{}

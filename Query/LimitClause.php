@@ -39,12 +39,9 @@ class LimitClause extends Clause
             throw new InvalidArgumentException($value);
     }
 
-    public function registerTables(Parameters $parameters)
-    {}
-
-    public function toSQL(Parameters $params)
+    public function getLimit()
     {
-        return "LIMIT " . $this->number->toSQL($params);
+        return $this->number;
     }
 }
 

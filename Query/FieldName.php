@@ -25,29 +25,28 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-class AnyExpression extends Expression
+class FieldName extends Expression
 {
-    protected $values = array();
+    protected $field;
+    protected $table;
 
-    public function __construct()
+    public function __construct($name, $table = null)
     {
-        $args = \WASP\flatten_array(func_get_args());
-        foreach ($args as $arg)
-        {
-            if (!is_scalar($arg))
-                throw new InvalidArgumentException("Not a scalar: " . $arg);
-            $this->values[] = $arg;
-        }
+        $this->field = $name;
+        if (is_string($table))
+            $this->table = new TableClause($field);
+        elseif ($table instanceof TableClause)
+            $this->table = $table;
     }
 
-    public function registerTables(Parameters $parameters)
-    {}
-
-    public function toSQL(Parameters $parameters)
+    public function getTable()
     {
-        $val = "{" . implode(",", $this->values) . "}";
-        $name = $parameters->assign($val);
-        return 'ANY(:' . $name . ')';
+        return $this->table;
+    }
+
+    public function getField()
+    {
+        return $this->field;
     }
 }
 

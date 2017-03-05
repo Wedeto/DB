@@ -25,44 +25,44 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-class FieldExpression extends Expression
+class Operator extends Expression
 {
-    protected $field;
-    protected $table;
+    protected $lhs = null;
+    protected $rhs;
+    protected $op;
 
-    public function __construct($name, $table = null)
+    protected static $valid_operators = array();
+
+    public function __construct($operator, $lhs, $rhs)
     {
-        $this->field = $name;
-        if (is_string($table))
-            $this->table = new TableClause($field);
-        elseif ($table instanceof TableClause)
-            $this->table = $table;
+        if (in_array($operator, static::$valid_operators))
+            throw new InvalidArgumentException($op);
+
+        if ($lhs !== null)
+            $this->lhs = $this->toExpression($lhs, false);
+        $this->rhs = $this->toExpression($rhs, false);
+        $this->op = $operator;
     }
 
     public function registerTables(Parameters $parameters)
     {
-        if ($this->table)
-            $this->table->registerTables($parameters);
+        $this->lhs->registerTables($parameters);
+        $this->rhs->registerTables($parameters);
     }
 
-    public function toSQL(Parameters $parameters)
+    public function getLHS()
     {
-        if ($this->table === null)
-            $this->table = $parameters->getDefaultTable();
-
-        if (!empty($this->table))
-            return $this->table->toSQL($parameters) . '.' . $parameters->getDB()->identQuote($this->field);
-        return $parameters->getDB()->identQuote($this->field);
+        return $this->lhs;
     }
 
-    public function getTable()
+    public function getRHS()
     {
-        return $this->table;
+        return $this->rhs;
     }
 
-    public function getField()
+    public function getOperator()
     {
-        return $this->field;
+        return $this->op;
     }
 }
 

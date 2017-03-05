@@ -32,41 +32,19 @@ class GetClause extends Clause
     protected $expression;
     protected $alias;
 
-    public function __construct($exp, $alias)
+    public function __construct($exp, string $alias = "")
     {
         $this->expression = $this->toExpression($exp, false);
         $this->alias = $alias;
     }
 
-    public function registerTables(Parameters $parameters)
+    public function getExpression()
     {
-        $this->expression->registerTables($parameters);
+        return $this->expression;
     }
 
-    public function toSQL(Parameters $parameters)
+    public function getAlias()
     {
-        $sql = $this->expression->toSQL($parameters);
-        if (empty($this->alias))
-        {
-            if ($this->expression instanceof FieldExpression)
-            {
-                $table = $this->expression->getTable();
-                if ($table !== null)
-                {
-                    $prefix = $table->getPrefix();
-                    $this->alias = $prefix . '_' . $this->expression->getField();
-                }
-            }
-            elseif ($this->expression instanceof FunctionExpression)
-            {
-                $func = $this->expression->getFunction();
-                $this->alias = strtolower($func);
-            }
-        }
-
-        if ($this->alias)
-            return $sql . ' AS ' . $parameters->getDB()->identQuote($this->alias);
-        else
-            return $sql;
+        return $this->alias;
     }
 }

@@ -55,15 +55,19 @@ class JoinClause extends Clause
         $this->condition = $expression;
     }
 
-    public function registerTables(Parameters $parameters)
+    public function getTable()
     {
-        $this->table->registerTables($parameters);
-        $this->condition->registerTables($parameters);
+        return $this->table;
     }
 
-    public function toSQL(Parameters $parameters)
+    public function getCondition()
     {
-        return $this->type . " JOIN " . $this->table->toSQL($parameters) . " ON " . $this->condition->toSQL($parameters);
+        return $this->getCondition();
+    }
+
+    public function getType()
+    {
+        return $this->type;
     }
 }
 

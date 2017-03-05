@@ -27,10 +27,6 @@ namespace WASP\DB\Query;
 
 abstract class Expression extends Clause
 {
-    protected $lhs;
-    protected $rhs;
-    protected $op;
-
     public function isNull()
     {
         return false;

@@ -27,18 +27,13 @@ namespace WASP\DB\Query;
 
 use InvalidArgumentException;
 
-class ComparisonOperator extends Expression
+class ComparisonOperator extends Operator
 {
     protected static $valid_operators = array('<', '>', '<=', '>=', '=', '!=', 'LIKE', 'ILIKE');
 
     public function __construct($op, $lhs, $rhs)
     {
-        if (!in_array($op, self::$valid_operators))
-            throw new InvalidArgumentException($op);
-
-        $this->op = $op;
-        $this->lhs = $this->toExpression($lhs, false);
-        $this->rhs = $this->toExpression($rhs, true);
+        parent::__construct($op, $lhs, $rhs);
         if ($this->rhs->isNull())
         {
             if ($this->op === "=")
@@ -46,17 +41,6 @@ class ComparisonOperator extends Expression
             elseif ($this->op === "!=")
                 $this->op = "IS NOT";
         }
-    }
-
-    public function registerTables(Parameters $parameters)
-    {
-        $this->lhs->registerTables($parameters);
-        $this->rhs->registerTables($parameters);
-    }
-
-    public function toSQL(Parameters $parameters)
-    {
-        return '(' . $this->lhs->toSQL($parameters) . ' ' . $this->op . ' ' . $this->rhs->toSQL($parameters) . ')';
     }
 }
 

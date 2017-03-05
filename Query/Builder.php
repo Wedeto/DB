@@ -86,12 +86,12 @@ class Builder
 
     public static function or(Expression $lhs, Expression $rhs)
     {
-        return new BinaryOperator("OR", $lhs, $rhs);
+        return new BooleanOperator("OR", $lhs, $rhs);
     }
 
     public static function and(Expression $lhs, Expression $rhs)
     {
-        return new BinaryOperator("AND", $lhs, $rhs);
+        return new BooleanOperator("AND", $lhs, $rhs);
     }
 
     public static function not(Expression $operand)
@@ -214,6 +214,6 @@ class Builder
 
     public static function any()
     {
-        return new AnyExpression(func_get_args());
+        return new ConstantArray(func_get_args());
     }
 }

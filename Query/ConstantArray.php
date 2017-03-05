@@ -25,16 +25,24 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-use WASP\DB\DB;
-
-class SourceTableClause extends TableClause
+class ConstantArray extends ConstantValue
 {
-    protected $name;
-    protected $alias;
+    protected $values = array();
 
-    public function __construct(string $name, string $alias = "")
+    public function __construct()
     {
-        $this->name = $name;
-        $this->alias = $alias;
+        $args = \WASP\flatten_array(func_get_args());
+        foreach ($args as $arg)
+        {
+            if (!is_scalar($arg))
+                throw new InvalidArgumentException("Not a scalar: " . $arg);
+            $this->values[] = $arg;
+        }
+    }
+
+    public function getValues()
+    {
+        return $this->values;
     }
 }
+

@@ -38,13 +38,10 @@ class OffsetClause extends Clause
         else
             throw new InvalidArgumentException($value);
     }
-
-    public function registerTables(Parameters $parameters)
-    {}
-
-    public function toSQL(Parameters $params)
+    
+    public function getOffset()
     {
-        return "OFFSET " . $this->number->toSQL($params);
+        return $this->number;
     }
 }
 

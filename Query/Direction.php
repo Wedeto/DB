@@ -42,14 +42,14 @@ class Direction extends Clause
         $this->operand = $this->toExpression($operand, false);
     }
 
-    public function registerTables(Parameters $parameters)
+    public function getOperand()
     {
-        $this->operand->registerTables($parameters);
+        return $this->operand;
     }
 
-    public function toSQL(Parameters $parameters)
+    public function getDirection()
     {
-        return $this->operand->toSQL($parameters) . " " . $this->direction;
+        return $this->direction;
     }
 }
 

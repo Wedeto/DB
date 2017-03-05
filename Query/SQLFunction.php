@@ -25,29 +25,24 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-class ConstantExpression extends Expression
+class SQLFunction extends Expression
 {
-    protected $value;
+    protected $func;
+    protected $arguments = array();
 
-    public function __construct($value)
+    public function __construct($func)
     {
-        $this->value = $value;
+        $this->func = $func;
     }
 
-    public function registerTables(Parameters $parameters)
-    {}
-
-    public function toSQL(Parameters $parameters)
+    public function addArgument(Expression $argument)
     {
-        if ($this->value === null)
-            return "NULL";
-        $name = $parameters->assign($this->value);
-        return ':' . $name;
+        $this->arguments[] = Expression::toExpression($argument);
+        return $this;
     }
 
-    public function isNull()
+    public function getFunction()
     {
-        return $this->value === null;
+        return $this->func;
     }
 }
-

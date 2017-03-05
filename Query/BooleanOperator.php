@@ -25,42 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-class FunctionExpression extends Expression
+class BooleanOperator extends OperatorExpression
 {
-    protected $func;
-    protected $arguments = array();
-
-    public function __construct($func)
-    {
-        $this->func = $func;
-    }
-
-    public function addArgument(Expression $argument)
-    {
-        $this->arguments[] = Expression::toExpression($argument);
-        return $this;
-    }
-
-    public function registerTables(Parameters $parameters)
-    {
-        foreach($this->arguments as $arg)
-            $arg->registerTables($parameters);
-    }
-
-    public function toSQL(Parameters $parameters)
-    {
-        if ($this->func === "COUNT")
-            return 'COUNT(*)';
-
-        $parts = array();
-        foreach ($this->arguments as $arg)
-            $parts[] = $arg->toSQL($parameters);
-
-        return $func . '(' . implode(', ', $parts) . ')';
-    }
-
-    public function getFunction()
-    {
-        return $this->func;
-    }
+    protected static $valid_types = array('AND', 'OR');
 }

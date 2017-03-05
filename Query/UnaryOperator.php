@@ -25,25 +25,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-class UnaryOperator extends Expression
+class UnaryOperator extends Operator
 {
+    static $valid_operators = array('NOT');
+
     public function __construct($op, $rhs)
     {
-        if ($op !== "NOT")
-            throw new InvalidArgumentException($op);
-
-        $this->rhs = $this->toExpression($rhs);
-        $this->op = $op;
-    }
-
-    public function registerTables(Parameters $parameters)
-    {
-        $this->rhs->registerTables($parameters);
-    }
-
-    public function toSQL(Parameters $params)
-    {
-        return "(" . $this->op . " (" . $this->rhs->toSQL($parameters) . "))";
+        parent::__construct($op, null, $rhs);
     }
 }
 
