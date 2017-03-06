@@ -109,12 +109,12 @@ class PGSQL extends Driver
         foreach ($values as $val)
         {
             if (is_string($val))
-                $vals[] = str_replace('"', '\\"', str_replace('\\', '\\\\', $val));
+                $val = str_replace('"', '\\"', str_replace('\\', '\\\\', $val));
             elseif (!is_scalar($val))
                 throw new InvalidArgumentException("All list elements must be scalars");
-            $vals[] = $val;
+            $vals[] = '"' . $val . '"';
         }
-        return '{' . implode('","', $values) . '}';
+        return '{' . implode(',', $vals) . '}';
     }
 
     public function select(Select $query)

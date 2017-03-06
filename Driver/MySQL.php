@@ -44,6 +44,7 @@ use WASP\DB\Query\Parameters;
 
 use PDO;
 use PDOException;
+use InvalidArgumentException;
 
 class MySQL extends Driver
 {
@@ -106,7 +107,7 @@ class MySQL extends Driver
         foreach ($values as $val)
         {
             if (strpos($val, ',') !== false)
-                throw new InvalidArgumentException("MySQL does not support escaping in set literals");
+                throw new InvalidArgumentException("MySQL does not support escaping in set literals: " . $val);
             elseif (!is_scalar($val))
                 throw new InvalidArgumentException("All list elements must be scalars");
             $vals[] = $val;

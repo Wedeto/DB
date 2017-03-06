@@ -27,6 +27,8 @@ namespace WASP\DB\Driver;
 
 use WASP\DB\Query\Clause;
 use WASP\DB\Query\ConstantValue;
+use WASP\DB\Query\ConstantArray;
+use WASP\DB\Query\CustomSQL;
 use WASP\DB\Query\Direction;
 use WASP\DB\Query\EqualsOneOf;
 use WASP\DB\Query\FieldName;
@@ -50,65 +52,6 @@ use OutOfRangeException;
 
 trait StandardSQLTrait
 {
-    /**
-     * Write an query clause as SQL query syntax
-     * @param Parameters $params The query parameters: tables and placeholder values
-     * @param Clause $clause The clause to write
-     * @param bool $inner_clause Whether this is a inner or outer clause. An
-     *                           inner clause will be wrapped in braces when
-     *                           it's a binary operator.
-     * @return string The generated SQL
-     */
-    public function toSQL(Parameters $params, Clause $clause, bool $inner_clause = false)
-    {
-        if ($clause instanceof Query)
-            return $this->queryToSQL($params, $clause);
-
-        if ($clause instanceof GetClause)
-            return $this->getToSQL($params, $clause);
-
-        if ($clause instanceof TableClause)
-            return $this->tableToSQL($params, $clause);
-
-        if ($clause instanceof WhereClause)
-            return $this->whereToSQL($params, $clause);
-
-        if ($clause instanceof OrderClause)
-            return $this->orderToSQL($params, $clause);
-
-        if ($clause instanceof Direction)
-            return $this->directionToSQL($params, $clause);
-
-        if ($clause instanceof LimitClause)
-            return $this->limitToSQL($params, $clause);
-
-        if ($clause instanceof OffsetClause)
-            return $this->offsetToSQL($params, $clause);
-
-        if ($clause instanceof ConstantValue)
-            return $this->constantToSQL($params, $clause);
-
-        if ($clause instanceof Operator)
-            return $this->operatorToSQL($params, $clause, $inner_clause);
-
-        if ($clause instanceof SQLFunction)
-            return $this->functionToSQL($params, $clause);
-
-        if ($clause instanceof SubQuery)
-            return $this->subQueryToSQL($params, $clause);
-
-        if ($clause instanceof FieldName)
-            return $this->fieldToSQL($params, $clause);
-
-        if ($clause instanceof EqualsOneOf)
-            return $this->equalsOneOfToSQL($params, $clause, $inner_clause);
-
-        if ($clause instanceof Wildcard)
-            return "*";
-
-        throw new \InvalidArgumentException("Unknown clause: " . get_class($clause));
-    }
-
     /**
      * Write an operator expression as SQL query syntax
      * @param Parameters $params The query parameters: tables and placeholder values
@@ -319,7 +262,7 @@ trait StandardSQLTrait
         if ($offset = $query->getOffset())
             $parts[] = $this->offsetToSQL($params, $offset);
         
-        return implode(" ", $parts);
+        return implode("\n", $parts);
     }
 
     public function equalsOneOfToSQL(Parameters $params, EqualsOneOf $matcher, bool $inner_clause)
@@ -355,6 +298,19 @@ trait StandardSQLTrait
         // Rebind, to be sure
         $list->bind($params, $key, array($this, 'formatArray'));
         return ':' . $key;
+    }
+
+    /**
+     * Add a custom SQL string to the query
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @param CustomSQL $custom The object containing the custom SQL
+     * @return string The generated SQL
+     */
+    public function customToSQL(Parameters $params, CustomSQL $custom, $inner_clause)
+    {
+        if ($inner_clause)
+            return '(' . $custom->getSQL() . ')';
+        return $custom->getSQL();
     }
 
     /**

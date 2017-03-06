@@ -29,8 +29,13 @@ class OrderClause extends Clause
 {
     protected $clauses = array();
 
-    public function addClause(Direction $clause)
+    public function addClause($clause)
     {
+        if (is_string($clause))
+            $clause = new CustomSQL($clause);
+        if (!($clause instanceof Clause))
+            throw new \InvalidArgumentException("No clause provided to order by");
+
         $this->clauses[] = $clause;
     }
 

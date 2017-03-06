@@ -35,9 +35,9 @@ class SQLFunction extends Expression
         $this->func = $func;
     }
 
-    public function addArgument(Expression $argument)
+    public function addArgument($argument)
     {
-        $this->arguments[] = Expression::toExpression($argument, true);
+        $this->arguments[] = $this->toExpression($argument, true);
         return $this;
     }
 

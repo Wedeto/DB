@@ -35,7 +35,8 @@ use WASP\DB\Table\Column\Column;
 
 use WASP\Debug\Logger;
 
-use WASP\DB\Query\Select;
+use WASP\DB\Query;
+use WASP\DB\Query\Parameters;
 
 use PDO;
 use PDOException;
@@ -152,7 +153,7 @@ abstract class Driver
     abstract public function generateDSN(array $config);
 
     // CRUD
-    abstract public function select(Select $query);
+    abstract public function select(Query\Select $query);
     abstract public function update($table, $idfield, array $record);
     abstract public function insert($table, $idfield, array &$record);
     abstract public function delete($table, $where);
@@ -309,4 +310,93 @@ abstract class Driver
             $parts[] = $buf;
         return array_map('trim', $parts);
     }
+
+    /**************************************************************************
+     ************************** QUERY BUILDER *********************************
+     **************************************************************************/
+
+    /**
+     * Write an query clause as SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @param Clause $clause The clause to write
+     * @param bool $inner_clause Whether this is a inner or outer clause. An
+     *                           inner clause will be wrapped in braces when
+     *                           it's a binary operator.
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, Query\Clause $clause, bool $inner_clause = false)
+    {
+        if ($clause instanceof Query\Query)
+            return $this->queryToSQL($params, $clause);
+
+        if ($clause instanceof Query\GetClause)
+            return $this->getToSQL($params, $clause);
+
+        if ($clause instanceof Query\TableClause)
+            return $this->tableToSQL($params, $clause);
+
+        if ($clause instanceof Query\WhereClause)
+            return $this->whereToSQL($params, $clause);
+
+        if ($clause instanceof Query\OrderClause)
+            return $this->orderToSQL($params, $clause);
+
+        if ($clause instanceof Query\Direction)
+            return $this->directionToSQL($params, $clause);
+
+        if ($clause instanceof Query\LimitClause)
+            return $this->limitToSQL($params, $clause);
+
+        if ($clause instanceof Query\OffsetClause)
+            return $this->offsetToSQL($params, $clause);
+
+        if ($clause instanceof Query\ConstantValue)
+            return $this->constantToSQL($params, $clause);
+
+        if ($clause instanceof Query\Operator)
+            return $this->operatorToSQL($params, $clause, $inner_clause);
+
+        if ($clause instanceof Query\SQLFunction)
+            return $this->functionToSQL($params, $clause);
+
+        if ($clause instanceof Query\SubQuery)
+            return $this->subQueryToSQL($params, $clause);
+
+        if ($clause instanceof Query\FieldName)
+            return $this->fieldToSQL($params, $clause);
+
+        if ($clause instanceof Query\EqualsOneOf)
+            return $this->equalsOneOfToSQL($params, $clause, $inner_clause);
+
+        if ($clause instanceof Query\CustomSQL)
+            return $this->customToSQL($params, $clause, $inner_clause);
+
+        if ($clause instanceof Query\Wildcard)
+            return "*";
+
+
+        throw new \InvalidArgumentException("Unknown clause: " . get_class($clause));
+    }
+
+    abstract public function constantToSQL(Parameters $params, Query\ConstantValue $expression);
+    abstract public function fieldToSQL(Parameters $params, Query\FieldName $expression);
+    abstract public function functionToSQL(Parameters $params, Query\SQLFunction $expression);
+    abstract public function constantArrayToSQL(Parameters $params, Query\ConstantArray $list);
+    abstract public function customToSQL(Parameters $params, Query\CustomSQL $custom, $inner_clause);
+    abstract public function directionToSQL(Parameters $params, Query\Direction $dir);
+    abstract public function equalsOneOfToSQL(Parameters $params, Query\EqualsOneOf $matcher, bool $inner_clause);
+    abstract public function getToSQL(Parameters $params, Query\GetClause $get);
+    abstract public function joinToSQL(Parameters $params, Query\JoinClause $join);
+    abstract public function limitToSQL(Parameters $params, Query\LimitClause $limit);
+    abstract public function offsetToSQL(Parameters $params, Query\OffsetClause $offset);
+    abstract public function operatorToSQL(Parameters $params, Query\Operator $expression, bool $inner_clause);
+    abstract public function orderToSQL(Parameters $params, Query\OrderClause $order);
+    abstract public function queryToSQL(Parameters $params, Query\Query $query);
+    abstract public function selectToSQL(Parameters $params, Query\Select $query);
+    abstract public function subqueryToSQL(Parameters $params, Query\SubQuery $expression);
+    abstract public function tableToSQL(Parameters $params, Query\TableClause $table);
+    abstract public function whereToSQL(Parameters $params, Query\WhereClause $where);
+
+    abstract public function formatArray(array $values);
+    abstract public function matchMultipleValues(Query\FieldName $field, Query\ConstantArray $list);
 }

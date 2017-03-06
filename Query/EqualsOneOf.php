@@ -36,6 +36,11 @@ class EqualsOneOf extends Expression
         $this->list = new ConstantArray($values);
     }
 
+    public function setValue(...$values)
+    {
+        return $this->list->setValue($values);
+    }
+
     public function getList()
     {
         return $this->list;

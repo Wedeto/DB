@@ -29,9 +29,14 @@ class WhereClause extends Clause
 {
     protected $operand;
 
-    public function __construct(Expression $operand)
+    public function __construct($operand)
     {
-        $this->operand = $operand; 
+        if ($operand instanceof Expression)
+            $this->operand = $operand; 
+        elseif (is_string($operand))
+            $this->operand = new CustomSQL($operand);
+        else
+            throw new \InvalidArgumentException("Invalid agument to WHERE");
     }
 
     public function registerTables(Parameters $parameters)

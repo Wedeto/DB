@@ -74,7 +74,7 @@ class ConstantValue extends Expression
 
     protected function update()
     {
-        $value = empty($this->formatter) ? $this->value : $this->formatter($this->value);
+        $value = empty($this->formatter) ? $this->value : ($this->formatter)($this->value);
         $this->parameters->set($this->target_key, $value);
     }
 }

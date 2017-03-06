@@ -79,7 +79,7 @@ class Builder
         return $i;
     }
 
-    public static function where(Expression $operand)
+    public static function where($operand)
     {
         return new WhereClause($operand);
     }
@@ -215,6 +215,11 @@ class Builder
     public static function any($field, ...$params)
     {
         return new EqualsOneOf($field, $params);
+    }
+    
+    public static function variable($value)
+    {
+        return new ConstantValue($value);
     }
 
     public static function wildcard()
