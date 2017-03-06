@@ -28,8 +28,23 @@ namespace WASP\DB;
 use WASP\Debug;
 use PDOException;
 
+use WASP\DB\Query;
 use WASP\DB\Query\Builder as QB;
 
+/**
+ * DAO (Data Access Object) allows for simple persistence of PHP objects to
+ * a relational database - it an ORM.
+ *
+ * Table structure is loaded from the driver, bringing out of the box data
+ * transformations such as to/from PHP DateTime objects and JSON
+ * encoding/decoding.
+ *
+ * It provives CRUD in the form of static insert, select, update and delete functions,
+ * and allows for object-level saving, loading and deleting by methods get, save
+ * and remove.
+ *
+ * If the ACL system is active, it also supports ACL access checking.
+ */
 class DAO
 {
     /** A mapping between class identifier and full, namespaced class name */
@@ -85,6 +100,14 @@ class DAO
         $this->id = $id;
         $this->initACL();
         $this->init();
+    }
+
+    public function assignRecord(array $record)
+    {
+        $this->id = isset($record[static::$idfield]) ? static::$idfield : null;
+        $this->record = $record;
+        $tihs->init();
+        return $this;
     }
 
     public function remove()
@@ -151,31 +174,48 @@ class DAO
         return $st->fetchAll();
     }
 
-    protected static function select()
+    protected static function select(..$args)
     {
-        $select = QB::select(func_get_args());
-        $select->add(new TableClause(static::tablename()));
+        $select = new Query\Select;
+        $select->add(new Query\TableClause(static::tablename()));
+        for ($args as $arg)
+            $select->add($arg);
 
         $db = DB::get()->driver();
-        return $db->execute($query, $parameters);
+        return $db->select($select);
     }
 
     protected static function update(array $record)
     {
+        $idf = static::$idfield;
+        $id = $record[$idf];
+        unset($record[$idf];
+
+        $update = new Query\Update;
+        $update->add(new Query\WhereClause(array($idf => $id]));
+
+        foreach ($record as $key => $value)
+            $update->add(new Query\UpdateField($key, $value);
+
         $db = DB::get()->driver();
-        return $db->update(static::tablename(), static::$idfield, $record);
+        return $db->update($update);
     }
 
     protected static function insert(array &$record)
     {
+        $insert = new Query\Insert(static::tablename(), $record, static::$idfield);
+
         $db = DB::get()->driver();
-        return $db->insert(static::tablename(), static::$idfield, $record);
+        $id = $db->insert($insert);
+        $record[static::$idfield] = $id;
+        return $id;
     }
 
     protected static function delete($where)
     {
+        $delete = new Query\Delete(static::tablename(), $where);
         $db = DB::get()->driver();
-        return $db->insert(static::tablename(), $where);
+        return $db->delete($delete);
     }
 
     public function getID()
@@ -205,6 +245,11 @@ class DAO
         if (isset($this->record[$field]))
             return $this->record[$field];
         return null;
+    }
+
+    public function getRecord()
+    {
+        return $this->record;
     }
 
     public function __set($field, $value)
@@ -313,12 +358,6 @@ class DAO
     public static function tablename()
     {
         return static::$table;
-    }
-
-    public static function quoteIdentity($identity)
-    {
-        $identity = str_replace(self::$ident_quote, self::$ident_quote . self::$ident_quote, $identity);
-        return self::$ident_quote . $identity . self::$ident_quote;
     }
 
     public static function getColumns()

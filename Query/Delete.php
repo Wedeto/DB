@@ -25,49 +25,40 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-class OrderClause extends Clause
+use DomainException;
+
+class Delete extends Query
 {
-    protected $clauses = array();
+    protected $table;
+    protected $where;
 
-    public function __construct($data = null)
+    public function __construct($table, $where)
     {
-        if (is_array($data))
-            $this->initFromArray($data);
-        elseif (is_string($data) && !empty($data))
-            $this->addClause($data);
+        $this->setTable($table);
+        $this->setWhere($where);
     }
 
-    public function addClause($clause)
+    public function getTable()
     {
-        if (is_string($clause))
-            $clause = new CustomSQL($clause);
-        if (!($clause instanceof Clause))
-            throw new \InvalidArgumentException("No clause provided to order by");
-
-        $this->clauses[] = $clause;
+        return $this->table;
     }
 
-    protected function initFromArray(array $clauses)
+    public function setTable($table)
     {
-        foreach ($clauses as $k => $v)
-        {
-            if (is_numeric($k))
-            {
-                $this->addClause(new Query\Direction("ASC", $v));
-            }
-            else
-            {
-                $v = strtoupper($v);
-                if ($v !== "ASC" && $v !== "DESC")
-                    throw new \InvalidArgumentException("Invalid order type {$v}");
-                $this->addClause(new Query\Direction($k, $v));
-            }
-        }
+        if (!($table instanceof TableClause))
+            $table = new TableClause($table);
+        $this->table = $table;
     }
 
-    public function getClauses()
+    public function getWhere()
     {
-        return $this->clauses;
+        return $this->where;
+    }
+
+    public function setWhere($where)
+    {
+        if (!($where instanceof WhereClause)
+            $where = new WhereClause($where);
+        $this->where = $where;
     }
 }
-

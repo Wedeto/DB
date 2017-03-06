@@ -25,49 +25,52 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-class OrderClause extends Clause
+use DomainException;
+
+class Update extends Query
 {
-    protected $clauses = array();
+    protected $table;
+    protected $joins = array();
+    protected $updates = array();
+    protected $where;
 
-    public function __construct($data = null)
+    public function __construct(..$params)
     {
-        if (is_array($data))
-            $this->initFromArray($data);
-        elseif (is_string($data) && !empty($data))
-            $this->addClause($data);
+        foreach ($params as $p)
+            $this->add($p);
     }
 
-    public function addClause($clause)
+    public function add(Clause $clause)
     {
-        if (is_string($clause))
-            $clause = new CustomSQL($clause);
-        if (!($clause instanceof Clause))
-            throw new \InvalidArgumentException("No clause provided to order by");
-
-        $this->clauses[] = $clause;
+        if ($clause instanceof WhereClause)
+            $this->where = $clause;
+        elseif ($clause instanceof TableClause)
+            $this->table = $clause;
+        elseif ($clause instanceof JoinClause)
+            $this->joins[] = $clause;
+        elseif ($clause instanceof UpdateField)
+            $this->updates[] = $clause;
+        else
+            throw new \InvalidArgumentException("Unknown clause: " . get_class($clause));
     }
 
-    protected function initFromArray(array $clauses)
+    public function getTable()
     {
-        foreach ($clauses as $k => $v)
-        {
-            if (is_numeric($k))
-            {
-                $this->addClause(new Query\Direction("ASC", $v));
-            }
-            else
-            {
-                $v = strtoupper($v);
-                if ($v !== "ASC" && $v !== "DESC")
-                    throw new \InvalidArgumentException("Invalid order type {$v}");
-                $this->addClause(new Query\Direction($k, $v));
-            }
-        }
+        return $this->table;
     }
 
-    public function getClauses()
+    public function getWhere()
     {
-        return $this->clauses;
+        return $this->where;
+    }
+
+    public function getUpdates()
+    {
+        return $this->updates;
+    }
+
+    public function getJoins()
+    {
+        return $this->joins;
     }
 }
-

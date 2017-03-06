@@ -25,49 +25,48 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-class OrderClause extends Clause
+use DomainException;
+
+class DuplicateKey extends Clause
 {
-    protected $clauses = array();
+    protected function $fields = array();
+    protected function $updates = array();
 
-    public function __construct($data = null)
+    public function __construct($field, ..$updates)
     {
-        if (is_array($data))
-            $this->initFromArray($data);
-        elseif (is_string($data) && !empty($data))
-            $this->addClause($data);
+        $this->setField($field);
+        $updates = WASP\flatten_array($updates);
+        foreach ($updates as $up)
+            $this->addUpdate($up);
     }
 
-    public function addClause($clause)
+    public function addConflictingField($field)
     {
-        if (is_string($clause))
-            $clause = new CustomSQL($clause);
-        if (!($clause instanceof Clause))
-            throw new \InvalidArgumentException("No clause provided to order by");
-
-        $this->clauses[] = $clause;
-    }
-
-    protected function initFromArray(array $clauses)
-    {
-        foreach ($clauses as $k => $v)
+        if (is_array($field))
         {
-            if (is_numeric($k))
-            {
-                $this->addClause(new Query\Direction("ASC", $v));
-            }
-            else
-            {
-                $v = strtoupper($v);
-                if ($v !== "ASC" && $v !== "DESC")
-                    throw new \InvalidArgumentException("Invalid order type {$v}");
-                $this->addClause(new Query\Direction($k, $v));
-            }
+            foreach ($field as $f)
+                $this->addField($field);
+            return;
         }
+
+        if (!($field instanceof FieldName))
+            $field = new FieldName($field);
+
+        $this->fields = $field;
     }
 
-    public function getClauses()
+    public function getConflictingFields()
     {
-        return $this->clauses;
+        return $this->fields;
+    }
+
+    public function addUpdate(UpdateField $update)
+    {
+        $this->updates[] = $update;
+    }
+
+    public function getUpdates()
+    {
+        return $this->updates;
     }
 }
-

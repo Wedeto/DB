@@ -192,79 +192,6 @@ abstract class Driver
     abstract public function getColumns($table_name);
     abstract public function getConstraints($table_name);
 
-    // Standard SQL parts - can be overriden if required, should usually not be necessary
-    public function getWhere($where, &$col_idx, array &$params)
-    {
-        if (is_string($where))
-            return " WHERE " . $where;
-
-        if (is_array($where) && count($where))
-        {
-            $parts = array();
-            foreach ($where as $k => $v)
-            {
-                if (is_array($v))
-                {
-                    $op = $v[0];
-                    $val = $v[1];
-                }
-                else
-                {
-                    $op = "=";
-                    $val = $v;
-                }
-
-                if ($val === null)
-                {
-                    if ($op === "=")
-                        $parts[] = self::identQuote($k) . " IS NULL";
-                    else if ($op == "!=")
-                        $parts[] = self::identQuote($k) . " IS NOT NULL";
-                }
-                else
-                {
-                    $col_name = "col" . (++$col_idx);
-                    $parts[] = self::identQuote($k) . " {$op} :{$col_name}";
-                    $params[$col_name] = $v;
-                }
-            }
-
-            return " WHERE " . implode(" AND ", $parts);
-        }
-
-        return "";
-    }
-
-    public function getOrder($order)
-    {
-        if (is_string($order))
-            return "ORDER BY " . $order;
-
-        if (is_array($order) && count($order))
-        {
-            $parts = array();
-            foreach ($order as $k => $v)
-            {
-                if (is_numeric($k))
-                {
-                    $k = $v;
-                    $v = "ASC";
-                }
-                else
-                {
-                    $v = strtoupper($v);
-                    if ($v !== "ASC" && $v !== "DESC")
-                        throw new DBException("Invalid order type {$v}");
-                }
-                $parts[] = self::identQuote($k) . " " . $v;
-            }
-
-            return " ORDER BY " . implode(", ", $parts);
-        }
-
-        return "";
-    }
-
     /**
      * Explodes a string on occurences of , while
      * parsing functions properly. Each opening brace should be
@@ -329,6 +256,9 @@ abstract class Driver
         if ($clause instanceof Query\Query)
             return $this->queryToSQL($params, $clause);
 
+        if ($clause instanceof Query\DuplicateKey)
+            return $this->duplicateKeyToSQL($params, $clause);
+
         if ($clause instanceof Query\GetClause)
             return $this->getToSQL($params, $clause);
 
@@ -371,9 +301,11 @@ abstract class Driver
         if ($clause instanceof Query\CustomSQL)
             return $this->customToSQL($params, $clause, $inner_clause);
 
+        if ($clause instanceof Query\UpdateField)
+            return $this->updateFieldToSQL($params, $clause, $inner_clause);
+
         if ($clause instanceof Query\Wildcard)
             return "*";
-
 
         throw new \InvalidArgumentException("Unknown clause: " . get_class($clause));
     }
@@ -384,6 +316,7 @@ abstract class Driver
     abstract public function constantArrayToSQL(Parameters $params, Query\ConstantArray $list);
     abstract public function customToSQL(Parameters $params, Query\CustomSQL $custom, $inner_clause);
     abstract public function directionToSQL(Parameters $params, Query\Direction $dir);
+    abstract public function duplicateKeyToSQL(Parameters $params, Query\DuplicateKey $duplicate);
     abstract public function equalsOneOfToSQL(Parameters $params, Query\EqualsOneOf $matcher, bool $inner_clause);
     abstract public function getToSQL(Parameters $params, Query\GetClause $get);
     abstract public function joinToSQL(Parameters $params, Query\JoinClause $join);
@@ -392,10 +325,16 @@ abstract class Driver
     abstract public function operatorToSQL(Parameters $params, Query\Operator $expression, bool $inner_clause);
     abstract public function orderToSQL(Parameters $params, Query\OrderClause $order);
     abstract public function queryToSQL(Parameters $params, Query\Query $query);
-    abstract public function selectToSQL(Parameters $params, Query\Select $query);
+    abstract public function updateFieldToSQL(Parameters $params, Query\UpdateField $query);
+
     abstract public function subqueryToSQL(Parameters $params, Query\SubQuery $expression);
     abstract public function tableToSQL(Parameters $params, Query\TableClause $table);
     abstract public function whereToSQL(Parameters $params, Query\WhereClause $where);
+
+    abstract public function deleteToSQL(Parameters $params, Query\Delete $query);
+    abstract public function insertToSQL(Parameters $params, Query\Insert $query);
+    abstract public function selectToSQL(Parameters $params, Query\Select $query);
+    abstract public function updateToSQL(Parameters $params, Query\Update $query);
 
     abstract public function formatArray(array $values);
     abstract public function matchMultipleValues(Query\FieldName $field, Query\ConstantArray $list);

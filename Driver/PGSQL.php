@@ -67,12 +67,15 @@ class PGSQL extends Driver
         Column::DECIMAL => 'decimal',
 
         Column::DATETIME => 'timestamp without time zone',
-        Column::DATE => 'date',
+        Column::DATE => 'da*te',
         Column::TIME => 'time',
 
         Column::BINARY => 'bytea'
     );
 
+    /**************************
+     ***** DATABASE SETUP *****
+     **************************/
     public function generateDSN(array $config)
     {
         foreach (array('hostname', 'database') as $req)
@@ -93,6 +96,9 @@ class PGSQL extends Driver
         return $this;
     }
 
+    /**********************************
+     ***** SQL DIALECT DEFINITION *****
+     **********************************/
     public function matchMultipleValues(Query\FieldName $field, Query\ConstantArray $list)
     {
         $operator = "=";
@@ -117,141 +123,85 @@ class PGSQL extends Driver
         return '{' . implode(',', $vals) . '}';
     }
 
+    public function duplicateKeyToSQL(Parameters $parameters, Query\DuplicateKey $duplicate)
+    {
+        $query = array("ON CONFLICT");
+
+        $conflicts = $duplicate->getConflictingFields();
+        $parts = array();
+        foreach ($conflicts as $c)
+            $parts = $this->toSQL($parameters, $c, false);
+
+        $query[] = "(" . implode(', ', $parts) . ")";
+        $query[] = "DO UPDATE";
+        $query[] = "SET";
+
+        $updates = $duplicate->getUpdates();
+        $parts = array();
+        foreach ($updates as $up)
+            $parts[] = $this->updateFieldToSQL($parameters, $up);
+
+        $query[] = implode(", " , $parts);
+
+        return implode(" ", $query);
+    }
+
+    public function delete(Delete $query)
+    {
+        $params = new Parameters($this);
+        $sql = $this->deleteToSQL($params, $d);
+
+        $this->logger->info("Model.DAO", "Preparing delete query {0}", [$sql]);
+        $st = $this->db->prepare($q);
+        $st->execute($params->getParameters());
+
+        return $st->rowCount();
+    }
+
+    public function insert(Insert $query, $id_field = null)
+    {
+        $parameters = new Parameters($this);
+        $sql = $this->insertToSQL($parameters, $query);
+
+        $retval = !empty($id_field);
+        if ($retval)
+            $sql .= " RETURNING " . $this->identQuote($id_field);
+
+        $st = $this->db->prepare($sql);
+        $st->execute($parameters->getParameters());
+
+        if ($retval)
+            $query->setInsertId($st->fetchColumn(0));
+        else
+            $query->setInsertId($this->db->lastInsertId());
+
+        return $query->getInsertId();
+    }
+
     public function select(Select $query)
     {
         $parameters = new Parameters($this);
-        $sql = $query->toSQL($parameters);
+        $sql = $query->selectToSQL($parameters);
 
         $st = $this->db->prepare($sql);
-        return $st->execute($parameters->getParameters());
+        $st->execute($parameters->getParameters());
+        return $st;
     }
 
-    public function update($table, $idfield, array $record)
+    public function update(Update $query)
     {
-        $id = $record[$idfield];
-        if (empty($id))
-            throw new DBException("No ID set for record to be updated");
-
-        unset($record[$idfield]);
-        if (count($record) == 0)
-            throw new DBException("Nothing to update");
-        
-        $col_idx = 0;
-        $params = array();
-
-        $parts = array();
-        foreach ($record as $k => $v)
-        {
-            $col_name = "col" . (++$col_idx);
-            $parts[] .= $this->identQuote($k) . " = :{$col_name}";
-            $params[$col_name] = $v;
-        }
-
-        $q = "UPDATE " . $this->getName($table) . " SET ";
-        $q .= implode(", ", $parts);
-        $q .= $this->getWhere(array($idfield => $id), $col_idx, $params);
-
-        $st = $this->db->prepare($q);
-        $st->execute($params);
-
-        return $st->rowCount();
-    }
-
-    public function insert($table, $idfield, array &$record)
-    {
-        if (!empty($record[$idfield]))
-            throw new DAOException("ID set for record to be inserted");
-
-        $q = "INSERT INTO " . $this->getName($table) . " ";
-        $fields = array_map(array($this, "identQuote"), array_keys($record));
-        $q .= "(" . implode(", ", $fields) . ")";
-
-        $col_idx = 0;
-        $params = array();
-        $parts = array();
-        foreach ($record as $val)
-        {
-            $col_name = "col" . (++$col_idx);
-            $parts[] = ":{$col_name}";
-            $params[$col_name] = $val;
-        }
-        $q .= " VALUES (" . implode(", ", $parts) . ") RETURNING " . $this->identQuote($idfield);
+        $parameters = new Parameters($this);
+        $sql = $this->updateToSQL($parameters, $query);
     
-        $st = $this->db->prepare($q);
-
-        $this->logger->info("Executing insert query with params {0}", [$q]);
-        $st->execute($params);
-        $record[$idfield] = $st->fetchColumn(0);
-
-        return $record[$idfield];
-    }
-
-    public function upsert($table, $idfield, $conflict, array &$record)
-    {
-        if (!empty($record[$idfield]))
-            return $This->update($table, $idfield, $record);
-
-        $q = "INSERT INTO " . $this->getName($table) . " ";
-        $fields = array_map(array($this, "identQuote"), array_keys($record));
-        $q .= "(" . implode(", ", $fields) . ")";
-
-        $col_idx = 0;
-        $params = array();
-        $parts = array();
-        foreach ($record as $val)
-        {
-            $col_name = "col" . (++$col_idx);
-            $parts[] = ":{$col_name}";
-            $params[$col_name] = $val;
-        }
-        $q .= " VALUES (" . implode(", ", $parts) . ")";
-
-        // Upsert part
-        $q .= " ON CONFLICT ";
-
-        $names = array_map(array($this, 'identQuote'), $conflict);
-        $q .= '(' . implode(',', $names) . ') ';
-
-
-        $q .= 'DO UPDATE SET ';
-
-        $conflict = (array)$conflict;
-        $parts = array();
-        foreach ($record as $field => $value)
-        {
-            if (in_array($field, $conflict))
-                continue;
-
-            $col_name = "col" . (++$col_idx);
-            $parts[] = $this->identQuote($field) . ' = :' . $col_name;
-            $params[$col_name] = $value;
-        }
-        $q .= implode(",", $parts);
-
-        $q .= " RETURNING " . $this->identQuote($idfield);
-        $st = $this->db->prepare($q);
-
-        $this->logger->info("Executing upsert query with params {0}", [$params]);
-        $st->execute($params);
-        $record[$idfield] = $st->fetchColumn(0);
-
-        return $record[$idfield];
-    }
-
-    public function delete($table, $where)
-    {
-        $q = "DELETE FROM " . $this->getName($table);
-        $col_idx = 0;
-        $params = array();
-        $q .= $this->getWhere($where, $col_idx, $params);
-
-        $this->logger->info("Model.DAO", "Preparing delete query {0}", [$q]);
-        $st = $this->db->prepare($q);
-        $st->execute($params);
+        $st = $this->db->prepare($sql);
+        $st->execute($parameters->getParameters());
 
         return $st->rowCount();
     }
 
+    /*******************************
+     ***** DATABASE MANAGEMENT *****
+     *******************************/
     public function getColumns($table_name)
     {
         try

@@ -25,49 +25,39 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-class OrderClause extends Clause
+use DomainException;
+
+class UpdateField extends Clause
 {
-    protected $clauses = array();
+    protected $field;
+    protected $value;
 
-    public function __construct($data = null)
+    public function __construct($field, $value)
     {
-        if (is_array($data))
-            $this->initFromArray($data);
-        elseif (is_string($data) && !empty($data))
-            $this->addClause($data);
+        $this->setField($field);
+        $this->setValue($value);
     }
 
-    public function addClause($clause)
+    public function setField($field)
     {
-        if (is_string($clause))
-            $clause = new CustomSQL($clause);
-        if (!($clause instanceof Clause))
-            throw new \InvalidArgumentException("No clause provided to order by");
-
-        $this->clauses[] = $clause;
+        if (!($field instanceof FieldName))
+            $field = new FieldName($field);
+        $this->field = $field;
+        return $this;
+    }
+    
+    public function getField()
+    {
+        return $this->field;
     }
 
-    protected function initFromArray(array $clauses)
+    public function setValue($value)
     {
-        foreach ($clauses as $k => $v)
-        {
-            if (is_numeric($k))
-            {
-                $this->addClause(new Query\Direction("ASC", $v));
-            }
-            else
-            {
-                $v = strtoupper($v);
-                if ($v !== "ASC" && $v !== "DESC")
-                    throw new \InvalidArgumentException("Invalid order type {$v}");
-                $this->addClause(new Query\Direction($k, $v));
-            }
-        }
+        $this->value = $this->toExpression($value, true);
     }
-
-    public function getClauses()
+    
+    public function getValue()
     {
-        return $this->clauses;
+        return $this->value;
     }
 }
-

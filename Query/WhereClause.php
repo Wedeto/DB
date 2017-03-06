@@ -35,6 +35,8 @@ class WhereClause extends Clause
             $this->operand = $operand; 
         elseif (is_string($operand))
             $this->operand = new CustomSQL($operand);
+        elseif (is_array($operand))
+            $this->initFromArray($operand);
         else
             throw new \InvalidArgumentException("Invalid agument to WHERE");
     }
@@ -47,6 +49,21 @@ class WhereClause extends Clause
     public function getOperand()
     {
         return $this->operand;
+    }
+
+    protected function initFromArray(array $where)
+    {
+        $keys = array_keys($where);
+        $first = array_shift($keys);
+        $lhs = new \Query\ComparisonOperator("=", $first, $where[$first]);
+
+        foreach ($keys as $key)
+        {
+            $rhs = new Query\ComparisonOperator("=", $key, $where[$key]);
+            $lhs = new Query\BooleanOperator("AND", $lhs, $rhs);
+        }
+
+        $this->operand = $lhs;
     }
 }
 

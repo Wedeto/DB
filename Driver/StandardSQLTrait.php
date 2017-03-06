@@ -29,10 +29,12 @@ use WASP\DB\Query\Clause;
 use WASP\DB\Query\ConstantValue;
 use WASP\DB\Query\ConstantArray;
 use WASP\DB\Query\CustomSQL;
+use WASP\DB\Query\Delete;
 use WASP\DB\Query\Direction;
 use WASP\DB\Query\EqualsOneOf;
 use WASP\DB\Query\FieldName;
 use WASP\DB\Query\GetClause;
+use WASP\DB\Query\Insert;
 use WASP\DB\Query\JoinClause;
 use WASP\DB\Query\LimitClause;
 use WASP\DB\Query\OffsetClause;
@@ -45,6 +47,8 @@ use WASP\DB\Query\SQLFunction;
 use WASP\DB\Query\SubQuery;
 use WASP\DB\Query\Parameters;
 use WASP\DB\Query\TableClause;
+use WASP\DB\Query\Update;
+use WASP\DB\Query\UpdateField;
 use WASP\DB\Query\WhereClause;
 use WASP\DB\Query\Wildcard;
 
@@ -185,6 +189,20 @@ trait StandardSQLTrait
     }
 
     /**
+     * Write a update assignment as SQL query syntax
+     * @param Parameters $params THe query parameters: tables and placeholder values
+     * @param UpdateField $update The field to update and the new value
+     * @return string The generated SQL
+     */
+    public function updateFieldToSQL(Parameters $params, UpdateField $update)
+    {
+        $fieldname = $this->toSQL($params, $update->getField());
+        $value = $this->toSQL($params, $update->getValue());
+
+        return $fieldname . ' = ' . $value;
+    }
+
+    /**
      * Write a sub query as SQL query syntax
      * @param Parameters $params The query parameters: tables and placeholder values
      * @param SubQuery $query The query to write
@@ -263,6 +281,54 @@ trait StandardSQLTrait
             $parts[] = $this->offsetToSQL($params, $offset);
         
         return implode("\n", $parts);
+    }
+
+    public function deleteToSQL(Parameters $params, Delete $delete)
+    {
+        return "DELETE FROM " . $this->tableToSQL($params, $delete->getTable()) . $this->whereToSQL($params, $delete->getWhere());
+    }
+
+    public function updateToSQL(Parameters $params, Update $update)
+    {
+        $query = array("UPDATE");
+        $query[] = $this->tableToSQL($params, $update->getTable());
+        foreach ($update->getJoins() as $join)
+            $query[] = $this->joinToSQL($params, $join);
+
+        $query[] = "SET";
+        foreach ($update->getUpdates() as $update)
+            $query[] = $this->updateFieldToSQL($params, $update);
+        
+        $where = $update->getWhere();
+        if ($where)
+            $query[] = $this->whereToSQL($params, $where);
+
+        return implode(" ", $query);
+    }
+
+    public function insertToSQL(Parameters $params, Insert $insert)
+    {
+        $query = array("INSERT INTO");
+        $query[] = $this->tableToSQL($params, $update->getTable());
+
+        $fields = $insert->getFields();
+        foreach ($fields as $key => $field)
+            $fields[$key] = $this->identQuote($field);
+
+        $query[] = '(' . implode(', ', $fields) . ')';
+        $query[] = 'VALUES';
+
+        $values = $insert->getValues();
+        foreach ($values as $key => $value)
+            $values[$key] = $this->toSQL($params, $value);
+
+        $query[] = '(' . implode(', ', $values) . ')';
+
+        $dup = $insert->getOnDuplicate();
+        if ($dup)
+            $query[] = $this->duplicateKeyToSQL($params, $dup);
+
+        return implode(' ', $query);
     }
 
     public function equalsOneOfToSQL(Parameters $params, EqualsOneOf $matcher, bool $inner_clause)

@@ -115,6 +115,23 @@ class MySQL extends Driver
         return implode(',', $values);
     }
 
+    public function duplicateKeyToSQL(Parameters $parameters, Query\DuplicateKey $duplicate)
+    {
+        $query = array("ON DUPLICATE KEY");
+
+        // MySQL doesn't care if you know which fields conflict
+        $query[] = "UPDATE";
+
+        $updates = $duplicate->getUpdates();
+        $parts = array();
+        foreach ($updates as $up)
+            $parts[] = $this->updateFieldToSQL($parameters, $up);
+
+        $query[] = implode(", " , $parts);
+
+        return implode(" ", $query);
+    }
+
     public function select(Select $query)
     {
         $parameters = new Parameters($this);
