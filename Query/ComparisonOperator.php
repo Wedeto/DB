@@ -29,18 +29,6 @@ use InvalidArgumentException;
 
 class ComparisonOperator extends Operator
 {
-    protected static $valid_operators = array('<', '>', '<=', '>=', '=', '!=', 'LIKE', 'ILIKE');
-
-    public function __construct($op, $lhs, $rhs)
-    {
-        parent::__construct($op, $lhs, $rhs);
-        if ($this->rhs->isNull())
-        {
-            if ($this->operator === "=")
-                $this->operator = "IS";
-            elseif ($this->operator === "!=")
-                $this->operator = "IS NOT";
-        }
-    }
+    protected static $valid_operators = array('<', '>', '<=', '>=', '=', '!=', 'LIKE', 'ILIKE', 'IS', 'IS NOT');
 }
 

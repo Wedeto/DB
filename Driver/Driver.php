@@ -304,6 +304,9 @@ abstract class Driver
         if ($clause instanceof Query\UpdateField)
             return $this->updateFieldToSQL($params, $clause, $inner_clause);
 
+        if ($clause instanceof Query\NullValue)
+            return "NULL";
+
         if ($clause instanceof Query\Wildcard)
             return "*";
 

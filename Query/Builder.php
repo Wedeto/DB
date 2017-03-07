@@ -226,4 +226,24 @@ class Builder
     {
         return new Wildcard();
     }
+
+    public static function null()
+    {
+        return new NullValue();
+    }
+
+    public static function nulleq($lhs, $rhs)
+    {
+        if (is_null($rhs) || is_scalar($rhs))
+            $rhs = self::variable($rhs);
+
+        return 
+            self::or(
+                self::operator("=", $lhs, $rhs),
+                self::and(
+                    self::operator("IS", $lhs, self::null()),
+                    self::operator("IS", $rhs, self::null())
+                )
+            );
+    }
 }

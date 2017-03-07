@@ -71,6 +71,39 @@ class Select extends Query
         return $this;
     }
 
+    public function from($from)
+    {
+        if (!($from instanceof SourceTableClause))
+            $from = new SourceTableClause($from);
+        return $this->add($from);
+    }
+
+    public function where($where)
+    {
+        if (!($where instanceof WhereClause))
+            $where = new WhereClause($where);
+        return $this->add($where);
+    }
+
+    public function join(JoinClause $join)
+    {
+        return $this->add($join);
+    }
+
+    public function limit($limit)
+    {
+        if (!($limit instanceof LimitClause))
+            $limit = new LimitClause($limit);
+        return $this->add($limit);
+    }
+
+    public function offset($offset)
+    {
+        if (!($offset instanceof OffsetClause))
+            $offset = new OffsetClause($offset);
+        return $this->add($offset);
+    }
+
     public function getFields()
     {
         return $this->fields;

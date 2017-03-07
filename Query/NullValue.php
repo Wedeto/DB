@@ -25,21 +25,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-use InvalidArgumentException;
+class NullValue extends Expression
+{}
 
-abstract class Clause
-{
-    public function toExpression($var, bool $constant)
-    {
-        if ($var === "*")
-            return new Wildcard();
-        elseif ($var === null)
-            return new NullValue();
-        elseif (is_scalar($var))
-            return $constant ? new ConstantValue($var) : new FieldName($var);
-        elseif ($var instanceof Expression)
-            return $var;
-        else
-            throw new InvalidArgumentException($var);
-    }
-}
