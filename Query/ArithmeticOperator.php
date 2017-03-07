@@ -25,48 +25,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-use DomainException;
+use InvalidArgumentException;
 
-class DuplicateKey extends Clause
+class ArithmeticOperator extends Operator
 {
-    protected $fields = array();
-    protected $updates = array();
-
-    public function __construct($field, ...$updates)
-    {
-        $this->addConflictingField($field);
-        $updates = \WASP\flatten_array($updates);
-        foreach ($updates as $up)
-            $this->addUpdate($up);
-    }
-
-    public function addConflictingField($field)
-    {
-        if (is_array($field))
-        {
-            foreach ($field as $f)
-                $this->addConflictingField($f);
-            return;
-        }
-
-        if (!($field instanceof FieldName))
-            $field = new FieldName($field);
-
-        $this->fields[] = $field;
-    }
-
-    public function getConflictingFields()
-    {
-        return $this->fields;
-    }
-
-    public function addUpdate(UpdateField $update)
-    {
-        $this->updates[] = $update;
-    }
-
-    public function getUpdates()
-    {
-        return $this->updates;
-    }
+    protected static $valid_operators = array('+', '-', '*', '/');
 }
+

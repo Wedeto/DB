@@ -77,5 +77,15 @@ class ConstantValue extends Expression
         $value = empty($this->formatter) ? $this->value : ($this->formatter)($this->value);
         $this->parameters->set($this->target_key, $value);
     }
+
+    public function __debugInfo()
+    {
+        return array(
+            'value' => $this->value,
+            'target_key' => $this->target_key,
+            'parameters' => ($this->parameters === null) ? null : get_class($this->parameters) . '#' . spl_object_hash($this->parameters),
+            'formatter' => $this->formatter
+        );
+    }
 }
 

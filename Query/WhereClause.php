@@ -55,12 +55,12 @@ class WhereClause extends Clause
     {
         $keys = array_keys($where);
         $first = array_shift($keys);
-        $lhs = new \Query\ComparisonOperator("=", $first, $where[$first]);
+        $lhs = new ComparisonOperator("=", $first, $where[$first]);
 
         foreach ($keys as $key)
         {
-            $rhs = new Query\ComparisonOperator("=", $key, $where[$key]);
-            $lhs = new Query\BooleanOperator("AND", $lhs, $rhs);
+            $rhs = new ComparisonOperator("=", $key, $where[$key]);
+            $lhs = new BooleanOperator("AND", $lhs, $rhs);
         }
 
         $this->operand = $lhs;

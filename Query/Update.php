@@ -34,7 +34,7 @@ class Update extends Query
     protected $updates = array();
     protected $where;
 
-    public function __construct(..$params)
+    public function __construct(...$params)
     {
         foreach ($params as $p)
             $this->add($p);
@@ -45,13 +45,28 @@ class Update extends Query
         if ($clause instanceof WhereClause)
             $this->where = $clause;
         elseif ($clause instanceof TableClause)
-            $this->table = $clause;
+            $this->setTable($clause);
         elseif ($clause instanceof JoinClause)
             $this->joins[] = $clause;
         elseif ($clause instanceof UpdateField)
             $this->updates[] = $clause;
         else
             throw new \InvalidArgumentException("Unknown clause: " . get_class($clause));
+    }
+
+    public function setTable($table)
+    {
+        if (!($table instanceof SourceTableClause))
+        {
+            if ($table instanceof TableClause)
+                $table = new SourceTableClause($table->getTable());
+            elseif (is_string($table))
+                $table = new SourceTableClause($table);
+            else
+                throw new \InvalidArgumentException("Invalid table: " . $table);
+        }
+
+        $this->table = $table;
     }
 
     public function getTable()

@@ -154,9 +154,9 @@ abstract class Driver
 
     // CRUD
     abstract public function select(Query\Select $query);
-    abstract public function update($table, $idfield, array $record);
-    abstract public function insert($table, $idfield, array &$record);
-    abstract public function delete($table, $where);
+    abstract public function update(Query\Update $query);
+    abstract public function insert(Query\Insert $query, $id_field = null);
+    abstract public function delete(Query\Delete $query);
 
     /**
      * Remove all rows from the table
@@ -170,9 +170,6 @@ abstract class Driver
         $this->db->exec($query);
         return $this;
     }
-
-    // Non-standard SQL, but commonly available
-    abstract public function upsert($table, $idfield, $conflict, array &$record);
 
     // Table administration
     abstract public function createTable(Table $table);

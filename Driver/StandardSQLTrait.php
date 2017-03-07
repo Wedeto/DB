@@ -285,7 +285,7 @@ trait StandardSQLTrait
 
     public function deleteToSQL(Parameters $params, Delete $delete)
     {
-        return "DELETE FROM " . $this->tableToSQL($params, $delete->getTable()) . $this->whereToSQL($params, $delete->getWhere());
+        return "DELETE FROM " . $this->tableToSQL($params, $delete->getTable()) . " " . $this->whereToSQL($params, $delete->getWhere());
     }
 
     public function updateToSQL(Parameters $params, Update $update)
@@ -296,8 +296,8 @@ trait StandardSQLTrait
             $query[] = $this->joinToSQL($params, $join);
 
         $query[] = "SET";
-        foreach ($update->getUpdates() as $update)
-            $query[] = $this->updateFieldToSQL($params, $update);
+        foreach ($update->getUpdates() as $update_fld)
+            $query[] = $this->updateFieldToSQL($params, $update_fld);
         
         $where = $update->getWhere();
         if ($where)
@@ -309,11 +309,11 @@ trait StandardSQLTrait
     public function insertToSQL(Parameters $params, Insert $insert)
     {
         $query = array("INSERT INTO");
-        $query[] = $this->tableToSQL($params, $update->getTable());
+        $query[] = $this->tableToSQL($params, $insert->getTable());
 
         $fields = $insert->getFields();
         foreach ($fields as $key => $field)
-            $fields[$key] = $this->identQuote($field);
+            $fields[$key] = $this->fieldToSQL($params, $field);
 
         $query[] = '(' . implode(', ', $fields) . ')';
         $query[] = 'VALUES';

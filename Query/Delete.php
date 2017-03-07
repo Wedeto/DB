@@ -45,8 +45,15 @@ class Delete extends Query
 
     public function setTable($table)
     {
-        if (!($table instanceof TableClause))
-            $table = new TableClause($table);
+        if (!($table instanceof SourceTableClause))
+        {
+            if ($table instanceof TableClause)
+                $table = new SourceTableClause($table->getTable());
+            elseif (is_string($table))
+                $table = new SourceTableClause($table);
+            else
+                throw new \InvalidArgumentException("Invalid table: " . $table);
+        }
         $this->table = $table;
     }
 
@@ -57,7 +64,7 @@ class Delete extends Query
 
     public function setWhere($where)
     {
-        if (!($where instanceof WhereClause)
+        if (!($where instanceof WhereClause))
             $where = new WhereClause($where);
         $this->where = $where;
     }

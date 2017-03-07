@@ -132,130 +132,47 @@ class MySQL extends Driver
         return implode(" ", $query);
     }
 
-    public function select(Select $query)
+    public function delete(Query\Delete $query)
     {
-        $parameters = new Parameters($this);
-        $sql = $query->toSQL($parameters);
+        $params = new Parameters($this);
+        $sql = $this->deleteToSQL($params, $d);
 
-        $st = $this->db->prepare($sql);
-        return $st->execute($parameters->getParameters());
-    }
-
-    public function update($table, $idfield, array $record)
-    {
-        $id = $record[$idfield];
-        if (empty($id))
-            throw new DBEXception("No ID set for record to be updated");
-
-        unset($record[$idfield]);
-        if (count($record) == 0)
-            throw new DBException("Nothing to update");
-        
-        $col_idx = 0;
-        $params = array();
-
-        $parts = array();
-        foreach ($record as $k => $v)
-        {
-            $col_name = "col" . (++$col_idx);
-            $parts[] .= $this->identQuote($k) . " = :{$col_name}";
-            $params[$col_name] = $v;
-        }
-
-        $q = "UPDATE " . $this->getName($table) . " SET ";
-        $q .= implode(", ", $parts);
-        $q .= $this->getWhere(array($idfield => $id), $col_idx, $params);
-
-        $this->logger->info("Preparing update query {0}", [$q]);
+        $this->logger->info("Model.DAO", "Preparing delete query {0}", [$sql]);
         $st = $this->db->prepare($q);
-        $st->execute($params);
+        $st->execute($params->getParameters());
 
         return $st->rowCount();
     }
 
-    public function insert($table, $idfield, array &$record)
+    public function insert(Query\Insert $query, $id_field = null)
     {
-        if (!empty($record[$idfield]))
-            throw new DBException("ID set for record to be inserted");
+        $parameters = new Parameters($this);
+        $sql = $this->insertToSQL($parameters, $query);
 
-        $q = "INSERT INTO " . $this->getName($table) . " ";
-        $fields = array_map(array($this, "identQuote"), array_keys($record));
-        $q .= "(" . implode(", ", $fields) . ")";
+        $st = $this->db->prepare($sql);
+        $st->execute($parameters->getParameters());
 
-        $col_idx = 0;
-        $params = array();
-        $parts = array();
-        foreach ($record as $val)
-        {
-            $col_name = "col" . (++$col_idx);
-            $parts[] = ":{$col_name}";
-            $params[$col_name] = $val;
-        }
-        $q .= " VALUES (" . implode(", ", $parts) . ")";
-    
-        $st = $this->db->prepare($q);
-
-        $this->logger->info("Executing insert query with params {0}", [$q]);
-        $st->execute($params);
-        $record[$idfield] = $this->db->lastInsertId();
-
-        return $record[$idfield];
+        $query->setInsertId($this->db->lastInsertId());
+        return $query->getInsertId();
     }
 
-    public function upsert($table, $idfield, $conflict, array &$record)
+    public function select(Query\Select $query)
     {
-        if (!empty($record[$idfield]))
-            return $This->update($table, $idfield, $record);
+        $parameters = new Parameters($this);
+        $sql = $query->selectToSQL($parameters);
 
-        $q = "INSERT INTO " . $this->getName($table) . " ";
-        $fields = array_map(array($this, "identQuote"), array_keys($record));
-        $q .= "(" . implode(", ", $fields) . ")";
-
-        $col_idx = 0;
-        $params = array();
-        $parts = array();
-        foreach ($record as $val)
-        {
-            $col_name = "col" . (++$col_idx);
-            $parts[] = ":{$col_name}";
-            $params[$col_name] = $val;
-        }
-        $q .= " VALUES (" . implode(", ", $parts) . ")";
-
-        // Upsert part
-        $q .= " ON DUPLICATE KEY UPDATE ";
-        $conflict = (array)$conflict;
-        $parts = array();
-        foreach ($record as $field => $value)
-        {
-            if (in_array($field, $conflict))
-                continue;
-
-            $col_name = "col" . (++$col_idx);
-            $parts[] = $this->identQuote($field) . ' = :' . $col_name;
-            $params[$col_name] = $value;
-        }
-        $q .= implode(",", $parts);
-    
-        $st = $this->db->prepare($q);
-
-        $this->logger->info("Executing upsert query with params {0}", [$params]);
-        $st->execute($params);
-        $record[$idfield] = $this->db->lastInsertId();
-
-        return $record[$idfield];
+        $st = $this->db->prepare($sql);
+        $st->execute($parameters->getParameters());
+        return $st;
     }
 
-    public function delete($table, $where)
+    public function update(Query\Update $query)
     {
-        $q = "DELETE FROM " . $this->getName($table);
-        $col_idx = 0;
-        $params = array();
-        $q .= $this->getWhere($where, $col_idx, $params);
-
-        $this->logger->info("Model.DAO", "Preparing delete query {0}", [$q]);
-        $st = $this->db->prepare($q);
-        $st->execute($params);
+        $parameters = new Parameters($this);
+        $sql = $this->updateToSQL($parameters, $query);
+    
+        $st = $this->db->prepare($sql);
+        $st->execute($parameters->getParameters());
 
         return $st->rowCount();
     }

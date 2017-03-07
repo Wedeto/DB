@@ -53,12 +53,28 @@ class Insert extends Query
 
         foreach ($record as $key => $value)
         {
-            $this->fields[] = $key;
+            $this->fields[] = new FieldName($key);
+            if (!($value instanceof ConstantValue))
+                $value = new ConstantValue($value);
             $this->values[] = $value;
         }
 
         if (!empty($idfield))
             $this->id_field = $idfield;
+    }
+
+    public function updateOnDuplicateKey(...$index_fields)
+    {
+        $updates = array();
+        foreach ($this->fields as $idx => $fld)
+        {
+            $name = $fld->getField();
+            $value = $this->values[$idx];
+            if (!in_array($name, $index_fields, true))
+                $updates[] = new UpdateField($fld, $value);
+        }
+        $this->on_duplicate = new DuplicateKey($index_fields, $updates);
+        return true;
     }
 
     public function setIDField(string $id_field)

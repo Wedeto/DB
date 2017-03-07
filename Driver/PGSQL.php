@@ -67,7 +67,7 @@ class PGSQL extends Driver
         Column::DECIMAL => 'decimal',
 
         Column::DATETIME => 'timestamp without time zone',
-        Column::DATE => 'da*te',
+        Column::DATE => 'date',
         Column::TIME => 'time',
 
         Column::BINARY => 'bytea'
@@ -130,7 +130,7 @@ class PGSQL extends Driver
         $conflicts = $duplicate->getConflictingFields();
         $parts = array();
         foreach ($conflicts as $c)
-            $parts = $this->toSQL($parameters, $c, false);
+            $parts[] = $this->toSQL($parameters, $c, false);
 
         $query[] = "(" . implode(', ', $parts) . ")";
         $query[] = "DO UPDATE";
@@ -146,7 +146,7 @@ class PGSQL extends Driver
         return implode(" ", $query);
     }
 
-    public function delete(Delete $query)
+    public function delete(Query\Delete $query)
     {
         $params = new Parameters($this);
         $sql = $this->deleteToSQL($params, $d);
@@ -158,7 +158,7 @@ class PGSQL extends Driver
         return $st->rowCount();
     }
 
-    public function insert(Insert $query, $id_field = null)
+    public function insert(Query\Insert $query, $id_field = null)
     {
         $parameters = new Parameters($this);
         $sql = $this->insertToSQL($parameters, $query);
@@ -178,7 +178,7 @@ class PGSQL extends Driver
         return $query->getInsertId();
     }
 
-    public function select(Select $query)
+    public function select(Query\Select $query)
     {
         $parameters = new Parameters($this);
         $sql = $query->selectToSQL($parameters);
@@ -188,7 +188,7 @@ class PGSQL extends Driver
         return $st;
     }
 
-    public function update(Update $query)
+    public function update(Query\Update $query)
     {
         $parameters = new Parameters($this);
         $sql = $this->updateToSQL($parameters, $query);

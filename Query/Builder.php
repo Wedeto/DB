@@ -40,7 +40,7 @@ class Builder
         return $s;
     }
 
-    public function update()
+    public static function update()
     {
         $u = new Update;
         foreach (func_get_args() as $arg)
@@ -50,33 +50,17 @@ class Builder
                 $u->add($arg_val);
         }
 
-        return $s;
+        return $u;
     }
 
-    public function delete()
+    public static function delete($table, $where)
     {
-        $d = new Delete;
-        foreach (func_get_args() as $arg)
-        {
-            $arg = \WASP\cast_array($arg);
-            foreach ($arg as $arg_val)
-                $d->add($arg_val);
-        }
-
-        return $d;
+        return new Delete($table, $where);
     }
 
-    public function insert()
+    public static function insert($table, $record, $id_field = "")
     {
-        $i = new Delete;
-        foreach (func_get_args() as $arg)
-        {
-            $arg = \WASP\cast_array($arg);
-            foreach ($arg as $arg_val)
-                $i->add($arg_val);
-        }
-
-        return $i;
+        return new Insert($table, $record, $id_field);
     }
 
     public static function where($operand)
@@ -177,6 +161,16 @@ class Builder
         return new TableClause($table, $alias);
     }
 
+    public static function into($table, $alias = "")
+    {
+        return new SourceTableClause($table, $alias);
+    }
+
+    public static function to($table, $alias = "")
+    {
+        return new SourceTableClause($table, $alias);
+    }
+
     public static function from($table, $alias = "")
     {
         return new SourceTableClause($table, $alias);
@@ -245,5 +239,27 @@ class Builder
                     self::operator("IS", $rhs, self::null())
                 )
             );
+    }
+
+    public static function increment($field, $amount = 1)
+    {
+        if (!($field instanceof $field))
+            $field = new FieldName($field);
+        return new UpdateField($field, new ArithmeticOperator('+', $field, 1));
+    }
+
+    public static function decrement($field, $amount = 1)
+    {
+        return self::increment($field, -$amount);
+    }
+
+    public static function arithmetic($operator, $lhs, $rhs)
+    {
+        return new ArhimeticOperator('+', $lhs, $rhs);
+    }
+
+    public static function calc($operator, $lhs, $rhs)
+    {
+        return self::arithmetic($operator, $lhs, $rhs);
     }
 }
