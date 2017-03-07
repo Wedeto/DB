@@ -30,10 +30,14 @@ class EqualsOneOf extends Expression
     protected $field;
     protected $list;
 
-    public function __construct(string $field, ...$values)
+    public function __construct($field, ...$values)
     {
         $this->field = $field instanceof FieldName ? $field : new FieldName($field);
-        $this->list = new ConstantArray($values);
+        
+        if (count($values) === 1 && $values[0] instanceof ConstantArray)
+            $this->list = $values[0];
+        else
+            $this->list = new ConstantArray($values);
     }
 
     public function setValue(...$values)

@@ -34,12 +34,7 @@ class ConstantValue extends Expression
 
     public function __construct($value)
     {
-        $this->value = $value;
-    }
-
-    public function isNull()
-    {
-        return $this->value === null;
+        $this->setValue($value);
     }
 
     public function getValue()
@@ -54,6 +49,12 @@ class ConstantValue extends Expression
 
     public function setValue($value)
     {
+        if ($value instanceof \DateTime)
+            $value = $value->format(\DateTime::ISO8601);
+
+        if (!is_scalar($value) && $value !== null)
+            throw new \InvalidArgumentException("Invalid data type for constant: " . \WASP\Debug\Logger::str($value));
+
         $this->value = $value;
         $this->update();
         return $this;
@@ -75,17 +76,8 @@ class ConstantValue extends Expression
     protected function update()
     {
         $value = empty($this->formatter) ? $this->value : ($this->formatter)($this->value);
-        $this->parameters->set($this->target_key, $value);
-    }
-
-    public function __debugInfo()
-    {
-        return array(
-            'value' => $this->value,
-            'target_key' => $this->target_key,
-            'parameters' => ($this->parameters === null) ? null : get_class($this->parameters) . '#' . spl_object_hash($this->parameters),
-            'formatter' => $this->formatter
-        );
+        if (!empty($this->parameters))
+            $this->parameters->set($this->target_key, $value);
     }
 }
 

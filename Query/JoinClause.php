@@ -31,12 +31,12 @@ class JoinClause extends Clause
     protected $condition;
     protected $type;
 
-    protected static $valid_types = array('LEFT', 'RIGHT', 'OUTER', 'INNER', 'CROSS');
+    protected static $valid_types = array('LEFT', 'RIGHT', 'FULL', 'INNER', 'CROSS');
 
     public function __construct(string $type, $table, Expression $expression)
     {
         if (!in_array($type, self::$valid_types))
-            throw new InvalidArgumentException("Invalid join type: " . $type);
+            throw new \InvalidArgumentException("Invalid join type: " . \WASP\Debug\Logger::str($type));
 
         $this->type = $type;
         if (is_string($table))
@@ -47,9 +47,13 @@ class JoinClause extends Clause
         {
             $this->table = $table;
         }
+        elseif ($table instanceof TableClause)
+        {
+            $this->table = new SourceTableClause($table->getTable());
+        }
         else
         {
-            throw new DomainException("Invalid table type: " . $table);
+            throw new \DomainException("Invalid table type: " . \WASP\Debug\Logger::str($table));
         }
 
         $this->condition = $expression;

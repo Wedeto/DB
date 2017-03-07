@@ -33,8 +33,10 @@ class OrderClause extends Clause
     {
         if (is_array($data))
             $this->initFromArray($data);
-        elseif (is_string($data) && !empty($data))
+        elseif (is_string($data) || $data instanceof Direction)
             $this->addClause($data);
+        elseif (!empty($data))
+            throw new \InvalidArgumentException("Invalid order: " . \WASP\Debug\Logger::str($data));
     }
 
     public function addClause($clause)
@@ -52,16 +54,9 @@ class OrderClause extends Clause
         foreach ($clauses as $k => $v)
         {
             if (is_numeric($k))
-            {
-                $this->addClause(new Query\Direction("ASC", $v));
-            }
+                $this->addClause(new Direction("ASC", $v));
             else
-            {
-                $v = strtoupper($v);
-                if ($v !== "ASC" && $v !== "DESC")
-                    throw new \InvalidArgumentException("Invalid order type {$v}");
-                $this->addClause(new Query\Direction($k, $v));
-            }
+                $this->addClause(new Direction($v, $k));
         }
     }
 

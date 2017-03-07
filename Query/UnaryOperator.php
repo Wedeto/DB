@@ -27,7 +27,7 @@ namespace WASP\DB\Query;
 
 class UnaryOperator extends Operator
 {
-    static $valid_operators = array('NOT');
+    protected static $valid_operators = array('NOT');
 
     public function __construct($op, $rhs)
     {

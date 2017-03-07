@@ -35,11 +35,11 @@ abstract class Clause
             return new Wildcard();
         elseif ($var === null)
             return new NullValue();
-        elseif (is_scalar($var))
+        elseif (is_scalar($var) || $var instanceof \DateTime)
             return $constant ? new ConstantValue($var) : new FieldName($var);
         elseif ($var instanceof Expression)
             return $var;
         else
-            throw new InvalidArgumentException($var);
+            throw new InvalidArgumentException("Invalid value for expression: " . \WASP\Debug\Logger::str($var));
     }
 }

@@ -36,17 +36,6 @@ class Parameters
     protected $aliases = array();
     protected $column_counter = 0;
     protected $table_counter = 0;
-    protected $db;
-
-    public function __construct(Driver $database)
-    {
-        $this->db = $database;
-    }
-
-    public function getDB()
-    {
-        return $this->db;
-    }
 
     public function assign($value)
     {
@@ -157,17 +146,6 @@ class Parameters
             return new TableClause($first);
         else
             return new TableClause($alias);
-    }
-
-    public function __debugInfo()
-    {
-        return array(
-            "params" => $this->params,
-            "tables" => $this->tables,
-            "aliases" => $this->aliases,
-            "column_counter" => $this->column_counter,
-            "table_counter " => $this->table_counter
-        );
     }
 }
 

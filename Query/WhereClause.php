@@ -38,12 +38,7 @@ class WhereClause extends Clause
         elseif (is_array($operand))
             $this->initFromArray($operand);
         else
-            throw new \InvalidArgumentException("Invalid agument to WHERE");
-    }
-
-    public function registerTables(Parameters $parameters)
-    {
-        $this->operand->registerTables($parameters);
+            throw new \InvalidArgumentException("Invalid operand: " . \WASP\Debug\Logger::str($operand));
     }
 
     public function getOperand()

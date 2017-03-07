@@ -36,7 +36,7 @@ class ConstantArray extends ConstantValue
 
     public function setValue($value)
     {
-        if (!is_array($value))
+        if (!\WASP\is_array_like($value))
             throw new InvalidArgumentException("Cannot assign non-array to ConstantArray");
 
         $args = \WASP\flatten_array(func_get_args());
@@ -44,7 +44,7 @@ class ConstantArray extends ConstantValue
         foreach ($args as $arg)
         {
             if (!is_scalar($arg))
-                throw new InvalidArgumentException("Not a scalar: " . $arg);
+                throw new InvalidArgumentException("Not a scalar: " . \WASP\Debug\Logger::str($arg));
             $this->value[] = $arg;
         }
 

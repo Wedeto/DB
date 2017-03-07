@@ -174,11 +174,11 @@ class DAO
         return $st->fetchAll();
     }
 
-    protected static function select(..$args)
+    protected static function select(...$args)
     {
         $select = new Query\Select;
         $select->add(new Query\TableClause(static::tablename()));
-        for ($args as $arg)
+        foreach ($args as $arg)
             $select->add($arg);
 
         $db = DB::get()->driver();
@@ -189,13 +189,13 @@ class DAO
     {
         $idf = static::$idfield;
         $id = $record[$idf];
-        unset($record[$idf];
+        unset($record[$idf]);
 
         $update = new Query\Update;
-        $update->add(new Query\WhereClause(array($idf => $id]));
+        $update->add(new Query\WhereClause([$idf => $id]));
 
         foreach ($record as $key => $value)
-            $update->add(new Query\UpdateField($key, $value);
+            $update->add(new Query\UpdateField($key, $value));
 
         $db = DB::get()->driver();
         return $db->update($update);

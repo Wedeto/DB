@@ -26,10 +26,5 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace WASP\DB\Query;
 
 abstract class Expression extends Clause
-{
-    public function isNull()
-    {
-        return false;
-    }
-}
+{}
 

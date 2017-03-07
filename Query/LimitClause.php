@@ -36,7 +36,7 @@ class LimitClause extends Clause
         elseif ($value instanceof ConstantValue)
             $this->number = $value;
         else
-            throw new InvalidArgumentException($value);
+            throw new \InvalidArgumentException("Invalid value for limit: " . \WASP\Debug\Logger::str($value));
     }
 
     public function getLimit()
