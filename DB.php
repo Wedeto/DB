@@ -32,12 +32,11 @@ use WASP\Debug\LoggerAwareStaticTrait;
 use WASP\System;
 
 /**
- * The DB class wraps a PDO allowing for lazy connecting.
- * The configuration is passed at initialization time,
- * but the connection is not established until the first method
- * call on the database. This behavior can be altered by setting
- * [sql][lazy] = false in the configuration, in which case
- * the PDO will be connected directly on construction.
+ * The DB class wraps a PDO allowing for lazy connecting.  The configuration is
+ * passed at initialization time, but the connection is not established until
+ * the first method call on the database. This behavior can be altered by
+ * setting [sql][lazy] = false in the configuration, in which case the PDO will
+ * be connected directly on construction.
  */
 class DB
 {
@@ -50,12 +49,52 @@ class DB
 
     /**
      * Create a new DB object for a specific configuration set.
+     *
+     * @param WASP\Dictionary $config The configuration for this connection
      */
-    private function __construct($config)
+    private function __construct(Dictionary $config)
     {
         $this->config = $config;
         if ($this->config->dget('sql', 'lazy', true) == false)
             $this->connect();
+    }
+
+    /**
+     * Find a proper driver based on the 'type' parameter in the configuration.
+     * @param string $type The type / driver name.
+     * @return WASP\DB\Driver\Driver A initialized driver object
+     * @throws WASP\DB\DBException When no driver could be found
+     */
+    protected function getDriver(string $type)
+    {
+        $driver = "WASP\\DB\\Driver\\" . $type;
+        if (class_exists($driver))
+            return new $driver($this);
+
+        // Attempt a case insensitive match
+        $driver = null;
+        $type = strtolower($type);
+
+        // Load all drivers in the Driver directory
+        $path = realpath(__FILE__);
+        $drivers = glob($path . '/Driver/*.php');
+
+        // Check if any of the names match the type
+        foreach ($drivers as $filename)
+        {
+            $filename = basename($filename, '.php');
+            if (strtolower($filename) === strtolower($type))
+            {
+                $driver = "WASP\\DB\\Driver\\" . $filename;
+                break;
+            }
+        }
+
+        // Check if a driver was found
+        if (empty($driver) || !class_exists($driver))
+            throw new DBException("No driver available for database type $type");
+
+        return new $driver($this);
     }
 
     /**
@@ -73,19 +112,13 @@ class DB
         $database = $this->config->get('sql', 'database');
         $schema = $this->config->get('sql', 'schema');
         $dsn = $this->config->get('sql', 'dsn');
-        $type = $this->config->get('sql', 'type');
-        if (empty($type))
+        if (!$this->config->has('sql', 'type', Dictionary::TYPE_STRING))
             throw new DBException("Please specify the database type in the configuration section [sql]");
 
-        $driver = "WASP\\DB\\Driver\\" . $type;
+        $type = $this->config->getString('sql', 'type');
 
-        if (!class_exists($driver))
-        {
-            throw new DBException("No driver available for database type $type");
-        }
-
-        $this->qdriver = new $driver($this);
-        $this->qdriver->setDatabaseName($database, $schema);
+        // Set up the driver
+        $this->qdriver = $this->getDriver($type);
         $this->qdriver->setTablePrefix($this->config->dget('sql', 'prefix', ''));
             
         if (!$dsn)
@@ -95,7 +128,7 @@ class DB
             $this->config->set('sql', 'dsn', $dsn);
         }
             
-            var_dump($dsn);
+        // Create the PDO and connect it to the database, setting default options
         $pdo = new PDO($dsn, $username, $password);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
@@ -105,6 +138,9 @@ class DB
 
     /**
      * Get a DB object for the provided configuration
+     *
+     * @param WASP\Dictionary $config The configuration used to connect to the database
+     * @return WASP\DB\DB The initalized DB object
      */
     public static function get(Dictionary $config = null)
     {
@@ -129,6 +165,9 @@ class DB
         return $db;
     }
 
+    /**
+     * @return WASP\DB\Driver\Driver The driver associated with this database connection.
+     */
     public function driver()
     {
         if ($this->qdriver === null)

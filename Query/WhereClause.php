@@ -38,7 +38,7 @@ class WhereClause extends Clause
         elseif (is_array($operand))
             $this->initFromArray($operand);
         else
-            throw new \InvalidArgumentException("Invalid operand: " . \WASP\Debug\Logger::str($operand));
+            throw new \InvalidArgumentException("Invalid operand: " . \WASP\str($operand));
     }
 
     public function getOperand()

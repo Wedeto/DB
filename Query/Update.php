@@ -51,7 +51,7 @@ class Update extends Query
         elseif ($clause instanceof UpdateField)
             $this->updates[] = $clause;
         else
-            throw new \InvalidArgumentException("Unknown clause: " . \WASP\Debug\Logger::str(get_class($clause)));
+            throw new \InvalidArgumentException("Unknown clause: " . \WASP\str(get_class($clause)));
     }
 
     public function setTable($table)
@@ -63,7 +63,7 @@ class Update extends Query
             elseif (is_string($table))
                 $table = new SourceTableClause($table);
             else
-                throw new \InvalidArgumentException("Invalid table: " . \WASP\Debug\Logger::str($table));
+                throw new \InvalidArgumentException("Invalid table: " . \WASP\str($table));
         }
 
         $this->table = $table;

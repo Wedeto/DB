@@ -36,7 +36,7 @@ class OrderClause extends Clause
         elseif (is_string($data) || $data instanceof Direction)
             $this->addClause($data);
         elseif (!empty($data))
-            throw new \InvalidArgumentException("Invalid order: " . \WASP\Debug\Logger::str($data));
+            throw new \InvalidArgumentException("Invalid order: " . \WASP\str($data));
     }
 
     public function addClause($clause)

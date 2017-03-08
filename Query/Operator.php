@@ -38,7 +38,7 @@ class Operator extends Expression
     public function __construct($operator, $lhs, $rhs)
     {
         if (!in_array($operator, static::$valid_operators, true))
-            throw new InvalidArgumentException("Invalid operator: " . \WASP\Debug\Logger::str($operator));
+            throw new InvalidArgumentException("Invalid operator: " . \WASP\str($operator));
 
         if ($lhs !== null)
             $this->lhs = $this->toExpression($lhs, false);

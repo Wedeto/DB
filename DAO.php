@@ -28,6 +28,7 @@ namespace WASP\DB;
 use WASP\Debug;
 use PDOException;
 
+use WASP\Auth\ACL\Entity;
 use WASP\DB\Query;
 use WASP\DB\Query\Builder as QB;
 
@@ -45,7 +46,7 @@ use WASP\DB\Query\Builder as QB;
  *
  * If the ACL system is active, it also supports ACL access checking.
  */
-class DAO
+abstract class DAO
 {
     /** A mapping between class identifier and full, namespaced class name */
     protected static $classes = array();
@@ -74,21 +75,40 @@ class DAO
     /** The associated ACL entity */
     protected $acl_entity = null;
 
+    /**
+     * @return WASP\DB\DB An active database connection
+     */
     protected function db()
     {
         return DB::get();
     }
 
+    /**
+     * Save the current record to the database.
+     * @return WASP\DB\DAO Provides fluent interface
+     */
     public function save()
     {
         $idf = static::$idfield;
         if (isset($this->record[$idf]))
+        {
+            // Update the current record
             self::update($this->record);
+        }
         else
+        {
             $this->id = self::insert($this->record);
-        $this->initACL();
+
+            // ACL record should be initialized now that there is 
+            $this->initACL();
+        }
+
+        return $this;
     }
 
+    /** 
+     * Load the record from the database
+     */
     protected function load($id)
     {
         $idf = static::$idfield;
@@ -96,12 +116,14 @@ class DAO
         if (empty($rec))
             throw new DAOEXception("Object not found with $id");
 
-        $this->record = $rec;
-        $this->id = $id;
-        $this->initACL();
-        $this->init();
+        $this->assignRecord($rec);
     }
 
+    /** 
+     * Assign the provided record to this object.
+     * @param array $record The record obtained from the database.
+     * @return WASP\DB\DAO Provides fluent interface
+     */
     public function assignRecord(array $record)
     {
         $this->id = isset($record[static::$idfield]) ? static::$idfield : null;
@@ -110,6 +132,9 @@ class DAO
         return $this;
     }
 
+    /**
+     * Remove the current record from the database
+     */
     public function remove()
     {
         $idf = static::$idfield;
@@ -122,15 +147,28 @@ class DAO
         $this->removeACL();
     }
 
-    // Override to perform initialization after record has been loaded
+    /**
+     * This method is called after assigning new data to $this->record.
+     * It can be used to initialize dependent member variables or provide additional actions.
+     *
+     * You should override to perform initialization after record has been loaded
+     */
     protected function init()
     {}
 
-    // Create an object from a database record or a ID
+    /**
+     * Initialize a single object from a database record or an ID.
+     *
+     * @param array|int $id The entry to initialize. If this is an integer, it
+     *                      is used to fetch a record with that ID from the 
+     *                      database. If it is an array, it is used as a
+     *                      database record directly.
+     * @return An instance of the class this method is called on
+     */
     public static function get($id)
     {
         $idf = static::$idfield;
-        if (!\is_int_val($id))
+        if (!\WASP\is_int_val($id))
         {
             if (!is_array($id) || empty($id[$idf]))
                 throw new DAOException("Cannot initialize object from $id");
@@ -146,36 +184,64 @@ class DAO
 
         $class = get_called_class();
         $obj = new $class();
-        $obj->id = $id;
-        $obj->record = $record;
-        $obj->init();
+        $obj->assignRecord($record);
         return $obj;
     }
 
-    // Create an object from a database record or a ID
-    public static function getAll($where = array(), $order = array(), $params = array())
+    /**
+     * Retrieve a set of records, create object from them and return the resulting list.
+     * @param $args The provided arguments for the select query.
+     * @return array The retrieved DAO objects
+     * @seealso WASP\DB\DAO::select
+     */
+    public static function getAll(...$args)
     {
         $list = array();
-        $records = static::fetchAll($where, $order, $params);
+        $records = static::fetchAll($args);
         foreach ($records as $record)
             $list[] = static::get($record);
         return $list;
     }
 
-    protected static function fetchSingle()
-    {
-        $select = static::select(func_get_args());
+    /**
+     * Execute a query, retrieve the first record and return it.
+     *
+     * @param $args The provided arguments for the select query.
+     * @return array The retrieved record
+     * @seealso WASP\DB\DAO::select
+     */
+    protected static function fetchSingle(...$args)
+    { 
+        $args[] = QB::limit(1);
+        $select = static::select($args);
         return $st->fetch();
     }
 
+    /**
+     * Execute a query, retrieve all records and return them in an array.
+     * @param $args The provided arguments for the select query.
+     * @return array The retrieved records.
+     * @seealso WASP\DB\DAO::select
+     */
     protected static function fetchAll()
     {
         $select = static::select(func_get_args());
         return $st->fetchAll();
     }
 
+    /**
+     * Select one or more records from the database.
+     * 
+     * @param $args The provided arguments should contain query parts passed to the
+     *              Select constructor. These can be objects such as:
+     *              FieldName, JoinClause, WhereClause, OrderClause, LimitClause,
+     *              OffsetClause.
+     *
+     * @seealso WASP\DB\Query\Select
+     */
     protected static function select(...$args)
     {
+        $args = \WASP\flatten_array($args);
         $select = new Query\Select;
         $select->add(new Query\TableClause(static::tablename()));
         foreach ($args as $arg)
@@ -185,6 +251,14 @@ class DAO
         return $db->select($select);
     }
 
+    /**
+     * Update records in the database.
+     *
+     * @param array $record The record to update. Should contain key/value pairs where
+     *                      keys are fieldnames, values are the values to update them to.
+     *                      Should also contain the ID field specified by static::$idfield,
+     *                      which will be used to find the record to be updated.
+     */
     protected static function update(array $record)
     {
         $idf = static::$idfield;
@@ -201,6 +275,13 @@ class DAO
         return $db->update($update);
     }
 
+    /**
+     * Insert a new record into the database.
+     *
+     * @param array $record The record to insert. Keys should be fieldnames,
+     *                      values the values to insert.
+     * @return int The new row ID
+     */
     protected static function insert(array &$record)
     {
         $insert = new Query\Insert(static::tablename(), $record, static::$idfield);
@@ -211,6 +292,17 @@ class DAO
         return $id;
     }
 
+    /**
+     * Delete records from the database.
+     *
+     * @param WASP\DB\Query\WhereClause Specifies which records to delete. You can use
+     *                                  WASP\DB\Query\Builder to create it, or provide a
+     *                                  string that will be interpreted as custom SQL. A third
+     *                                  option is to provide an associative array where keys
+     *                                  indicate field names and values their
+     *                                  values to match them with.
+     * @return int The number of rows deleted
+     */
     protected static function delete($where)
     {
         $delete = new Query\Delete(static::tablename(), $where);
@@ -218,11 +310,19 @@ class DAO
         return $db->delete($delete);
     }
 
+    /**
+     * @return int The unique ID of this DAO.
+     */
     public function getID()
     {
         return $this->id;
     }
 
+    /**
+     * Get the value for a field of this record.
+     * @param string $field The name of the field to get
+     * @return mixed The value of this field
+     */
     public function getField($field)
     {
         if (isset($this->record[$field]))
@@ -230,6 +330,13 @@ class DAO
         return null;
     }
 
+    /**
+     * Set a field to a new value. The value will be validated first by
+     * calling validate.
+     * @param string $field The field to retrieve
+     * @param mixed $value The value to set it to.
+     * @return WASP\DB\DAO Provides fluent interface.
+     */
     public function setField($field, $value)
     {
         $correct = $this->validate($field, $value);
@@ -237,27 +344,50 @@ class DAO
             throw new DAOException("Field $field cannot be set to $value: {$correct}");
 
         $this->record[$field] = $value;
+        return $this;
     }
 
+    /**
+     * Get the value for a property of this database record. Allows to access them transparently
+     * by doing $obj->id.
+     *
+     * @param string $field The name of the field to get
+     * @seealso DAO::getField
+     */
     public function __get($field)
     {
         return $this->getField($field);
-        if (isset($this->record[$field]))
-            return $this->record[$field];
-        return null;
     }
 
+    /**
+     * @return array The record with all data of this DAO object that is stored
+     * in the database.
+     */
     public function getRecord()
     {
         return $this->record;
     }
 
+    /**
+     * Magic method __set allows transparant property access to
+     * instances of the DAO.
+     *
+     * @param string $field The field to set
+     * @param mixed $value What to set the field to
+     * @seealso WASP\DB\DAO
+     */
     public function __set($field, $value)
     {
-        $this->setField($field, $value);
+        return $this->setField($field, $value);
     }
     
-    // Override to perform checks
+    /**
+     * Validate a value for the field before setting it. This method is called
+     * from the setField method before updating the value. You can override
+     * this to add validators.
+     *
+     * @return bool True if the value is valid, false if not.
+     */
     public function validate($field, $value)
     {
         return true;
@@ -332,14 +462,21 @@ class DAO
      */
     protected function initACL()
     {
-        if (!class_exists("WASP\\ACL\\Entity", false))
+        if (!class_exists(Entity::class, false))
+            return;
+
+        // We cannot generate ACL's for object without a ID
+        if ($this->id === null)
             return;
         
-        $id = \WASP\ACL\Entity::generateID($this);
-        if (!\WASP\ACL\Entity::hasInstance($id))
-            $this->acl_entity = new \WASP\ACL\Entity($id, $this->getParents());
+        // Generate the ACL ID
+        $id = Entity::generateID($this);
+
+        // Retrieve or obtain the appropriate ACL
+        if (!(Entity::hasInstance($id)))
+            $this->acl_entity = new Entity($id, $this->getParents());
         else
-            $this->acl_entity = \WASP\ACL\Entity::getInstance($id);
+            $this->acl_entity = Entity::getInstance($id);
     }
 
     /**
@@ -355,11 +492,17 @@ class DAO
         self::$classesnames[$cl] = $name;
     }
 
+    /**
+     * Return the name of this table
+     */
     public static function tablename()
     {
         return static::$table;
     }
 
+    /**
+     * @return array The set of columns associated with this table
+     */
     public static function getColumns()
     {
         if (self::$columns === null)

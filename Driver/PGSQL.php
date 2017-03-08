@@ -76,24 +76,75 @@ class PGSQL extends Driver
     /**************************
      ***** DATABASE SETUP *****
      **************************/
+
+    /**
+     * Generate a DSN-string to connect to the database.
+     * @param array $config The configuration available for the connection
+     *                      Accepted values are: 'ssl', 'sslmode', 'host',
+     *                      'hostname', 'port' 'host', 'hostaddr', 'database',
+     *                      'dbname', 'schema'.
+     *
+     *                      'host' and 'hostname' are aliases, where 'hostname'
+     *                      takes precedence.
+     *
+     *                      'ssl' implies 'sslmode'='require' and takes precedence.
+     *
+     *                      When 'schema' is not specified, the PGSQL default
+     *                      'public' is used.
+     *
+     *                      When no 'host' and 'hostname' are both not defined,
+     *                      a connection will be attempted through a Unix
+     *                      domain socket.
+     */
     public function generateDSN(array $config)
     {
-        foreach (array('hostname', 'database') as $req)
-            if (!isset($config[$req]))
-                throw new DBException("Required field missing: " . $req);
+        $dsn = array();
+        if (isset($config['hostname']))
+            $dsn['host'] = $config['hostname'];
+        elseif (isset($config['host']))
+            $dsn['host'] = $config['host'];
 
-        $ssl = (!empty($config['ssl'])) ? " sslmode=require" : "";
-        $port = (!empty($config['port'])) ? " port=" . $config['port'] : "";
+        if (isset($config['hostaddr']))
+        {
+            $add = filter_var($config['hostaddr'], FILTER_VALIDATE_IP);
+            if ($add === false)
+                throw new \DomainException("Invalid IP-address specified for 'hostaddr': " . $config['hostaddr']);
+        }
 
-        return "pgsql:dbname=" . $config['database'] . " host=" . $config['hostname'] . $ssl . $port;
-    }
+        if (!empty($config['port']) && \WASP\is_int_val($config['port']))
+            $dsn['port'] = (int)$config['port'];
 
-    public function setDatabaseName($dbname, $schema = null)
-    {
-        $this->dbname = $dbname;
-        $this->schema = $schema !== null ? $schema : "public";
+        if (isset($config['ssl']) && (bool)$config['ssl'])
+        {
+            $dsn['sslmode'] = 'require';
+        }
+        elseif (isset($config['sslmode']))
+        {
+            if (!in_array($config['ssl'], ['prefer', 'disable', 'allow', 'require']))
+                throw new \Domainexception("Invalid value for sslmode: " . \WASP\str($config['ssl']));
+            $dsn['sslmode'] = $config['sslmode'];
+        }
 
-        return $this;
+        if (isset($config['dbname']))
+            $dsn['dbname'] = (string)$config['dbname'];
+        elseif (isset($config['database']))
+            $dsn['dbname'] = (string)$config['database'];
+
+        if (!isset($dsn['dbname']))
+            throw new DBException("No database name provided");
+
+        $this->dbname = $dsn['dbname'];
+        
+        if (isset($config['schema']))
+            $this->schema = (string)$config['schema'];
+        else
+            $this->schema = 'public';
+
+        $parts = array();
+        foreach ($dsn as $key => $value)
+            $parts[] = "$key=$value";
+
+        return 'pgsql:' . implode(';', $parts);
     }
 
     /**********************************

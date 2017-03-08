@@ -36,7 +36,7 @@ class OffsetClause extends Clause
         elseif ($value instanceof ConstantValue)
             $this->number = $value;
         else
-            throw new \InvalidArgumentException("Invalid value for offset: " . \WASP\Debug\Logger::str($value));
+            throw new \InvalidArgumentException("Invalid value for offset: " . \WASP\str($value));
     }
     
     public function getOffset()

@@ -72,14 +72,6 @@ abstract class Driver
         return $this;
     }
 
-    public function setDatabaseName($dbname, $schema = null)
-    {
-        $this->dbname = $dbname;
-        $this->schema = $schema !== null ? $schema : $dbname;
-
-        return $this;
-    }
-
     /**
      * Quote the name of an identity
      * @param $name string The name to quote

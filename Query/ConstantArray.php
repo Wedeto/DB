@@ -44,7 +44,7 @@ class ConstantArray extends ConstantValue
         foreach ($args as $arg)
         {
             if (!is_scalar($arg))
-                throw new InvalidArgumentException("Not a scalar: " . \WASP\Debug\Logger::str($arg));
+                throw new InvalidArgumentException("Not a scalar: " . \WASP\str($arg));
             $this->value[] = $arg;
         }
 

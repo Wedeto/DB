@@ -36,7 +36,7 @@ class Direction extends Clause
     {
         $direction = strtoupper($direction);
         if (!in_array($direction, self::$valid_directions))
-            throw new \InvalidArgumentException("Invalid direction: " . \WASP\Debug\Logger::str($direction));
+            throw new \InvalidArgumentException("Invalid direction: " . \WASP\str($direction));
 
         $this->direction = $direction;
         $this->operand = $this->toExpression($operand, false);

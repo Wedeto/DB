@@ -40,6 +40,6 @@ abstract class Clause
         elseif ($var instanceof Expression)
             return $var;
         else
-            throw new InvalidArgumentException("Invalid value for expression: " . \WASP\Debug\Logger::str($var));
+            throw new InvalidArgumentException("Invalid value for expression: " . \WASP\str($var));
     }
 }

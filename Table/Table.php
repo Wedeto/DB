@@ -78,7 +78,7 @@ class Table implements \Serializable, \JSONSerializable
             elseif ($arg instanceof ForeignKey)
                 $this->addForeignKey($arg);
             else
-                throw new DBException("Invalid argument: " . Logger::str($arg));
+                throw new DBException("Invalid argument: " . \WASP\str($arg));
         }
 
         TableRepository::putTable($this);

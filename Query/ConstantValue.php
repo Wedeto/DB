@@ -53,7 +53,7 @@ class ConstantValue extends Expression
             $value = $value->format(\DateTime::ISO8601);
 
         if (!is_scalar($value) && $value !== null)
-            throw new \InvalidArgumentException("Invalid data type for constant: " . \WASP\Debug\Logger::str($value));
+            throw new \InvalidArgumentException("Invalid data type for constant: " . \WASP\str($value));
 
         $this->value = $value;
         $this->update();

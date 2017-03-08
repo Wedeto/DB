@@ -36,7 +36,7 @@ class JoinClause extends Clause
     public function __construct(string $type, $table, Expression $expression)
     {
         if (!in_array($type, self::$valid_types))
-            throw new \InvalidArgumentException("Invalid join type: " . \WASP\Debug\Logger::str($type));
+            throw new \InvalidArgumentException("Invalid join type: " . \WASP\str($type));
 
         $this->type = $type;
         if (is_string($table))
@@ -53,7 +53,7 @@ class JoinClause extends Clause
         }
         else
         {
-            throw new \DomainException("Invalid table type: " . \WASP\Debug\Logger::str($table));
+            throw new \DomainException("Invalid table type: " . \WASP\str($table));
         }
 
         $this->condition = $expression;
