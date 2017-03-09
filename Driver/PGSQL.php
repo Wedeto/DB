@@ -232,7 +232,7 @@ class PGSQL extends Driver
     public function select(Query\Select $query)
     {
         $parameters = new Parameters($this);
-        $sql = $query->selectToSQL($parameters);
+        $sql = $this->selectToSQL($parameters, $query);
 
         $st = $this->db->prepare($sql);
         $st->execute($parameters->getParameters());

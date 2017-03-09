@@ -72,6 +72,9 @@ abstract class DAO
     /** The database record */
     protected $record;
 
+    /** The altered records */
+    protected $changed;
+
     /** The associated ACL entity */
     protected $acl_entity = null;
 
@@ -93,7 +96,11 @@ abstract class DAO
         if (isset($this->record[$idf]))
         {
             // Update the current record
-            self::update($this->record);
+            $changes = array();
+            foreach ($this->changed as $key => $v)
+                $changes[$key] = $this->record[$key];
+            self::update($this->id, $changes);
+            $this->changed = array();
         }
         else
         {
@@ -112,7 +119,7 @@ abstract class DAO
     protected function load($id)
     {
         $idf = static::$idfield;
-        $rec = static::fetchSingle(array($idf => $id));
+        $rec = static::fetchSingle(QB::where(array($idf => $id)));
         if (empty($rec))
             throw new DAOEXception("Object not found with $id");
 
@@ -126,9 +133,9 @@ abstract class DAO
      */
     public function assignRecord(array $record)
     {
-        $this->id = isset($record[static::$idfield]) ? static::$idfield : null;
+        $this->id = isset($record[static::$idfield]) ? $record[static::$idfield] : null;
         $this->record = $record;
-        $tihs->init();
+        $this->init();
         return $this;
     }
 
@@ -214,7 +221,7 @@ abstract class DAO
     { 
         $args[] = QB::limit(1);
         $select = static::select($args);
-        return $st->fetch();
+        return $select->fetch();
     }
 
     /**
@@ -243,7 +250,7 @@ abstract class DAO
     {
         $args = \WASP\flatten_array($args);
         $select = new Query\Select;
-        $select->add(new Query\TableClause(static::tablename()));
+        $select->add(new Query\SourceTableClause(static::tablename()));
         foreach ($args as $arg)
             $select->add($arg);
 
@@ -259,15 +266,15 @@ abstract class DAO
      *                      Should also contain the ID field specified by static::$idfield,
      *                      which will be used to find the record to be updated.
      */
-    protected static function update(array $record)
+    protected static function update($id, array $record)
     {
+        var_dump($record);
         $idf = static::$idfield;
-        $id = $record[$idf];
-        unset($record[$idf]);
 
         $update = new Query\Update;
-        $update->add(new Query\WhereClause([$idf => $id]));
-
+        $update->add(new Query\SourceTableClause(static::tablename()));
+        $update->add(new Query\WhereClause([static::$idfield => $id]));
+        
         foreach ($record as $key => $value)
             $update->add(new Query\UpdateField($key, $value));
 
@@ -339,11 +346,15 @@ abstract class DAO
      */
     public function setField($field, $value)
     {
+        if (isset($this->record[$field]) && $this->record[$field] === $value)
+            return;
+
         $correct = $this->validate($field, $value);
         if ($correct !== true)
             throw new DAOException("Field $field cannot be set to $value: {$correct}");
 
         $this->record[$field] = $value;
+        $this->changed[$field] = true;
         return $this;
     }
 
@@ -513,3 +524,7 @@ abstract class DAO
         return self::$columns;
     }
 }
+
+// @codeCoverageIgnoreStart
+\WASP\Functions::load();
+// @codeCoverageIgnoreEnd

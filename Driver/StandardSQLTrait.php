@@ -25,6 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Driver;
 
+use WASP\DB\DBException;
 use WASP\DB\Query\Clause;
 use WASP\DB\Query\ConstantValue;
 use WASP\DB\Query\ConstantArray;
@@ -296,8 +297,12 @@ trait StandardSQLTrait
             $query[] = $this->joinToSQL($params, $join);
 
         $query[] = "SET";
+        $updates = array();
         foreach ($update->getUpdates() as $update_fld)
-            $query[] = $this->updateFieldToSQL($params, $update_fld);
+            $updates[] = $this->updateFieldToSQL($params, $update_fld);
+        $query[] = implode(", ", $updates);
+        if (count($updates) === 0)
+            throw new DBException("Nothing to update");
         
         $where = $update->getWhere();
         if ($where)
