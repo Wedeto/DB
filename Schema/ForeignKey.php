@@ -125,8 +125,6 @@ class ForeignKey implements \Serializable, \JSONSerializable
         {
             if (!($arg instanceof Column))
                 throw new DBException("Invalid column");
-            $this->columns[] = $arg;
-
             $t = $arg->getTable();
 
             if ($t === null)
@@ -136,6 +134,8 @@ class ForeignKey implements \Serializable, \JSONSerializable
                 throw new DBException("All referring columns must be in the same table");
 
             $this->table = $t;
+            $this->columns[] = $arg->getName();
+
         }
         return $this;
     }
@@ -186,7 +186,7 @@ class ForeignKey implements \Serializable, \JSONSerializable
 
     public function getTable()
     {
-        return $this->columns;
+        return $this->table;
     }
 
     public function getReferredTable()

@@ -78,12 +78,50 @@ abstract class DAO
     /** The associated ACL entity */
     protected $acl_entity = null;
 
+    /** The database connection */
+    protected $db = array();
+
     /**
      * @return WASP\DB\DB An active database connection
      */
-    protected function db()
+    protected static function db()
     {
-        return DB::get();
+        $class = static::class;
+        if (isset(self::$db[$class]))
+            return self::$db[$class];
+
+        if (!isset(self::$db['_default']))
+            self::$db['_default'] = DB::get();
+
+        return self::$db['_default'];
+    }
+
+    /**
+     * Get the table specification
+     */
+    protected static function getTable()
+    {
+        $class = static::class;
+        $db = static::db();
+        $schema = $db->getSchema();
+
+        return $schema->getTable(static::$table);
+    }
+
+    /**
+     * Set the database for the current DAO type
+     *
+     * Databases will be linked to a specific instance. If you want to set the
+     * database for all tables, you can call this directly on DAO.
+     *
+     * @param WASP\DB\DB $db The database connection
+     */
+    public static function setDB(DB $db)
+    {
+        $class = static::class;
+        if ($class === DAO::class)
+            $class = '_default';
+        self::$db[$class] = $db;
     }
 
     /**
@@ -254,7 +292,7 @@ abstract class DAO
         foreach ($args as $arg)
             $select->add($arg);
 
-        $db = DB::get()->driver();
+        $db = static::db()->driver();
         return $db->select($select);
     }
 
@@ -268,7 +306,6 @@ abstract class DAO
      */
     protected static function update($id, array $record)
     {
-        var_dump($record);
         $idf = static::$idfield;
 
         $update = new Query\Update;
@@ -278,7 +315,7 @@ abstract class DAO
         foreach ($record as $key => $value)
             $update->add(new Query\UpdateField($key, $value));
 
-        $db = DB::get()->driver();
+        $db = static::db()->driver();
         return $db->update($update);
     }
 
@@ -293,7 +330,7 @@ abstract class DAO
     {
         $insert = new Query\Insert(static::tablename(), $record, static::$idfield);
 
-        $db = DB::get()->driver();
+        $db = static::db()->driver();
         $id = $db->insert($insert);
         $record[static::$idfield] = $id;
         return $id;
@@ -313,7 +350,7 @@ abstract class DAO
     protected static function delete($where)
     {
         $delete = new Query\Delete(static::tablename(), $where);
-        $db = DB::get()->driver();
+        $db = static::db()->driver();
         return $db->delete($delete);
     }
 
@@ -518,7 +555,7 @@ abstract class DAO
     {
         if (self::$columns === null)
         {
-            $driver = DB::get()->driver();
+            $driver = static::db()->driver();
             self::$columns = $driver->getColumns(static::tablename());
         }
         return self::$columns;

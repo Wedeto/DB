@@ -28,12 +28,20 @@ namespace WASP\DB\Schema;
 use WASP\Dictionary;
 use WASP\Cache;
 use WASP\DB\DBException;
+use WASP\DB\Driver\Driver;
 
 class Schema
 {
     protected $name;
     protected $tables;
+    protected $db;
 
+    /**
+     * Create the schema, providing a name and specifying whether to use the cache or not.
+     *
+     * @param string $schema_name A name for the schema
+     * @param bool $use_cache True to load the cache from disk, false to use a Dictionary for storage
+     */
     public function __construct(string $schema_name, bool $use_cache)
     {
         $this->schema_name = $name;
@@ -42,7 +50,29 @@ class Schema
         else
             $this->tables = new Dictionary;
     }
+    
+    /**
+     * Set the database driver that can be used to obtain schemas
+     * @param WASP\DB\Driver\Driver The database driver
+     * @return WASP\DB\Schema\Schema Provides fluent interface
+     */
+    public function setDBDriver(Driver $drv)
+    {
+        $this->db = $drv;
+        return $this;
+    }
 
+    /**
+     * @return WASP\DB\Driver\Driver the database driver
+     */
+    public function getDBDriver()
+    {
+        return $this->db;
+    }
+
+    /**
+     * Load the cache containing table definitions
+     */
     public function loadCache()
     {
         if (empty($schema_name))
@@ -50,24 +80,68 @@ class Schema
 
         $this->tables = new Cache('dbschema_' . $this->schema_name);
     }
-
-    public function getTable($table)
+    
+    /**
+     * Whether any tables exist in the database
+     */
+    public function isEmpty()
     {
-        if (!isset($this->tables->has($table)))
-            throw new DBException("Table $table not ofund");
-
-        return $this->tables[$table];
+        return count($this->tables['tables']) == 0;
     }
 
+    /**
+     * Get a table definition from the schema
+     */
+    public function getTable($table_name)
+    {
+        if (!isset($this->tables->has('tables', $table_name)))
+        {
+            if ($this->db !== null)
+            {
+                $table = $this->db->loadTable($table_name);
+                $this->tables->set('tables', $table_name, $table);
+            }
+            else
+                throw new DBException("Table $table not ofund");
+        }
+
+        return $this->tables->get('tables', $table_name);
+    }
+
+    /**
+     * Add a table to the schema
+     *
+     * @return WASP\DB\Schema\Schema Provides fluent interface
+     */
     public function putTable(Table $table)
     {
-        $this->tables[$table->getName()] = $table;
+        $this->tables->set('tables', $table->getName(), $table);
+        return $this;
     }
 
+    /**
+     * Remove a schema from the table definition
+     * @param string|Table The table to remove
+     * @return WASP\DB\Schema\Schema Provides fluent interface
+     */
     public function removeTable($table)
     {
         if ($table instanceof Table)
             $table = $table->getName();
-        unset($this->tables[$table]);
+        $this->tables->set('tables', $table, null);
+        return $this;
+    }
+
+    /**
+     * When cloning the schema, we need to make sure the clone is not using the
+     * Cache anymore, and we need to create a clone of all tables so they are
+     * not co-dependent anymore.
+     */
+    public function __clone()
+    {
+        $tables = $this->tables->getAll();
+        $this->tables = new Dictionary;
+        foreach ($tables as $name => $table)
+            $this->tables[$name] = clone $table;
     }
 }

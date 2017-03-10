@@ -31,10 +31,10 @@ use WASP\DB\DB;
 use WASP\DB\TableNotExists;
 use WASP\DB\DBException;
 
-use WASP\DB\Table\Table;
-use WASP\DB\Table\Index;
-use WASP\DB\Table\ForeignKey;
-use WASP\DB\Table\Column\Column;
+use WASP\DB\Schema\Table;
+use WASP\DB\Schema\Index;
+use WASP\DB\Schema\ForeignKey;
+use WASP\DB\Schema\Column\Column;
 
 use WASP\Config;
 

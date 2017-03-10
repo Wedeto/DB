@@ -66,10 +66,18 @@ abstract class Driver
      * @param $prefix string The prefix string
      * @return $Driver Provides fluent interface
      */
-    public function setTablePrefix($prefix)
+    public function setTablePrefix(string $prefix)
     {
         $this->table_prefix = $prefix;
         return $this;
+    }
+
+    /**
+     * @return string The table prefix
+     */
+    public function getTablePrefix()
+    {
+        return $this->table_prefix;
     }
 
     /**

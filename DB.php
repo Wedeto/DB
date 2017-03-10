@@ -30,6 +30,7 @@ use WASP\Dictionary;
 use PDO;
 use WASP\Debug\LoggerAwareStaticTrait;
 use WASP\System;
+use WASP\DB\Schema\Schema;
 
 /**
  * The DB class wraps a PDO allowing for lazy connecting.  The configuration is
@@ -42,10 +43,11 @@ class DB
 {
     use LoggerAwareStaticTrait;
 
-    private static $default_db = null;
-    private $pdo;
-    private $qdriver;
-    private $config;
+    protected static $default_db = null;
+    protected $pdo;
+    protected $qdriver;
+    protected $config;
+    protected $schema;
 
     /**
      * Create a new DB object for a specific configuration set.
@@ -185,6 +187,25 @@ class DB
             $this->connect();
 
         return $this->pdo;
+    }
+
+    /**
+     * Get the database schema
+     */
+    public function getSchema()
+    {
+        if ($this->schema === null)
+        {
+            $database = $this->config->get('sql', 'database');
+            $schema = $this->config->get('sql', 'schema');
+            $type = $this->config->get('sql', 'type');
+            $schema_name = sprintf("%s_%s_%s", $type, $database, $schema);
+
+            $this->schema = new Schema($schema_name, true);
+            $this->schema->setDBDriver($this->qdriver);
+        }
+
+        return $this->schema;
     }
 
     /**

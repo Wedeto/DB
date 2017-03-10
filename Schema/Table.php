@@ -340,6 +340,26 @@ class Table implements \Serializable, \JSONSerializable
         }
 
     }
+
+    /**
+     * Cloning a table requires a deep clone, otherwise they will be
+     * co-dependent which will give unexpected results.
+     */
+    public function __clone()
+    {
+        foreach ($this->columns as &$col)
+            $col = clone $col;
+
+        foreach ($indexes as &$index)
+        {
+            $index = clone $index;
+            if ($index->getType() === Index::PRIMARY)
+                $this->primary = $index;
+        }
+
+        foreach ($foreign_keys as &$fk)
+            $fk = clone $fk;
+    }
 }
 
 Table::setLogger();
