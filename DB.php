@@ -196,8 +196,9 @@ class DB
     {
         if ($this->schema === null)
         {
-            $database = $this->config->get('sql', 'database');
-            $schema = $this->config->get('sql', 'schema');
+            $drv = $this->driver();
+            $database = $drv->getDatabaseName();
+            $schema = $drv->getSchemaName();
             $type = $this->config->get('sql', 'type');
             $schema_name = sprintf("%s_%s_%s", $type, $database, $schema);
 

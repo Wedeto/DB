@@ -282,7 +282,7 @@ trait StandardSQLTrait
         if ($offset = $query->getOffset())
             $parts[] = $this->offsetToSQL($params, $offset);
         
-        return implode("\n", $parts);
+        return implode(" ", $parts);
     }
 
     public function deleteToSQL(Parameters $params, Delete $delete)

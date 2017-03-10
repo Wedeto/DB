@@ -28,10 +28,10 @@ namespace WASP\DB\Driver;
 use WASP\DB\DB;
 use WASP\DB\DBException;
 
-use WASP\DB\Table\Table;
-use WASP\DB\Table\Index;
-use WASP\DB\Table\ForeignKey;
-use WASP\DB\Table\Column\Column;
+use WASP\DB\Schema\Table;
+use WASP\DB\Schema\Index;
+use WASP\DB\Schema\ForeignKey;
+use WASP\DB\Schema\Column\Column;
 
 use WASP\Debug\Logger;
 
@@ -105,6 +105,16 @@ abstract class Driver
             throw new DBException("Provide a string or a object with a getName method");
         $entity = $this->table_prefix . $entity;
         return $quote ? $this->identQuote($entity) : $entity;
+    }
+
+    public function getDatabaseName()
+    {
+        return $this->dbname;
+    }
+
+    public function getSchemaName()
+    {
+        return $this->schema;
     }
 
     public function stripPrefix($name)

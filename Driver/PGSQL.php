@@ -67,6 +67,7 @@ class PGSQL extends Driver
         Column::DECIMAL => 'decimal',
 
         Column::DATETIME => 'timestamp without time zone',
+        Column::DATETIMETZ => 'timestamp with time zone',
         Column::DATE => 'date',
         Column::TIME => 'time',
 
@@ -258,13 +259,19 @@ class PGSQL extends Driver
         try
         {
             $q = $this->db->prepare("
-                SELECT column_name, data_type, udt_name, is_nullable, column_default, numeric_precision, numeric_scale, character_maximum_length 
+                SELECT 
+                        column_name, data_type, udt_name, 
+                        is_nullable, column_default, numeric_precision,
+                        numeric_scale, character_maximum_length 
                     FROM information_schema.columns 
                     WHERE table_name = :table AND table_schema = :schema
                     ORDER BY ordinal_position
             ");
 
             $q->execute(array("table" => $table_name, "schema" => $this->schema));
+
+            if ($q->rowCount() === 0)
+                throw new TableNotExists();
 
             return $q->fetchAll();
         }
@@ -446,7 +453,7 @@ class PGSQL extends Driver
 
         // Drop the sequence providing the value
         // TODO: maybe this is not necessary
-        $this->db->exec("DROP SEQUENCE {seqname}");
+        $this->db->exec("DROP SEQUENCE {$seqname}");
 
         $column->setSerial(false);
         $column->setDefault(null);
@@ -504,6 +511,17 @@ class PGSQL extends Driver
 
     public function loadTable($table_name)
     {
+        // Check if table exists
+        $q = $this->db->prepare(
+            "SELECT 1 FROM \"pg_tables\" "
+            . "WHERE schemaname = :schema "
+            . "AND tablename = :table"
+        );
+        $q->execute(array('schema' => $this->schema, 'table' => $table_name));
+
+        if ($q->rowCount() === 0)
+            throw new TableNotExists("Table does not exist: " . $table_name);
+
         $table = new Table($table_name);
 
         // Get all columns
@@ -534,7 +552,7 @@ class PGSQL extends Driver
             }
 
             if ($numtype === false)
-                    throw new DBException("Unsupported field type: " . $type);
+                throw new DBException("Unsupported field type: " . $type);
 
             $column = new Column(
                 $col['column_name'],
@@ -664,10 +682,11 @@ class PGSQL extends Driver
             }
             elseif ($unique)
             {
-                if (!preg_match('/^UNIQUE \(([\w\d\s,_]+)\)$/', $constraintdef, $matches))
-                    throw new DBException("Invalid unique key: $constraintdef");
+                if (!preg_match('/^CREATE UNIQUE INDEX \w+ ON \w+ USING (\w+) \(([\w\d\s,_]+)\)$/', $indexdef, $matches))
+                    throw new DBException("Invalid unique key: $indexdef");
 
-                $columns = explode(", ", $matches[1]);
+				$algo = $matches[1];
+                $columns = explode(", ", $matches[2]);
                 $constraints[] = array(
                     'type' => 'UNIQUE',
                     'column' => $columns,

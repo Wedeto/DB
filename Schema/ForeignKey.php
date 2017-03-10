@@ -244,7 +244,7 @@ class ForeignKey implements \Serializable, \JSONSerializable
 
     public static function strToPolicy($str)
     {
-        if (\is_int_val($str) && $str >= self::DO_CASCADE && $str <= self::DO_NULL)
+        if (\WASP\is_int_val($str) && $str >= self::DO_CASCADE && $str <= self::DO_NULL)
             return $str;
         if ($str === "CASCADE") return self::DO_CASCADE;
         if ($str === "RESTRICT") return self::DO_RESTRICT;

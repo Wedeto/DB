@@ -30,26 +30,27 @@ use WASP\DB\DBException;
 
 class Column implements \Serializable, \JSONSerializable
 {
-    const CHAR      =  1;
-    const VARCHAR   =  2;
-    const TEXT      =  3;
-    const JSON      =  4;
-    const ENUM      =  5;
+    const CHAR       =  1;
+    const VARCHAR    =  2;
+    const TEXT       =  3;
+    const JSON       =  4;
+    const ENUM       =  5;
 
-    const BOOLEAN   =  6;
-    const TINYINT   =  7;
-    const SMALLINT  =  8;
-    const MEDIUMINT =  9;
-    const INT       = 10;
-    const BIGINT    = 11;
-    const FLOAT     = 12;
-    const DECIMAL   = 13;
+    const BOOLEAN    =  6;
+    const TINYINT    =  7;
+    const SMALLINT   =  8;
+    const MEDIUMINT  =  9;
+    const INT        = 10;
+    const BIGINT     = 11;
+    const FLOAT      = 12;
+    const DECIMAL    = 13;
  
-    const DATE      = 14;
-    const DATETIME  = 15;
-    const TIME      = 16;
+    const DATE       = 14;
+    const DATETIME   = 15;
+    const DATETIMETZ = 16;
+    const TIME       = 17;
 
-    const BINARY    = 17;
+    const BINARY     = 18;
 
     protected $table;
 
@@ -74,7 +75,7 @@ class Column implements \Serializable, \JSONSerializable
         $this->max_length = $max_length;
         $this->numeric_precision = $numeric_precision;
         $this->numeric_scale = $numeric_scale;
-        $this->nullable = $nullable == true;
+        $this->nullable = \WASP\parse_bool($nullable);
         $this->default = $default;
         $this->serial = $serial == true;
     }
@@ -212,7 +213,7 @@ class Column implements \Serializable, \JSONSerializable
         extract($args);
         $col = new Column($name, $type, $max_length, $is_nullable, $column_default, $numeric_precision, $numeric_scale, $serial);
         if (isset($enum_values) && $type === Column::ENUM)
-            $col->setEnumValues($col['enum_values']);
+            $col->setEnumValues($enum_values);
         return $col;
     }
 
@@ -253,10 +254,10 @@ class Column implements \Serializable, \JSONSerializable
 
     public static function strToType($type)
     {
-        if (\is_int_val($type) && $type >= Column::CHAR && $type <= Column::TEXT)
+        if (\WASP\is_int_val($type) && $type >= Column::CHAR && $type <= Column::TEXT)
             return $type;
 
-        $name = get_called_class() . "::" . $type;
+        $name = static::class . "::" . $type;
         if (defined($name))
             return constant($name);
         throw new DBException("Invalid type: $type");
@@ -283,6 +284,7 @@ class Column implements \Serializable, \JSONSerializable
          
             case Column::DATE: return "DATE";
             case Column::DATETIME: return "DATETIME";
+            case Column::DATETIMETZ: return "DATETIMETZ";
             case Column::TIME: return "TIME";
 
             case Column::BINARY: return "BINARY";

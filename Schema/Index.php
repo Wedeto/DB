@@ -146,7 +146,7 @@ class Index implements \Serializable, \JSONSerializable
 
     public static function strToType($str)
     {
-        if (\is_int_val($str) && $str >= Index::PRIMARY && $str <= Index::INDEX)
+        if (\WASP\is_int_val($str) && $str >= Index::PRIMARY && $str <= Index::INDEX)
             return $str;
 
         $name = get_called_class() . "::" . $str;

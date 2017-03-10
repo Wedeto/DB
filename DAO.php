@@ -54,6 +54,9 @@ abstract class DAO
     /** A mapping between full, namespaced class name and class identifier */
     protected static $classnames = array();
 
+    /** The database connection */
+    protected static $db = array();
+
     /** Override to set the name of the ID field */
     protected static $idfield = "id";
 
@@ -78,9 +81,6 @@ abstract class DAO
     /** The associated ACL entity */
     protected $acl_entity = null;
 
-    /** The database connection */
-    protected $db = array();
-
     /**
      * @return WASP\DB\DB An active database connection
      */
@@ -99,7 +99,7 @@ abstract class DAO
     /**
      * Get the table specification
      */
-    protected static function getTable()
+    public static function getTable()
     {
         $class = static::class;
         $db = static::db();
@@ -271,7 +271,7 @@ abstract class DAO
     protected static function fetchAll()
     {
         $select = static::select(func_get_args());
-        return $st->fetchAll();
+        return $select->fetchAll();
     }
 
     /**
@@ -289,6 +289,9 @@ abstract class DAO
         $args = \WASP\flatten_array($args);
         $select = new Query\Select;
         $select->add(new Query\SourceTableClause(static::tablename()));
+        $t = static::getTable();
+        foreach ($t->getColumns() as $name => $def)
+            $select->add(new Query\GetClause($name));
         foreach ($args as $arg)
             $select->add($arg);
 

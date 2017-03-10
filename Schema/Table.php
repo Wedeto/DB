@@ -53,20 +53,6 @@ class Table implements \Serializable, \JSONSerializable
 
         $this->name = $name;
 
-        $duplicate = false;
-        try
-        {
-            $tb = TableRepository::getTable($name);
-            $duplicate = true;
-        }
-        catch (DBException $e)
-        {
-            // This is actually the wanted situation
-        }
-
-        if ($duplicate)
-            throw new DBException("Duplicate table definition for {$name}");
-
         $args = func_get_args();
         array_shift($args); // Name
         foreach ($args as $arg)
@@ -80,8 +66,6 @@ class Table implements \Serializable, \JSONSerializable
             else
                 throw new DBException("Invalid argument: " . \WASP\str($arg));
         }
-
-        TableRepository::putTable($this);
     }
 
     protected function initFromArray($data)

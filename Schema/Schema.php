@@ -44,7 +44,7 @@ class Schema
      */
     public function __construct(string $schema_name, bool $use_cache)
     {
-        $this->schema_name = $name;
+        $this->name = $schema_name;
         if ($use_cache)
             $this->loadCache();
         else
@@ -75,10 +75,10 @@ class Schema
      */
     public function loadCache()
     {
-        if (empty($schema_name))
+        if (empty($this->name))
             throw new DBException("Please provide a name for the schema when using the cache");
 
-        $this->tables = new Cache('dbschema_' . $this->schema_name);
+        $this->tables = new Cache('dbschema_' . $this->name);
     }
     
     /**
@@ -94,8 +94,9 @@ class Schema
      */
     public function getTable($table_name)
     {
-        if (!isset($this->tables->has('tables', $table_name)))
+        if (!$this->tables->has('tables', $table_name))
         {
+			echo "TABLE $table_name HEb ik NIET voorhanden!\n";
             if ($this->db !== null)
             {
                 $table = $this->db->loadTable($table_name);
@@ -104,6 +105,8 @@ class Schema
             else
                 throw new DBException("Table $table not ofund");
         }
+		else
+			echo "TABLE $table_name HEb ik voorhanden!\n";
 
         return $this->tables->get('tables', $table_name);
     }
