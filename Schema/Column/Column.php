@@ -23,9 +23,9 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\Table\Column;
+namespace WASP\DB\Schema\Column;
 
-use WASP\DB\Table\Table;
+use WASP\DB\Schema\Table;
 use WASP\DB\DBException;
 
 class Column implements \Serializable, \JSONSerializable

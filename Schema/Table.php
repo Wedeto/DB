@@ -23,12 +23,12 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\Table;
+namespace WASP\DB\Schema;
 
 use WASP\DB\DBException;
-use WASP\DB\Table\Column\Column;
-use WASP\DB\Table\Index;
-use WASP\DB\Table\ForeignKey;
+use WASP\DB\Schema\Column\Column;
+use WASP\DB\Schema\Index;
+use WASP\DB\Schema\ForeignKey;
 
 use WASP\Debug\Logger;
 use WASP\Debug\LoggerAwareStaticTrait;

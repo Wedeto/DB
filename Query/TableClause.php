@@ -31,6 +31,7 @@ class TableClause extends Clause
 {
     protected $name;
     protected $alias;
+    protected $dont_prefix = false;
 
     public function __construct(string $name)
     {
@@ -51,5 +52,16 @@ class TableClause extends Clause
     public function getAlias()
     {
         return $this->alias;
+    }
+    
+    public function setDisablePrefixing($dont_prefix = true)
+    {
+        $this->dont_prefix = $dont_prefix;
+        return $this;
+    }
+
+    public function getDisablePrefixing()
+    {
+        return $this->dont_prefix;
     }
 }

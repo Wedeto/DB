@@ -23,13 +23,51 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\Table\Column;
+namespace WASP\DB\Schema;
 
-class SerialColumn extends IntColumn
+use WASP\Dictionary;
+use WASP\Cache;
+use WASP\DB\DBException;
+
+class Schema
 {
-    public function __construct($name, $nullable = false, $default = null)
+    protected $name;
+    protected $tables;
+
+    public function __construct(string $schema_name, bool $use_cache)
     {
-        parent::__construct($name, Column::INT, null, 11, null, $nullable, $default);
-        $this->setSerial();
+        $this->schema_name = $name;
+        if ($use_cache)
+            $this->loadCache();
+        else
+            $this->tables = new Dictionary;
+    }
+
+    public function loadCache()
+    {
+        if (empty($schema_name))
+            throw new DBException("Please provide a name for the schema when using the cache");
+
+        $this->tables = new Cache('dbschema_' . $this->schema_name);
+    }
+
+    public function getTable($table)
+    {
+        if (!isset($this->tables->has($table)))
+            throw new DBException("Table $table not ofund");
+
+        return $this->tables[$table];
+    }
+
+    public function putTable(Table $table)
+    {
+        $this->tables[$table->getName()] = $table;
+    }
+
+    public function removeTable($table)
+    {
+        if ($table instanceof Table)
+            $table = $table->getName();
+        unset($this->tables[$table]);
     }
 }

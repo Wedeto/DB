@@ -168,10 +168,11 @@ trait StandardSQLTrait
     {
         $name = $table->getTable();
         $alias = $table->getAlias();
+        $prefix_disabled = $table->getDisablePrefixing();
 
         if ($table instanceof SourceTableClause)
         {
-            $sql = $this->getName($name);
+            $sql = $prefix_disabled ? $this->identQuote($name) : $this->getName($name);
             if (!empty($alias))
             {
                 $params->registerTable($name, $alias);
@@ -186,7 +187,7 @@ trait StandardSQLTrait
         list($tname, $talias) = $params->resolveTable($name, $alias);
         if ($talias !== $tname)
             return $this->identQuote($talias);
-        return $this->getName($tname);
+        return $prefix_disabled ? $this->identQuote($tname) : $this->getName($tname);
     }
 
     /**

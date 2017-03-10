@@ -23,12 +23,13 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\Table\Column;
+namespace WASP\DB\Schema\Column;
 
-class CharColumn extends Column
+class SerialColumn extends IntColumn
 {
-    public function __construct($name, $max_length, $nullable = false, $default = null)
+    public function __construct($name, $nullable = false, $default = null)
     {
-        parent::__construct($name, Column::CHAR, $max_length, null, null, $nullable, $default);
+        parent::__construct($name, Column::INT, null, 11, null, $nullable, $default);
+        $this->setSerial();
     }
 }

@@ -23,12 +23,12 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\Table\Column;
+namespace WASP\DB\Schema\Column;
 
-class BigIntColumn
+class SmallIntColumn extends Column
 {
     public function __construct($name, $nullable = false, $default = null)
     {
-        parent::__construct($name, Column::BIGINT, null, 19, null, $nullable, $default);
+        parent::__construct($name, Column::SMALLINT, null, 5, null, $nullable, $default);
     }
 }
