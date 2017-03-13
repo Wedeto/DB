@@ -25,12 +25,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB;
 
-use WASP\Debug;
 use PDOException;
+use DateTime;
 
 use WASP\Auth\ACL\Entity;
 use WASP\DB\Query;
 use WASP\DB\Query\Builder as QB;
+use WASP\DB\Schema\Column\Column;
 
 /**
  * DAO (Data Access Object) allows for simple persistence of PHP objects to
@@ -55,19 +56,13 @@ abstract class DAO
     protected static $classnames = array();
 
     /** The database connection */
-    protected static $db = array();
+    protected static $db_connections = array();
 
     /** Override to set the name of the ID field */
     protected static $idfield = "id";
 
-    /** Override to set the name of the table */
+    /** Subclasses should override this to set the name of the table */
     protected static $table = null;
-
-    /** The columns defined in the database */
-    protected static $columns = null;
-
-    /** The quote character for identifiers */
-    protected static $ident_quote = '`';
 
     /** The ID value */
     protected $id;
@@ -75,37 +70,62 @@ abstract class DAO
     /** The database record */
     protected $record;
 
-    /** The altered records */
+    /** The altered fields */
     protected $changed;
 
     /** The associated ACL entity */
     protected $acl_entity = null;
 
+    /** The database this object was retrieved from */
+    protected $source_db = null;
+
     /**
+     * Return the active connectio
      * @return WASP\DB\DB An active database connection
      */
-    protected static function db()
+    public static function db()
     {
         $class = static::class;
-        if (isset(self::$db[$class]))
-            return self::$db[$class];
+        if (isset(self::$db_connections[$class]))
+            return self::$db_connections[$class];
 
-        if (!isset(self::$db['_default']))
-            self::$db['_default'] = DB::get();
+        if (!isset(self::$db_connections['_default']))
+            self::$db_connections['_default'] = DB::get();
 
-        return self::$db['_default'];
+        return self::$db_connections['_default'];
+    }
+
+    /**
+     * Return the name of this table
+     */
+    public static function tablename()
+    {
+        return static::$table;
     }
 
     /**
      * Get the table specification
+     * @param WASP\DB\DB $database The database to get the columns from. If
+     *                             null, the default is used.
      */
-    public static function getTable()
+    public static function getTable(DB $database = null)
     {
-        $class = static::class;
-        $db = static::db();
-        $schema = $db->getSchema();
+        if ($database === null)
+            $database = static::db();
+        $schema = $database->getSchema();
 
         return $schema->getTable(static::$table);
+    }
+
+    /**
+     * @param WASP\DB\DB $database The database to get the columns from. If
+     *                             null, the default is used.
+     * @return array The set of columns associated with this table
+     */
+    public static function getColumns(DB $database = null)
+    {
+        $table = static::getTable($database);
+        return $table->getColumns();
     }
 
     /**
@@ -121,30 +141,60 @@ abstract class DAO
         $class = static::class;
         if ($class === DAO::class)
             $class = '_default';
-        self::$db[$class] = $db;
+        self::$db_connections[$class] = $db;
+    }
+
+    /**
+     * Set the database this object came from
+     *
+     * @param WASP\DB\DB $db The database connection
+     * @return WASP\DB\DAO PRovides fluent interface
+     */
+    public function setSourceDB(DB $db)
+    {
+        if ($db === null)
+            throw new \InvalidArgumentException("Source database must not be null");
+        $this->source_db = $db;
+        return $this;
+    }
+
+    /**
+     * @return WASP\DB\DB The database this object was retrieved from
+     */
+    public function getSourceDB()
+    {
+        if ($this->source_db === null)
+            $this->setSourceDB(static::db());
+
+        return $this->source_db;
     }
 
     /**
      * Save the current record to the database.
      * @return WASP\DB\DAO Provides fluent interface
      */
-    public function save()
+    public function save(DB $database = null)
     {
+        if ($database === null)
+            $database = $this->getSourceDB();
+
         $idf = static::$idfield;
         if (isset($this->record[$idf]))
         {
             // Update the current record
             $changes = array();
-            foreach ($this->changed as $key => $v)
-                $changes[$key] = $this->record[$key];
-            self::update($this->id, $changes);
+            foreach ($this->changed as $field => $v)
+                $changes[$field] = $this->record[$field];
+            static::update($this->id, $changes, $database);
             $this->changed = array();
+            $this->setSourceDB($database);
         }
         else
         {
-            $this->id = self::insert($this->record);
+            $this->id = static::insert($this->record, $database);
+            $this->setSourceDB($database);
 
-            // ACL record should be initialized now that there is 
+            // ACL record should be initialized now that there is an ID
             $this->initACL();
         }
 
@@ -154,26 +204,42 @@ abstract class DAO
     /** 
      * Load the record from the database
      */
-    protected function load($id)
+    protected function load($id, DB $database = null)
     {
+        if ($database === null)
+            $database = static::db();
         $idf = static::$idfield;
-        $rec = static::fetchSingle(QB::where(array($idf => $id)));
+        $rec = static::fetchSingle(QB::where(array($idf => $id)), $database);
         if (empty($rec))
             throw new DAOEXception("Object not found with $id");
 
-        $this->assignRecord($rec);
+        $this->assignRecord($rec, $database);
     }
 
     /** 
      * Assign the provided record to this object.
      * @param array $record The record obtained from the database.
+     * @param WASP\DB\DB $database The database this record comes from
      * @return WASP\DB\DAO Provides fluent interface
      */
-    public function assignRecord(array $record)
+    public function assignRecord(array $record, DB $database = null)
     {
+        if ($database === null)
+            $database = static::db();
+
         $this->id = isset($record[static::$idfield]) ? $record[static::$idfield] : null;
         $this->record = $record;
+        $this->setSourceDB($database);
         $this->init();
+
+        $columns = static::getColumns($database);
+        foreach ($columns as $name => $def)
+        {
+            if (!array_key_exists($name, $this->record))
+                continue;
+
+            $this->record[$name] = $def->afterFetchFilter($this->record[$name]);
+        }
         return $this;
     }
 
@@ -210,26 +276,29 @@ abstract class DAO
      *                      database record directly.
      * @return An instance of the class this method is called on
      */
-    public static function get($id)
+    public static function get($id, DB $database = null)
     {
+        if ($database === null)
+            $database = static::db();
+
         $idf = static::$idfield;
         if (!\WASP\is_int_val($id))
         {
             if (!is_array($id) || empty($id[$idf]))
-                throw new DAOException("Cannot initialize object from $id");
+                throw new DAOException("Cannot initialize object from " . \WASP\str($id));
             $record = $id;
             $id = $record[$idf];
         }
         else
         {
-            $record = static::fetchSingle(array($idf => $id));
+            $record = static::fetchSingle(array($idf => $id), $database);
             if (empty($record))
                 return null;
         }
 
-        $class = get_called_class();
-        $obj = new $class();
-        $obj->assignRecord($record);
+        $cl = static::class;
+        $obj = new $cl;
+        $obj->assignRecord($record, $database);
         return $obj;
     }
 
@@ -268,9 +337,9 @@ abstract class DAO
      * @return array The retrieved records.
      * @seealso WASP\DB\DAO::select
      */
-    protected static function fetchAll()
+    protected static function fetchAll(...$args)
     {
-        $select = static::select(func_get_args());
+        $select = static::select($args);
         return $select->fetchAll();
     }
 
@@ -280,23 +349,37 @@ abstract class DAO
      * @param $args The provided arguments should contain query parts passed to the
      *              Select constructor. These can be objects such as:
      *              FieldName, JoinClause, WhereClause, OrderClause, LimitClause,
-     *              OffsetClause.
+     *              OffsetClause. A WASP\DB\DB object can also be passed in to
+     *              use as a Database.
      *
      * @seealso WASP\DB\Query\Select
      */
-    protected static function select(...$args)
+    public static function select(...$args)
     {
         $args = \WASP\flatten_array($args);
+        $database = null;
+        foreach ($args as $idx => $val)
+        {
+            if ($val instanceof DB)
+            {
+                list($database, ) = array_splice($args, $idx, 1);
+                break;
+            }
+        }
+
+        if ($database === null)
+            $database = static::db();
+
         $select = new Query\Select;
         $select->add(new Query\SourceTableClause(static::tablename()));
-        $t = static::getTable();
-        foreach ($t->getColumns() as $name => $def)
+        $cols = static::getColumns($database);
+        foreach ($cols as $name => $def)
             $select->add(new Query\GetClause($name));
         foreach ($args as $arg)
             $select->add($arg);
 
-        $db = static::db()->driver();
-        return $db->select($select);
+        $drv = $database->driver();
+        return $drv->select($select);
     }
 
     /**
@@ -306,20 +389,31 @@ abstract class DAO
      *                      keys are fieldnames, values are the values to update them to.
      *                      Should also contain the ID field specified by static::$idfield,
      *                      which will be used to find the record to be updated.
+     * @param WASP\DB\DB $database The DB on which to perform the operation
      */
-    protected static function update($id, array $record)
+    public static function update($id, array $record, DB $database = null)
     {
         $idf = static::$idfield;
+        if ($database === null)
+            $database = static::db();
 
         $update = new Query\Update;
         $update->add(new Query\SourceTableClause(static::tablename()));
         $update->add(new Query\WhereClause([static::$idfield => $id]));
         
-        foreach ($record as $key => $value)
-            $update->add(new Query\UpdateField($key, $value));
+        $columns = static::getColumns($database);
+        foreach ($record as $field => $value)
+        {
+            if (!isset($columns[$field]))
+                throw new DAOException("Invalid field: " . $field);
 
-        $db = static::db()->driver();
-        return $db->update($update);
+            $coldef = $columns[$field];
+            $value = $coldef->beforeInsertFilter($value);
+            $update->add(new Query\UpdateField($field, $value));
+        }
+
+        $drv = $database->driver();
+        return $drv->update($update);
     }
 
     /**
@@ -327,14 +421,28 @@ abstract class DAO
      *
      * @param array $record The record to insert. Keys should be fieldnames,
      *                      values the values to insert.
+     * @param WASP\DB\DB $database The DB on which to perform the operation
      * @return int The new row ID
      */
-    protected static function insert(array &$record)
+    protected static function insert(array &$record, DB $database = null)
     {
-        $insert = new Query\Insert(static::tablename(), $record, static::$idfield);
+        if ($database === null)
+            $database = static::db();
+        $db_record = array();
+        $columns = static::getColumns($database);
+        foreach ($record as $field => $value)
+        {
+            if (!isset($columns[$field]))
+                throw new DAOException("Invalid field: " . $field);
 
-        $db = static::db()->driver();
-        $id = $db->insert($insert);
+            $coldef = $columns[$field];
+            $db_record[$field] = $coldef->beforeInsertFilter($value);
+        }
+
+        $insert = new Query\Insert(static::tablename(), $db_record, static::$idfield);
+
+        $drv = $database->driver();
+        $id = $drv->insert($insert);
         $record[static::$idfield] = $id;
         return $id;
     }
@@ -350,11 +458,13 @@ abstract class DAO
      *                                  values to match them with.
      * @return int The number of rows deleted
      */
-    protected static function delete($where)
+    protected static function delete($where, DB $database = null)
     {
+        if ($database === null)
+            $database = static::db();
         $delete = new Query\Delete(static::tablename(), $where);
-        $db = static::db()->driver();
-        return $db->delete($delete);
+        $drv = $database->driver();
+        return $drv->delete($delete);
     }
 
     /**
@@ -370,7 +480,7 @@ abstract class DAO
      * @param string $field The name of the field to get
      * @return mixed The value of this field
      */
-    public function getField($field)
+    public function getField(string $field)
     {
         if (isset($this->record[$field]))
             return $this->record[$field];
@@ -384,10 +494,17 @@ abstract class DAO
      * @param mixed $value The value to set it to.
      * @return WASP\DB\DAO Provides fluent interface.
      */
-    public function setField($field, $value)
+    public function setField(string $field, $value)
     {
         if (isset($this->record[$field]) && $this->record[$field] === $value)
             return;
+
+        $columns = static::getColumns($this->getSourceDB());
+        if (!isset($columns[$field]))
+            throw new DAOException("Field $field does not exist!");
+
+        $coldef = $columns[$field];
+        $coldef->validate($value);
 
         $correct = $this->validate($field, $value);
         if ($correct !== true)
@@ -541,27 +658,6 @@ abstract class DAO
         $cl = get_called_class();
         self::$classes[$name] = $cl;
         self::$classesnames[$cl] = $name;
-    }
-
-    /**
-     * Return the name of this table
-     */
-    public static function tablename()
-    {
-        return static::$table;
-    }
-
-    /**
-     * @return array The set of columns associated with this table
-     */
-    public static function getColumns()
-    {
-        if (self::$columns === null)
-        {
-            $driver = static::db()->driver();
-            self::$columns = $driver->getColumns(static::tablename());
-        }
-        return self::$columns;
     }
 }
 

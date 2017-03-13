@@ -45,6 +45,7 @@ class DB
 
     protected static $default_db = null;
     protected $pdo;
+    protected $dsn;
     protected $qdriver;
     protected $config;
     protected $schema;
@@ -113,7 +114,7 @@ class DB
         $host = $this->config->get('sql', 'hostname');
         $database = $this->config->get('sql', 'database');
         $schema = $this->config->get('sql', 'schema');
-        $dsn = $this->config->get('sql', 'dsn');
+        $this->dsn = $this->config->get('sql', 'dsn');
         if (!$this->config->has('sql', 'type', Dictionary::TYPE_STRING))
             throw new DBException("Please specify the database type in the configuration section [sql]");
 
@@ -123,15 +124,15 @@ class DB
         $this->qdriver = $this->getDriver($type);
         $this->qdriver->setTablePrefix($this->config->dget('sql', 'prefix', ''));
             
-        if (!$dsn)
+        if (!$this->dsn)
         {
-            $dsn = $this->qdriver->generateDSN($this->config->getArray('sql'));
-            self::$logger->info("Generated DSN: {0}", [$dsn]);
-            $this->config->set('sql', 'dsn', $dsn);
+            $this->dsn = $this->qdriver->generateDSN($this->config->getArray('sql'));
+            self::$logger->info("Generated DSN: {0}", [$this->dsn]);
+            $this->config->set('sql', 'dsn', $this->dsn);
         }
             
         // Create the PDO and connect it to the database, setting default options
-        $pdo = new PDO($dsn, $username, $password);
+        $pdo = new PDO($this->dsn, $username, $password);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             
@@ -225,6 +226,12 @@ class DB
             self::$logger->info("Preparing query: {0}", [$args[0]]);
             
         return call_user_func_array(array($this->pdo, $func), $args);
+    }
+
+    public function __debuginfo()
+    {
+        $drv = get_class($this->driver());
+        return array('dsn' => $this->dsn, 'driver' => $drv);
     }
 }
 

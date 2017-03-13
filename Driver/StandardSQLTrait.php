@@ -107,7 +107,14 @@ trait StandardSQLTrait
         }
 
         if ($key === null)
-            $key = $params->assign($expression->getValue());
+        {
+            $val = $expression->getValue();
+            if ($val instanceof \DateTimeInterface)
+                $val = $val->format(\DateTimeInterface::ATOM);
+            elseif ($val === false)
+                $val = 0;
+            $key = $params->assign($val);
+        }
         $expression->bind($params, $key, null);
 
         return ':' . $key;

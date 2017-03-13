@@ -28,6 +28,8 @@ namespace WASP\DB\Schema\Column;
 use WASP\DB\Schema\Table;
 use WASP\DB\DBException;
 
+use DateTime;
+
 class Column implements \Serializable, \JSONSerializable
 {
     const CHAR       =  1;
@@ -184,6 +186,107 @@ class Column implements \Serializable, \JSONSerializable
     public function getEnumValues()
     {
         return $this->enum_values;
+    }
+
+    public function validate($value)
+    {
+        if ($value === null && !$this->is_nullable)
+            throw new DBException("Column {$this->name} must not be null");
+
+        $tp = $this->getType();
+        switch ($tp)
+        {
+            case Column::FLOAT:
+                if (!is_numeric($value))
+                    throw new DBException("Invalid float value for {$this->name}: " . \WASP\str($value));
+                break;
+            case Column::INT:
+                if (!\WASP\is_int_val($value))
+                    throw new DBException("Invalid int value for {$this->name}: " . \WASP\str($value));
+                break;
+            case Column::BOOLEAN:
+                if (!is_bool($value))
+                    throw new DBException("Invalid bool value for {$this->name}: " . \WASP\str($value));
+                break;
+            case Column::DATETIME:
+            case Column::DATETIMETZ:
+            case Column::DATE:
+            case Column::TIME:
+                if (!$value instanceof DateTime)
+                    throw new DBException(
+                        "Invalid " . strtolower(Column::typeToStr($this->getType())) 
+                        . " value for {$this->name}: " . \WASP\str($value)
+                    );
+                break;
+            case Column::CHAR:
+            case Column::VARCHAR:
+            case Column::TEXT:
+                if ($tp !== Column::TEXT || strpos($this->name, "json") === false)
+                {
+                    if (!is_string($value))
+                        throw new DBException("Invalid string value for {$this->name}: " . \WASP\str($value));
+                    break;
+                }
+                // Falling through
+            case Column::JSON:
+                if (!is_scalar($value) && !is_array($value) && (!is_object($value) || !($value instanceof JsonSerializable)))
+                    throw new DBException("Invalid JSON value for {$this->name}: " . \WASP\str($value));
+                break;
+        }
+        return true;
+    }
+
+    public function afterFetchFilter($value)
+    {
+        if ($value === null)
+            return null;
+
+        $tp = $this->getType();
+        switch ($tp)
+        {
+            case Column::DATETIME:
+            case Column::DATETIMETZ:
+            case Column::DATE:
+            case Column::TIME:
+                return new DateTime($value);
+            case Column::TEXT:
+                if (strpos($this->name, "json") === false)
+                    return $value;
+                // Falling through
+            case Column::JSON:
+                return json_decode($value, true);
+            default:
+                return $value;
+        }
+    }
+
+    public function beforeInsertFilter($value)
+    {
+        if ($value === null)
+            return null;
+
+        $tp = $this->getType();
+        switch ($tp)
+        {
+            case Column::BOOLEAN:
+                return $value ? 1 : 0;
+            case Column::DATETIME:
+                return $value->format("Y-m-d\TH:i:s");
+            case Column::DATETIMETZ:
+                return $value->format(\DateTime::ATOM);
+            case Column::DATE:
+                return $value->format("Y-m-d");
+            case Column::TIME:
+                return $value->format("H:i:s");
+            case Column::TEXT:
+                if (strpos($name, "json") === false)
+                    return $value;
+                // Falling through
+            case Column::JSON:
+                return json_encode($value);
+            default:
+                return $value;
+        }
     }
 
     public function toArray()
