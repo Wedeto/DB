@@ -33,6 +33,8 @@ class Select extends Query
     protected $table;
     protected $joins = array();
     protected $where;
+    protected $groupby = null;
+    protected $union = null;
     protected $order;
     protected $limit;
     protected $offset;
@@ -55,10 +57,16 @@ class Select extends Query
             $this->where = $clause;
         elseif ($clause instanceof TableClause)
             $this->table = $clause;
-        elseif ($clause instanceof GetClause)
+        elseif ($clause instanceof FieldAlias)
             $this->fields[] = $clause;
+        elseif ($clause instanceof FieldName)
+            $this->fields[] = new FieldAlias($clause, "");
         elseif ($clause instanceof JoinClause)
             $this->joins[] = $clause;
+        elseif ($clause instanceof GroupByClause)
+            $this->groupby = $clause;
+        elseif ($clause instanceof UnionClause)
+            $this->union = $clause;
         elseif ($clause instanceof OrderClause)
             $this->order = $clause;
         elseif ($clause instanceof LimitClause)
@@ -104,6 +112,18 @@ class Select extends Query
         return $this->add($offset);
     }
 
+    public function groupBy($clause)
+    {
+        if (!($clause instanceof GroupByClause))
+            $clause = new GroupByClause($clause);
+        return $this->add($clause);
+    }
+    
+    public function setUnion(UnionClause $union)
+    {
+        $this->union = $union;
+    }
+
     public function getFields()
     {
         return $this->fields;
@@ -122,6 +142,16 @@ class Select extends Query
     public function getWhere()
     {
         return $this->where;
+    }
+
+    public function getGroupBy()
+    {
+        return $this->groupby;
+    }
+
+    public function getUnion()
+    {
+        return $this->union;
     }
 
     public function getOrder()

@@ -25,59 +25,33 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-class JoinClause extends Clause
+class HavingClause extends Clause
 {
-    protected $table;
     protected $condition;
-    protected $type;
 
-    protected static $valid_types = array(
-        'LEFT' => 'LEFT OUTER',
-        'RIGHT' => 'RIGHT OUTER',
-        'FULL' => 'FULL OUTER',
-        'INNER' => 'INNER',
-        'CROSS' => 'CROSS'
-    );
-
-    public function __construct(string $type, $table, Expression $expression)
+    public function __construct($condition)
     {
-        if (!in_array($type, self::$valid_types))
-            throw new \InvalidArgumentException("Invalid join type: " . \WASP\str($type));
-
-        $this->type = $type;
-        if (is_string($table))
-        {
-            $this->table = new SourceTableClause($table);
-        }
-        elseif ($table instanceof SourceTableClause)
-        {
-            $this->table = $table;
-        }
-        elseif ($table instanceof TableClause)
-        {
-            $this->table = new SourceTableClause($table->getTable());
-        }
-        else
-        {
-            throw new \DomainException("Invalid table type: " . \WASP\str($table));
-        }
-
-        $this->condition = $expression;
+        $this->setCondition($condition);
     }
 
-    public function getTable()
+    public function setCondition($expression)
     {
-        return $this->table;
+        if (empty($condition))
+            throw new \InvalidArgumentException("Provide HAVING condition");
+
+        if (!(is_string($condition) || $condition instanceof Expression))
+        {
+            throw new \InvalidArgumentException(
+                "Invalid HAVING condition: " . \WASP\str($condition)
+            );
+        }
+            
+        $this->condition = self::toExpression($condition);
+        return $this;
     }
 
     public function getCondition()
     {
         return $this->condition;
     }
-
-    public function getType()
-    {
-        return $this->type;
-    }
 }
-

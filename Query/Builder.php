@@ -30,11 +30,19 @@ class Builder
     public static function select()
     {
         $s = new Select;
+        $non_field = false;
         foreach (func_get_args() as $arg)
         {
             $arg = \WASP\cast_array($arg);
             foreach ($arg as $arg_val)
+            {
+                if (!is_string($val) && !($arg instanceof FieldName) && !($arg instanceof FieldAlias))
+                    $non_field = true;
+                if ($non_field === false && is_string($arg))
+                    $arg new new FieldName($arg);
+
                 $s->add($arg_val);
+            }
         }
 
         return $s;
@@ -141,9 +149,9 @@ class Builder
         return $cl;
     }
 
-    public static function get($expression, $alias = "")
+    public static function alias($expression, string $alias)
     {
-        return new GetClause($expression, $alias);
+        return new FieldAlias($expression, $alias);
     }
 
     public static function field($field, $table = null)
@@ -261,5 +269,33 @@ class Builder
     public static function calc($operator, $lhs, $rhs)
     {
         return self::arithmetic($operator, $lhs, $rhs);
+    }
+
+    public static function groupBy(...$parameters)
+    {
+        return new GroupBy($parameters);
+    }
+
+    public static function having($condition)
+    {
+        return new HavingClause($condition);
+    }
+
+    public static function union(Select $union)
+    {
+        return new UnionClause("DISTINCT", $union);
+    }
+
+    public static function unionAll(Select $union)
+    {
+        return new UnionClause("ALL", $union);
+    }
+
+    public static function subquery(Select $query, $alias = null)
+    {
+        if (!empty($alias))
+            return new FieldAlias(new SubQuery($query), $alias);
+
+        return new SubQuery($query);
     }
 }

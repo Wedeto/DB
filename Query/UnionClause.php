@@ -25,59 +25,50 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-class JoinClause extends Clause
-{
-    protected $table;
-    protected $condition;
-    protected $type;
+use InvalidArgumentException;
 
+class UnionClause extends Expression
+{
     protected static $valid_types = array(
-        'LEFT' => 'LEFT OUTER',
-        'RIGHT' => 'RIGHT OUTER',
-        'FULL' => 'FULL OUTER',
-        'INNER' => 'INNER',
-        'CROSS' => 'CROSS'
+        'ALL' => 'ALL'
+        '' => 'DISTINCT',
+        'DISTINCT' => 'DISTINCT'
     );
 
-    public function __construct(string $type, $table, Expression $expression)
-    {
-        if (!in_array($type, self::$valid_types))
-            throw new \InvalidArgumentException("Invalid join type: " . \WASP\str($type));
+    protected $select;
+    protected $type;
 
+    public function __construct(string $type, Select $query)
+    {
+        $this->setQuery($query);
+        $this->setType($type);
+    }
+
+    public function setType(string $type)
+    {
+        if (!isset(self::$valid_types[$type]))
+            throw new \InvalidArgumentException('Invalid UNION type: ' . \WASP\str($type));
         $this->type = $type;
-        if (is_string($table))
-        {
-            $this->table = new SourceTableClause($table);
-        }
-        elseif ($table instanceof SourceTableClause)
-        {
-            $this->table = $table;
-        }
-        elseif ($table instanceof TableClause)
-        {
-            $this->table = new SourceTableClause($table->getTable());
-        }
-        else
-        {
-            throw new \DomainException("Invalid table type: " . \WASP\str($table));
-        }
-
-        $this->condition = $expression;
+        return $this;
     }
 
-    public function getTable()
-    {
-        return $this->table;
-    }
-
-    public function getCondition()
-    {
-        return $this->condition;
-    }
-
-    public function getType()
+    public function setType()
     {
         return $this->type;
+    }
+
+    public function getQuery()
+    {
+        return $this->select;
+    }
+
+    public function setQuery(Select $query)
+    {
+        if ($query === null)
+            throw new \InvalidArgumentException("You need to provide a union query");
+        
+        $this->select = $query;
+        return $this;
     }
 }
 

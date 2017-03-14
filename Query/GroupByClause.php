@@ -25,26 +25,54 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
-use InvalidArgumentException;
-
-class GetClause extends Clause
+class GroupByClause extends Clause
 {
-    protected $expression;
-    protected $alias;
+    protected $groups;
+    protected $having;
 
-    public function __construct($exp, string $alias = "")
+    public function __construct(...$conditions)
     {
-        $this->expression = $this->toExpression($exp, false);
-        $this->alias = $alias;
+        if (count($conditions) === 0)
+            throw new \InvalidArgumentException("Specify at least one group by condition");
+
+        $conditions = \WASP\flatten_array($conditions);
+        foreach ($conditions as $condition)
+        {
+            if ($condition instanceof HavingClause)
+            {
+                $this->setHaving($condition);
+            }
+            elseif (is_string($condition) || $condition instanceof Expression)
+            {
+                $this->addGroup(self::toExpression($condition, false));
+            }
+            else
+            {
+                throw new \InvalidArgumentException(
+                    "Invalid parameter: " . \WASP\str($condition)
+                );
+            }
+        }
     }
 
-    public function getExpression()
+    public function setHaving(HavingClause $having)
     {
-        return $this->expression;
+        $this->having = $having;
     }
 
-    public function getAlias()
+    public function addGroup(Expression $expression)
     {
-        return $this->alias;
+        $this->groups[] = $expression;
+        return $this;
+    }
+
+    public function getGroups()
+    {
+        return $this->conditions;
+    }
+
+    public function getHaving()
+    {
+        return $this->having;
     }
 }
