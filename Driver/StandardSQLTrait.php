@@ -279,6 +279,9 @@ trait StandardSQLTrait
 
         if ($where = $query->getWhere())
             $parts[] = $this->whereToSQL($params, $where);
+
+        if ($union = $query->getUnion())
+            $parts[] = $this->unionToSQL($params, $union);
         
         if ($order = $query->getOrder())
             $parts[] = $this->orderToSQL($params, $order);
@@ -459,6 +462,49 @@ trait StandardSQLTrait
             return $sql . ' AS ' . $params->getDB()->identQuote($alias);
         else
             return $sql;
+    }
+
+    /**
+     * Write a UNION clause as SQL query synta
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @return string The generated SQL
+     */
+    public function unionToSQL(Parameters $params, UnionClause $union)
+    {
+        $q = $union->getQuery();
+        $t = $union->getType();
+
+        return $t . ' (' . $this->selectToSQL($params, $q) . ')';
+    }
+
+    /**
+     * Write a GROUPBY clause as SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @param GroupByClause $groupby The GROUP BY clause
+     * @return string The generated SQL
+     */
+    public function groupbyToSQL(Parameters $params, GroupByClause $groupby)
+    {
+        $groups = $groupby->getGroups();
+        $having = $groupby->getHaving();
+
+        if (count($groups) === 0)
+            throw new \InvalidArgumentException("No groups in GROUP BY clause");
+
+        $parts = array();
+        foreach ($groups as $group)
+        {
+            $parts[] = $this->toSQL($group);
+        }
+        
+        $having = !empty($having) ? $this->havingToSQL($params, $having) : "";
+
+        return "GROUP BY " . implode(", ", $parts) . $having;
+    }
+
+    public function havingToSQL(Parameters $params, HavingClause $having)
+    {
+        return "HAVING " . $this->toSQL($params, $cond);
     }
 
     /**
