@@ -41,7 +41,7 @@ class JoinClause extends Clause
 
     public function __construct(string $type, $table, Expression $expression)
     {
-        if (!in_array($type, self::$valid_types))
+        if (!array_key_exists($type, self::$valid_types))
             throw new \InvalidArgumentException("Invalid join type: " . \WASP\str($type));
 
         $this->type = $type;

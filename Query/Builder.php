@@ -39,7 +39,7 @@ class Builder
                 if (!is_string($val) && !($arg instanceof FieldName) && !($arg instanceof FieldAlias))
                     $non_field = true;
                 if ($non_field === false && is_string($arg))
-                    $arg new new FieldName($arg);
+                    $arg = new FieldName($arg);
 
                 $s->add($arg_val);
             }
