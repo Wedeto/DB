@@ -43,9 +43,6 @@ class SubQuery extends Expression
 
     public function setQuery(Select $query)
     {
-        if ($query === null)
-            throw new \InvalidArgumentException("You need to provide a subquery");
-        
         $this->select = $query;
         return $this;
     }

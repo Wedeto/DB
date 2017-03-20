@@ -68,7 +68,7 @@ class GroupByClause extends Clause
 
     public function getGroups()
     {
-        return $this->conditions;
+        return $this->groups;
     }
 
     public function getHaving()

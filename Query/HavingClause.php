@@ -34,7 +34,7 @@ class HavingClause extends Clause
         $this->setCondition($condition);
     }
 
-    public function setCondition($expression)
+    public function setCondition($condition)
     {
         if (empty($condition))
             throw new \InvalidArgumentException("Provide HAVING condition");
@@ -46,7 +46,7 @@ class HavingClause extends Clause
             );
         }
             
-        $this->condition = self::toExpression($condition);
+        $this->condition = self::toExpression($condition, false);
         return $this;
     }
 

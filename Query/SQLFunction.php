@@ -30,14 +30,16 @@ class SQLFunction extends Expression
     protected $func;
     protected $arguments = array();
 
-    public function __construct(string $func)
+    public function __construct(string $func, ...$args)
     {
         $this->func = $func;
+        foreach ($args as $arg)
+            $this->addArgument($arg);
     }
 
     public function addArgument($argument)
     {
-        $this->arguments[] = $this->toExpression($argument, true);
+        $this->arguments[] = $this->toExpression($argument, false);
         return $this;
     }
 

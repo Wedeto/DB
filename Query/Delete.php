@@ -52,7 +52,7 @@ class Delete extends Query
             elseif (is_string($table))
                 $table = new SourceTableClause($table);
             else
-                throw new \InvalidArgumentException("Invalid table: " . $table);
+                throw new \InvalidArgumentException("Invalid table: " . \WASP\str($table));
         }
         $this->table = $table;
     }

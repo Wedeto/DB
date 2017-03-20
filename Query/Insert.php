@@ -26,6 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace WASP\DB\Query;
 
 use DomainException;
+use WASP\DB\DAO;
 
 class Insert extends Query
 {
@@ -60,7 +61,7 @@ class Insert extends Query
         }
 
         if (!empty($idfield))
-            $this->id_field = $idfield;
+            $this->setIDField($idfield);
     }
 
     public function updateOnDuplicateKey(...$index_fields)
@@ -79,11 +80,19 @@ class Insert extends Query
 
     public function setIDField(string $id_field)
     {
-        if (in_array($id_field, $this->fields, true) !== false)
-            throw new \InvalidArgumentException("Refusing to insert with predefined ID");
+        foreach ($this->fields as $fld)
+        {
+            if ($fld->getField() === $id_field)
+                throw new \InvalidArgumentException("Refusing to insert with predefined ID");
+        }
 
         $this->id_field = $id_field;
         return $this;
+    }
+
+    public function getIDField()
+    {
+        return $this->id_field;
     }
 
     public function getFields()

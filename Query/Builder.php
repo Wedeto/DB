@@ -36,10 +36,10 @@ class Builder
             $arg = \WASP\cast_array($arg);
             foreach ($arg as $arg_val)
             {
-                if (!is_string($val) && !($arg instanceof FieldName) && !($arg instanceof FieldAlias))
+                if (!is_string($arg_val) && !($arg_val instanceof FieldName) && !($arg_val instanceof FieldAlias))
                     $non_field = true;
-                if ($non_field === false && is_string($arg))
-                    $arg = new FieldName($arg);
+                if ($non_field === false && is_string($arg_val))
+                    $arg_val = new FieldName($arg_val);
 
                 $s->add($arg_val);
             }

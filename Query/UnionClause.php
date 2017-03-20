@@ -30,7 +30,7 @@ use InvalidArgumentException;
 class UnionClause extends Expression
 {
     protected static $valid_types = array(
-        'ALL' => 'ALL'
+        'ALL' => 'ALL',
         '' => 'DISTINCT',
         'DISTINCT' => 'DISTINCT'
     );
@@ -48,11 +48,11 @@ class UnionClause extends Expression
     {
         if (!isset(self::$valid_types[$type]))
             throw new \InvalidArgumentException('Invalid UNION type: ' . \WASP\str($type));
-        $this->type = $type;
+        $this->type = self::$valid_types[$type];
         return $this;
     }
 
-    public function setType()
+    public function getType()
     {
         return $this->type;
     }
@@ -64,9 +64,6 @@ class UnionClause extends Expression
 
     public function setQuery(Select $query)
     {
-        if ($query === null)
-            throw new \InvalidArgumentException("You need to provide a union query");
-        
         $this->select = $query;
         return $this;
     }
