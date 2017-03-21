@@ -27,52 +27,33 @@ namespace WASP\DB\Query;
 
 use WASP\DB\DB;
 
-class TableClause extends Clause
+class SourceSubQuery extends SourceTableClause
 {
-    protected $table;
-    protected $alias = null;
-    protected $dont_prefix = false;
+    protected $query;
 
-    public function __construct(string $table)
+    public function __construct(Clause $subquery, string $alias)
     {
-        $this->setTable($table);
+        if (empty($alias))
+            throw new \InvalidArgumentException("Subqueries must have an alias");
+
+        $this->setSubQuery($subquery);
+        $this->setAlias($alias);
     }
 
-    public function getPrefix()
+    public function setSubQuery(Clause $subquery)
     {
-        return $this->alias ?: $this->table;
-    }
+        if ($subquery instanceof Select)
+            $subquery = new SubQuery($subquery);
 
-    public function getTable()
-    {
-        return $this->table;
-    }
+        if (!($subquery instanceof SubQuery))
+            throw new \DomainException("Provide a subquery as argument to SourceSubQuery, not: " . \WASP\str($subquery));
 
-    public function setTable(string $table)
-    {
-        $this->table = $table;
+        $this->query = $subquery;
         return $this;
     }
 
-    public function setAlias(string $alias)
+    public function getSubQuery()
     {
-        $this->alias = $alias;
-        return $this;
-    }
-
-    public function getAlias()
-    {
-        return $this->alias;
-    }
-    
-    public function setDisablePrefixing($dont_prefix = true)
-    {
-        $this->dont_prefix = $dont_prefix;
-        return $this;
-    }
-
-    public function getDisablePrefixing()
-    {
-        return $this->dont_prefix;
+        return $this->query;
     }
 }

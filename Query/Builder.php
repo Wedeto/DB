@@ -159,9 +159,9 @@ class Builder
         return new FieldName($field, $table);
     }
 
-    public static function func($func)
+    public static function func($func, ...$args)
     {
-        return new SQLFunction($func);
+        return new SQLFunction($func, $args);
     }
 
     public static function table($table, $alias = "")

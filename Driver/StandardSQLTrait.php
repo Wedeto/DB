@@ -173,6 +173,18 @@ trait StandardSQLTrait
      */
     public function tableToSQL(Parameters $params, TableClause $table)
     {
+        if ($table instanceof SourceSubQuery)
+        {
+            $subquery = $table->getSubQuery();
+            $alias = $table->getAlias();
+
+            if (!empty($alias))
+                throw new DBException("A subquery must have an alias");
+
+            $sql = $this->subqueryToSQL($params, $subquery);
+            return $sql . ' AS ' . $this->identQuote($alias);
+        }
+
         $name = $table->getTable();
         $alias = $table->getAlias();
         $prefix_disabled = $table->getDisablePrefixing();

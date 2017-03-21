@@ -29,16 +29,13 @@ use WASP\DB\DB;
 
 class SourceTableClause extends TableClause
 {
-    protected $name;
-    protected $alias;
-
-    public function __construct($name, string $alias = "")
+    public function __construct($table, string $alias = "")
     {
-        if (is_string($name))
-            $this->name = $name;
-        elseif ($name instanceof TableClause)
-            $this->name = $name->name;
+        if (is_string($table))
+            $this->setTable($table);
+        elseif ($table instanceof TableClause)
+            $this->setTable($table->getTable());
 
-        $this->alias = $alias;
+        $this->setAlias($alias);
     }
 }
