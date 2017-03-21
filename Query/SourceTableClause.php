@@ -32,9 +32,13 @@ class SourceTableClause extends TableClause
     protected $name;
     protected $alias;
 
-    public function __construct(string $name, string $alias = "")
+    public function __construct($name, string $alias = "")
     {
-        $this->name = $name;
+        if (is_string($name))
+            $this->name = $name;
+        elseif ($name instanceof TableClause)
+            $this->name = $name->name;
+
         $this->alias = $alias;
     }
 }

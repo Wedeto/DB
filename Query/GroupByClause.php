@@ -58,6 +58,7 @@ class GroupByClause extends Clause
     public function setHaving(HavingClause $having)
     {
         $this->having = $having;
+        return $this;
     }
 
     public function addGroup(Expression $expression)

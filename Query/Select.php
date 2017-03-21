@@ -26,6 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace WASP\DB\Query;
 
 use DomainException;
+use WASP\DB\DBException;
 
 class Select extends Query
 {
@@ -39,15 +40,43 @@ class Select extends Query
     protected $limit;
     protected $offset;
 
+    /**
+     * Form a COUNT-query: a query that has the same conditions but
+     * only counts the number of matching rows.
+     *
+     * This function only works for queries that do not use GROUP BY
+     * or UNION DISTINCT, because those queries make it impossible to 
+     *
+     * For UNION DISTINCT: you probably want to get the count query of the main
+     * query and the UNION query separately and add them together, but you are
+     * still counting duplicates then. Switching to UNION ALL makes this function work.
+     *
+     * For GROUP BY: you need to find what count you actually need - there is no
+     * direct link between the number of rows in the table and the number of rows in the result.
+     */
     public static function countQuery(Select $query)
     {
+        if ((!empty($query->union) && $query->union->getType() !== "ALL") || !empty($query->groupby))
+            throw new DBException("Forming count query for queries including group by or union distinct is not supported");
+
         $cq = new Select;
         $count_func = new SQLFunction("COUNT");
         $count_func->addArgument(new Wildcard());
-        $cq->fields = array(new getClause($count_func));
+        $cq->fields = array(new FieldAlias($count_func, "COUNT"));
         $cq->table = $query->table;
         $cq->joins = $query->joins;
         $cq->where = $query->where;
+
+        if (!empty($query->union))
+        {
+            $rcq = self::countQuery($query->union->getQuery());
+            
+            $main_q = new Select;
+            $add_q = new ArithmeticOperator("+", new SubQuery($cq), new SubQuery($rcq));
+            $main_q->add(new FieldAlias($add_q, "COUNT"));
+            return $main_q;
+        }
+
         return $cq;
     }
 
@@ -115,7 +144,7 @@ class Select extends Query
     public function groupBy($clause)
     {
         if (!($clause instanceof GroupByClause))
-            $clause = new GroupByClause($clause);
+            $clause = new GroupByClause(func_get_args());
         return $this->add($clause);
     }
     
