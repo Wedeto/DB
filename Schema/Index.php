@@ -73,10 +73,11 @@ class Index implements \Serializable, \JSONSerializable
         $args = func_get_args();
         foreach ($args as $column)
         {
+            if ($column instanceof Column)
+                $column = $column->getName();
+
             if (is_string($column))
-                $this->columns[] = $column;
-            elseif ($column instanceof Column)
-                $this->columns[] = $column->getName();
+                $this->columns[$column] = $column;
             else
                 throw new DBException("Invalid column for index");
         }

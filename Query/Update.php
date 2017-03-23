@@ -69,6 +69,11 @@ class Update extends Query
         $this->table = $table;
     }
 
+    public function where($condition)
+    {
+        $this->where = new WhereClause($condition);
+    }
+
     public function getTable()
     {
         return $this->table;

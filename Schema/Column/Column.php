@@ -77,7 +77,9 @@ class Column implements \Serializable, \JSONSerializable
         $this->max_length = $max_length;
         $this->numeric_precision = $numeric_precision;
         $this->numeric_scale = $numeric_scale;
+        var_dump($nullable);
         $this->nullable = \WASP\parse_bool($nullable);
+        var_dump($this->nullable);
         $this->default = $default;
         $this->serial = $serial == true;
     }
@@ -191,7 +193,7 @@ class Column implements \Serializable, \JSONSerializable
     public function validate($value)
     {
         if ($value === null && !$this->is_nullable)
-            throw new DBException("Column {$this->name} must not be null");
+            throw new DBException("Column must not be null: {$this->name}");
 
         $tp = $this->getType();
         switch ($tp)
@@ -263,7 +265,11 @@ class Column implements \Serializable, \JSONSerializable
     public function beforeInsertFilter($value)
     {
         if ($value === null)
+        {
+            if (!$this->isNullabe())
+                throw new DBException("Column must not be null: {$this->name}");
             return null;
+        }
 
         $tp = $this->getType();
         switch ($tp)
@@ -314,7 +320,7 @@ class Column implements \Serializable, \JSONSerializable
     {
         $args = self::parseArray($data);
         extract($args);
-        $col = new Column($name, $type, $max_length, $is_nullable, $column_default, $numeric_precision, $numeric_scale, $serial);
+        $col = new Column($name, $type, $max_length, $numeric_precision, $numeric_scale, $is_nullable, $column_default, $serial);
         if (isset($enum_values) && $type === Column::ENUM)
             $col->setEnumValues($enum_values);
         return $col;
@@ -325,13 +331,13 @@ class Column implements \Serializable, \JSONSerializable
         return array(
             'name' => $data['column_name'],
             'type' => self::strToType($data['data_type']),
-            'max_length' => isset($data['character_maximum_length']),
+            'max_length' => $data['character_maximum_length'] ?? null,
             'is_nullable' => isset($data['is_nullable']) ? $data['is_nullable'] == true : false,
-            'column_default' => isset($data['column_default']) ? $data['column_default'] : null,
-            'numeric_precision' => isset($data['numeric_precision']) ? $data['numeric_precision'] : null,
-            'numeric_scale' => isset($data['numeric_scale']) ? $data['numeric_scale'] : null,
+            'column_default' => $data['column_default'] ?? null,
+            'numeric_precision' => $data['numeric_precision'] ?? null,
+            'numeric_scale' => $data['numeric_scale'] ?? null,
             'serial' => isset($data['serial']) ? $data['serial'] == true : false,
-            'enum_values' => isset($data['enum_values']) ? $data['enum_values'] : null
+            'enum_values' => $data['enum_values'] ?? null
         );
     }
 
@@ -347,9 +353,10 @@ class Column implements \Serializable, \JSONSerializable
 
     public function unserialize($data)
     {
+        $data = unserialize($data);
         $args = self::parseArray($data);
         extract($args);
-        $this->__construct($name, $type, $max_length, $is_nullable, $column_default, $numeric_precision, $numeric_scale, $serial);
+        $this->__construct($name, $type, $max_length, $numeric_precision, $numeric_scale, $is_nullable, $column_default, $serial);
         if (isset($enum_values) && $type === Column::ENUM)
             $this->setEnumValues($col['enum_values']);
         return $col;

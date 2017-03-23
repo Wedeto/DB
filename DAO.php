@@ -32,6 +32,7 @@ use WASP\Auth\ACL\Entity;
 use WASP\DB\Query;
 use WASP\DB\Query\Builder as QB;
 use WASP\DB\Schema\Column\Column;
+use WASP\DB\Schema\Index;
 
 /**
  * DAO (Data Access Object) allows for simple persistence of PHP objects to
@@ -58,20 +59,17 @@ abstract class DAO
     /** The database connection */
     protected static $db_connections = array();
 
-    /** Override to set the name of the ID field */
-    protected static $idfield = "id";
-
     /** Subclasses should override this to set the name of the table */
     protected static $table = null;
 
-    /** The ID value */
+    /** The value for the primary key columns */
     protected $id;
     
     /** The database record */
     protected $record;
 
     /** The altered fields */
-    protected $changed;
+    protected $changed = array();
 
     /** The associated ACL entity */
     protected $acl_entity = null;
@@ -124,8 +122,57 @@ abstract class DAO
      */
     public static function getColumns(DB $database = null)
     {
-        $table = static::getTable($database);
-        return $table->getColumns();
+        return static::getTable($database ?: static::db());
+    }
+
+    /**
+     * @param WASP\DB\DB $database The database to get the primary key from. If
+     *                             null, the default is used.
+     * @return array Associative array with column names as keys and their
+     *               column definitions as value.
+     */
+    public static function getPrimaryKey(DB $database = null)
+    {
+        return static::getTable($database ?: static::db())->getPrimaryColumns();
+    }
+
+    /**
+     * Form a condition that matches the record using the values in the provided record.
+     * @param array $pkey The column names in the primary key
+     * @param array $record The record to match
+     */
+    public static function getSelector($pkey, array $record)
+    {
+        if ($pkey !== null && !is_array($pkey))
+            throw new \InvalidArgumentException("Invalid primary key: " . \WASP\str($pkey));
+
+        // When no primary key is available, we match on all fields
+        $is_primary_key = true;
+        if ($pkey === null)
+        {
+            $table = static::getTable();
+            $pkey = array();
+            foreach ($record as $k => $v)
+                $pkey[$k] = $table->getColumn($v);
+            $is_primary_key = false;
+        }
+
+        // Make sure there are fields to match on
+        if (empty($pkey))
+            throw new \InvalidArgumentException("No fields to match on");
+
+        $condition = null;
+        foreach ($pkey as $pkey_column => $coldef)
+        {
+            if ($is_primary_key && (!array_key_exists($pkey_column, $record) || $record[$pkey_column] === null))
+                throw new DAOException("Record does not have value for primary key column {$pkey_column}");
+            
+            $pkey_value = $coldef->beforeInsertFilter($record[$pkey_column]);
+            $comparator = new Query\ComparisonOperator("=", $pkey_column, $pkey_value);
+            $condition = $condition === null ? $comparator : new Query\BooleanOperator("AND", $condition, $comparator);
+        }
+
+        return $condition;
     }
 
     /**
@@ -163,25 +210,37 @@ abstract class DAO
      */
     public function getSourceDB()
     {
-        if ($this->source_db === null)
-            $this->setSourceDB(static::db());
-
         return $this->source_db;
     }
 
     /**
      * Save the current record to the database.
+     * @param WASP\DB\DB $database The database to save to. When you specify this,
+     *                             an insert is implied. When not specified,
+     *                             the source database is used to update, when
+     *                             availabe, and the default database is used
+     *                             to insert when no source database is
+     *                             available.
      * @return WASP\DB\DAO Provides fluent interface
      */
     public function save(DB $database = null)
     {
+        $insert = $database !== null;
         if ($database === null)
             $database = $this->getSourceDB();
 
-        $idf = static::$idfield;
-        if (isset($this->record[$idf]))
+        if ($database === null)
+        {
+            $insert = true;
+            $database = static::db();
+        }
+
+        if (!$insert)
         {
             // Update the current record
+            if (empty($this->changed))
+                return $this;
+
             $changes = array();
             foreach ($this->changed as $field => $v)
                 $changes[$field] = $this->record[$field];
@@ -203,15 +262,33 @@ abstract class DAO
 
     /** 
      * Load the record from the database
+     * @param mixed $id The record to load, indicating the primary key. The
+     *                  type should match the primary key: scalar for unary
+     *                  primary keys, associative array for combined primary
+     *                  keys.
+     * @param WASP\DB\DB $database The database load from. This is set as
+     *                             source database. When not specified, the
+     *                             default database is used.
      */
     protected function load($id, DB $database = null)
     {
         if ($database === null)
             $database = static::db();
-        $idf = static::$idfield;
-        $rec = static::fetchSingle(QB::where(array($idf => $id)), $database);
+
+        $pkey = static::getTable($database)->getPrimaryColumns();
+        if ($pkey === null)
+            throw new DAOException("A primary key is required to select a record by ID");
+
+        // If there's a unary primary key, the value can be specified as a
+        // single scalar, rather than an array
+        if (count($pkey) === 1 && is_scalar($id))
+            foreach ($pkey as $colname => $def)
+                $id[$col] = $id;
+
+        $condition = static::getSelector($pkey, $id);
+        $rec = static::fetchSingle(QB::where($condition), $database);
         if (empty($rec))
-            throw new DAOEXception("Object not found with $id");
+            throw new DAOEXception("Object not found with " . \WASP\str($id));
 
         $this->assignRecord($rec, $database);
     }
@@ -222,13 +299,23 @@ abstract class DAO
      * @param WASP\DB\DB $database The database this record comes from
      * @return WASP\DB\DAO Provides fluent interface
      */
-    public function assignRecord(array $record, DB $database = null)
+    public function assignRecord(array $record, DB $database)
     {
         if ($database === null)
             $database = static::db();
 
-        $this->id = isset($record[static::$idfield]) ? $record[static::$idfield] : null;
+        $pkey = static::getTable($database)->getPrimaryColumns();
+        if ($pkey !== null)
+        {
+            $this->id = array();
+            foreach ($pkey as $col)
+                $this->id[$col->getName()] = $record[$col->getName()];
+        }
+        else
+            $this->id = null;
+
         $this->record = $record;
+        $this->changed = array();
         $this->setSourceDB($database);
         $this->init();
 
@@ -244,15 +331,19 @@ abstract class DAO
     }
 
     /**
-     * Remove the current record from the database
+     * Remove the current record from the database it was retrieved from.
      */
     public function remove()
     {
-        $idf = static::$idfield;
-        if ($this->id === null)
-            throw new DAOException("Object does not have a ID");
+        $db = $this->getSourceDB();
 
-        static::delete(array($idf => $this->id));
+        if ($db === null)
+            throw new DAOException("No database to remove this record from - it appears as not saved");
+
+        $pkey = static::getTable($db)->getPrimaryColumns();
+        $condition = static::getSelector($pkey, $this->id);
+
+        static::delete(new WhereClause($condition), $db);
         $this->id = null;
         $this->record = null;
         $this->removeACL();
@@ -268,36 +359,33 @@ abstract class DAO
     {}
 
     /**
-     * Initialize a single object from a database record or an ID.
+     * Initialize a single object from a ID
      *
-     * @param array|int $id The entry to initialize. If this is an integer, it
-     *                      is used to fetch a record with that ID from the 
-     *                      database. If it is an array, it is used as a
-     *                      database record directly.
+     * @param mixed $id The record to load, indicating the primary key. The
+     *                  type should match the primary key: scalar for simple
+     *                  primary keys, and array for combined primary keys.
      * @return An instance of the class this method is called on
      */
     public static function get($id, DB $database = null)
     {
         if ($database === null)
             $database = static::db();
+        $pkey = static::getTable($database)->getPrimaryColumns();
 
-        $idf = static::$idfield;
-        if (!\WASP\is_int_val($id))
-        {
-            if (!is_array($id) || empty($id[$idf]))
-                throw new DAOException("Cannot initialize object from " . \WASP\str($id));
-            $record = $id;
-            $id = $record[$idf];
-        }
-        else
-        {
-            $record = static::fetchSingle(array($idf => $id), $database);
-            if (empty($record))
-                return null;
-        }
+        if ($pkey === null)
+            throw new DAOException("Cannot fetch by ID without primary key");
 
-        $cl = static::class;
-        $obj = new $cl;
+        if (is_scalar($id) && count($pkey) === 1)
+            foreach ($pkey as $colname => $def)
+                $id = [$colname => $id];
+
+        $condition = self::getSelector($pkey, $id);
+        $record = static::fetchSingle(new Query\WhereClause($condition), $database);
+
+        if (empty($record))
+            return null;
+
+        $obj = new static;
         $obj->assignRecord($record, $database);
         return $obj;
     }
@@ -311,10 +399,33 @@ abstract class DAO
     public static function getAll(...$args)
     {
         $list = array();
+        $db = self::getDBFromList($args) ?: static::db();
         $records = static::fetchAll($args);
         foreach ($records as $record)
-            $list[] = static::get($record);
+        {
+            $obj = new static;
+            $obj->assignRecord($record, $db);
+            $list[] = $obj;
+        }
         return $list;
+    }
+
+    /** 
+     * Find a database object in a set of arguments
+     * @param array $args The list of arguments that may contain a DB object
+     * @return WASP\DB\DB The database object if found, false otherwise.
+     */
+    protected static function getDBFromList(array $args)
+    {
+        foreach ($args as $arg)
+        {
+            if (is_array($arg))
+                $arg = static::getDBFromList($arg);
+
+            if ($arg instanceof DB)
+                return $arg;
+        }
+        return null;
     }
 
     /**
@@ -385,23 +496,36 @@ abstract class DAO
     /**
      * Update records in the database.
      *
+     * @param mixed $id The values for the primary key to select the record to update
      * @param array $record The record to update. Should contain key/value pairs where
      *                      keys are fieldnames, values are the values to update them to.
-     *                      Should also contain the ID field specified by static::$idfield,
+     *                      Should also contain the value for the primary key.
      *                      which will be used to find the record to be updated.
      * @param WASP\DB\DB $database The DB on which to perform the operation
      */
-    public static function update($id, array $record, DB $database = null)
+    public static function update($id, array $record, DB $database)
     {
-        $idf = static::$idfield;
-        if ($database === null)
-            $database = static::db();
+        $table = static::getTable($database);
+        $columns = $table->getColumns();
+
+        $pkey = $table->getPrimaryColumns();
+        if ($pkey === null)
+            throw new DAOException("Cannot update record without primary key");
+
+        if (is_scalar($id) && count($pkey) === 1)
+            foreach ($pkey as $colname => $def)
+                $id = [$colname => $def];
+
+        $condition = static::getSelector($pkey, $id);
+
+        // Remove primary key from the to-be-updated fields
+        foreach ($pkey as $column)
+            unset($record[$column->getName()]);
 
         $update = new Query\Update;
         $update->add(new Query\SourceTableClause(static::tablename()));
-        $update->add(new Query\WhereClause([static::$idfield => $id]));
+        $update->add(new Query\WhereClause($condition));
         
-        $columns = static::getColumns($database);
         foreach ($record as $field => $value)
         {
             if (!isset($columns[$field]))
@@ -422,14 +546,20 @@ abstract class DAO
      * @param array $record The record to insert. Keys should be fieldnames,
      *                      values the values to insert.
      * @param WASP\DB\DB $database The DB on which to perform the operation
-     * @return int The new row ID
+     * @return int A generated serial, if available
      */
-    protected static function insert(array &$record, DB $database = null)
+    protected static function insert(array &$record, DB $database)
     {
-        if ($database === null)
-            $database = static::db();
         $db_record = array();
-        $columns = static::getColumns($database);
+        $table = static::getTable($database);
+        $columns = $table->getColumns();
+
+        foreach ($columns as $field => $def)
+        {
+            if (!isset($record[$field]) && !$def->isNullable() && $def->getDefault() === null && !$def->getSerial())
+                throw new DBException("Column must not be null: {$field}");
+        }
+
         foreach ($record as $field => $value)
         {
             if (!isset($columns[$field]))
@@ -439,12 +569,30 @@ abstract class DAO
             $db_record[$field] = $coldef->beforeInsertFilter($value);
         }
 
-        $insert = new Query\Insert(static::tablename(), $db_record, static::$idfield);
+
+        $pkey = $table->getPrimaryColumns();
+        if ($pkey === null)
+            $pkey = [];
+        $insert = new Query\Insert(static::tablename(), $db_record, $pkey);
 
         $drv = $database->driver();
-        $id = $drv->insert($insert);
-        $record[static::$idfield] = $id;
-        return $id;
+        $drv->insert($insert, $pkey);
+            
+        // Store the potentially generated serial in the inserted record
+        $pkey_values = $insert->getInsertId();
+        foreach ($pkey as $pkey_column)
+        {
+            if (!$pkey_column->getSerial())
+                continue;
+
+            $colname = $pkey_column->getName();
+            if (!isset($pkey_values[$colname]))
+                throw new DAOException("No value generated for serial column {$colname}");
+
+            $record[$colname] = $pkey_values[$colname];
+        }
+
+        return $pkey_values;
     }
 
     /**
@@ -468,10 +616,18 @@ abstract class DAO
     }
 
     /**
-     * @return int The unique ID of this DAO.
+     * @return mixed The primary key values for this object. This is a single scalar
+     *               for unary primary keys, and an array of values for
+     *               compined primary keys.
      */
     public function getID()
     {
+        if (empty($this->id))
+            return null;
+
+        if (count($this->id) === 1)
+            return reset($this->id);
+
         return $this->id;
     }
 
@@ -499,9 +655,16 @@ abstract class DAO
         if (isset($this->record[$field]) && $this->record[$field] === $value)
             return;
 
-        $columns = static::getColumns($this->getSourceDB());
+        $db = $this->getSourceDB();
+        if ($db === null)
+            $db = static::db();
+
+        $table = static::getTable($db);
+        $columns = $table->getColumns();
         if (!isset($columns[$field]))
             throw new DAOException("Field $field does not exist!");
+
+        $pkey = $table->getPrimaryColumns();
 
         $coldef = $columns[$field];
         $coldef->validate($value);
@@ -609,9 +772,9 @@ abstract class DAO
             throw new \RuntimeException("Invalid DAO type: {$parts[0]}");
 
         $classname = self::$classes[$parts[0]];
-        $id = (int)$parts[1];
+        $pkey_values = explode("-", $id);
 
-        return new $classname($id);
+        return call_user_func(array($classname, "get"), $pkey_values);
     }
 
     /**
@@ -655,7 +818,7 @@ abstract class DAO
         if (isset(self::$classes[$name]))
             throw new \RuntimeException("Cannot register the same name twice");
 
-        $cl = get_called_class();
+        $cl = static::class;
         self::$classes[$name] = $cl;
         self::$classesnames[$cl] = $name;
     }

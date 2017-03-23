@@ -141,12 +141,12 @@ class Builder
         return new Direction("DESC", $operand);
     }
 
-    public static function order()
+    public static function order($order, ...$args)
     {
-        $cl = new OrderClause;
-        foreach (func_get_args() as $arg)
-            $cl->addClause($arg);
-        return $cl;
+        if (is_string($order) && count($args) === 0)
+            return new OrderClause(new CustomSQL($order));
+
+        return new OrderClause($args);
     }
 
     public static function alias($expression, string $alias)

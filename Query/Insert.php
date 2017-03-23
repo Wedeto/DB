@@ -30,7 +30,7 @@ use WASP\DB\DAO;
 
 class Insert extends Query
 {
-    protected $id_field;
+    protected $primary_key;
     protected $fields;
     protected $table;
     protected $values;
@@ -38,10 +38,10 @@ class Insert extends Query
 
     protected $inserted_id = null;
 
-    public function __construct($table, $record, string $idfield = "")
+    public function __construct($table, $record, array $primary_key = [])
     {
-        if (!($table instanceof TableClause))
-            $table = new TableClause($table);
+        if (!($table instanceof SourceTableClause))
+            $table = new SourceTableClause($table);
 
         if ($record instanceof DAO)
             $record = $record->getRecord();
@@ -60,8 +60,8 @@ class Insert extends Query
             $this->values[] = $value;
         }
 
-        if (!empty($idfield))
-            $this->setIDField($idfield);
+        if (!empty($primary_key))
+            $this->setPrimaryKey($primary_key);
     }
 
     public function updateOnDuplicateKey(...$index_fields)
@@ -78,21 +78,15 @@ class Insert extends Query
         return true;
     }
 
-    public function setIDField(string $id_field)
+    public function setPrimaryKey(array $primary_key)
     {
-        foreach ($this->fields as $fld)
-        {
-            if ($fld->getField() === $id_field)
-                throw new \InvalidArgumentException("Refusing to insert with predefined ID");
-        }
-
-        $this->id_field = $id_field;
+        $this->primary_key = $primary_key;
         return $this;
     }
 
-    public function getIDField()
+    public function getPrimaryKey()
     {
-        return $this->id_field;
+        return $this->primary_key;
     }
 
     public function getFields()
@@ -112,7 +106,18 @@ class Insert extends Query
 
     public function setInsertId($id)
     {
-        $this->inserted_id = $id;
+        if (is_scalar($id) && count($this->primary_key) === 1)
+            foreach ($this->primary_key as $field => $def)
+                $id = [$field => $id];
+
+        $inserted_id = array();
+        foreach ($this->primary_key as $field => $def)
+        {
+            if (isset($id[$field]))
+                $inserted_id[$field] = $id[$field];
+        }
+
+        $this->inserted_id = $inserted_id;
         return $this;
     }
 

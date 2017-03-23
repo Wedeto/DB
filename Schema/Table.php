@@ -42,6 +42,8 @@ class Table implements \Serializable, \JSONSerializable
     protected $indexes = array();
     protected $foreign_keys = array();
     protected $primary = null;
+    protected $primary_columns = null;
+    
 
     public function __construct($name)
     {
@@ -173,6 +175,20 @@ class Table implements \Serializable, \JSONSerializable
             }
         }
         return $this;
+    }
+
+    /**
+     * @return WASP\DB\Schema\Index The primary key columns
+     */
+    public function getPrimaryColumns()
+    {
+        if ($this->primary_columns === null && !empty($this->primary))
+        {
+            $this->primary_columns = [];
+            foreach ($this->primary->getColumns() as $col)
+                $this->primary_columns[$col] = $this->getColumn($col); 
+        }
+        return $this->primary_columns;
     }
 
     public function addIndex(Index $idx)

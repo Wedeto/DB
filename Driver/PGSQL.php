@@ -210,24 +210,34 @@ class PGSQL extends Driver
         return $st->rowCount();
     }
 
-    public function insert(Query\Insert $query, $id_field = null)
+    public function insert(Query\Insert $query, $pkey = null)
     {
         $parameters = new Parameters($this);
         $sql = $this->insertToSQL($parameters, $query);
 
-        $retval = !empty($id_field);
+        $retval = !empty($pkey);
         if ($retval)
-            $sql .= " RETURNING " . $this->identQuote($id_field);
+        {
+            $pkey_cols = array();
+            foreach ($pkey as $colname => $def)
+                $pkey_cols[] = $this->identQuote($colname);
+                
+            $sql .= " RETURNING " . implode(', ', $pkey_cols);
+        }
 
         $st = $this->db->prepare($sql);
         $st->execute($parameters->getParameters());
 
+        $id = null;
         if ($retval)
-            $query->setInsertId($st->fetchColumn(0));
+        {
+            $id = $st->fetch();
+            $query->setInsertId($id);
+        }
         else
-            $query->setInsertId($this->db->lastInsertId());
+            $id = $this->db->lastInsertId();
 
-        return $query->getInsertId();
+        return $id;
     }
 
     public function select(Query\Select $query)

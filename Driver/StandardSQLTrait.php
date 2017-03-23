@@ -35,6 +35,8 @@ use WASP\DB\Query\Direction;
 use WASP\DB\Query\EqualsOneOf;
 use WASP\DB\Query\FieldName;
 use WASP\DB\Query\GetClause;
+use WASP\DB\Query\GroupByClause;
+use WASP\DB\Query\HavingClause;
 use WASP\DB\Query\Insert;
 use WASP\DB\Query\JoinClause;
 use WASP\DB\Query\LimitClause;
@@ -48,6 +50,7 @@ use WASP\DB\Query\SQLFunction;
 use WASP\DB\Query\SubQuery;
 use WASP\DB\Query\Parameters;
 use WASP\DB\Query\TableClause;
+use WASP\DB\Query\UnionClause;
 use WASP\DB\Query\Update;
 use WASP\DB\Query\UpdateField;
 use WASP\DB\Query\WhereClause;
@@ -495,7 +498,7 @@ trait StandardSQLTrait
      * @param GroupByClause $groupby The GROUP BY clause
      * @return string The generated SQL
      */
-    public function groupbyToSQL(Parameters $params, GroupByClause $groupby)
+    public function groupByToSQL(Parameters $params, GroupByClause $groupby)
     {
         $groups = $groupby->getGroups();
         $having = $groupby->getHaving();

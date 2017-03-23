@@ -350,7 +350,7 @@ abstract class Driver
     abstract public function unionToSQL(Parameters $params, Query\UnionClause $expression);
     abstract public function tableToSQL(Parameters $params, Query\TableClause $table);
     abstract public function whereToSQL(Parameters $params, Query\WhereClause $where);
-    abstract public function groupByToSQL(Parameters $params, Query\WhereClause $where);
+    abstract public function groupByToSQL(Parameters $params, Query\GroupByClause $where);
     abstract public function havingToSQL(Parameters $params, Query\HavingClause $where);
 
     abstract public function deleteToSQL(Parameters $params, Query\Delete $query);

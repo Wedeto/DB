@@ -29,14 +29,21 @@ class OrderClause extends Clause
 {
     protected $clauses = array();
 
-    public function __construct($data = null)
+    public function __construct(...$args)
     {
-        if (is_array($data))
-            $this->initFromArray($data);
-        elseif (is_string($data) || $data instanceof Direction)
-            $this->addClause($data);
-        elseif (!empty($data))
-            throw new \InvalidArgumentException("Invalid order: " . \WASP\str($data));
+        $args = \WASP\flatten_array($args);
+
+        foreach ($args as $k => $arg)
+        {
+            if (is_array($arg))
+                $this->initFromArray($arg);
+            elseif (is_string($arg) && is_numeric($k))
+                $this->addClause(new Direction("ASC", $arg)); 
+            elseif (is_string($arg) || $arg instanceof Direction)
+                $this->addClause($arg);
+            else
+                throw new \InvalidArgumentException("Invalid order: " . \WASP\str($arg));
+        }
     }
 
     public function addClause($clause)
