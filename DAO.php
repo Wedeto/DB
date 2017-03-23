@@ -252,6 +252,7 @@ abstract class DAO
         {
             $this->id = static::insert($this->record, $database);
             $this->setSourceDB($database);
+            $this->changed = array();
 
             // ACL record should be initialized now that there is an ID
             $this->initACL();

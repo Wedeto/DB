@@ -285,7 +285,7 @@ class Column implements \Serializable, \JSONSerializable
             case Column::TIME:
                 return $value->format("H:i:s");
             case Column::TEXT:
-                if (strpos($name, "json") === false)
+                if (strpos($this->name, "json") === false)
                     return $value;
                 // Falling through
             case Column::JSON:
