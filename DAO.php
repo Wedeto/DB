@@ -35,6 +35,7 @@ use WASP\DB\Query;
 use WASP\DB\Query\Builder as QB;
 use WASP\DB\Schema\Column\Column;
 use WASP\DB\Schema\Index;
+use WASP\ACL\Rule;
 
 /**
  * DAO (Data Access Object) allows for simple persistence of PHP objects to
@@ -750,8 +751,8 @@ abstract class DAO
     {
         if ($this->acl_entity === null)
         {
-            if (class_exists("WASP\\ACL\\Rule", false))
-                return WASP\ACL\Rule::getDefaultPolicy();
+            if (class_exists(Rule::class, false))
+                return Rule::getDefaultPolicy();
 
             return true;
         }

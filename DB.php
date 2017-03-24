@@ -29,7 +29,7 @@ use PDO;
 
 use WASP\Util\Dictionary;
 use WASP\Log\LoggerAwareStaticTrait;
-use WASP\System;
+use WASP\Platform\System;
 use WASP\DB\Schema\Schema;
 
 /**
