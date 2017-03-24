@@ -25,9 +25,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB;
 
-use WASP\Config;
-use WASP\Dictionary;
 use PDO;
+
+use WASP\Util\Dictionary;
 use WASP\Log\LoggerAwareStaticTrait;
 use WASP\System;
 use WASP\DB\Schema\Schema;
@@ -53,7 +53,7 @@ class DB
     /**
      * Create a new DB object for a specific configuration set.
      *
-     * @param WASP\Dictionary $config The configuration for this connection
+     * @param WASP\Util\Dictionary $config The configuration for this connection
      */
     private function __construct(Dictionary $config)
     {
@@ -142,7 +142,7 @@ class DB
     /**
      * Get a DB object for the provided configuration
      *
-     * @param WASP\Dictionary $config The configuration used to connect to the database
+     * @param WASP\Util\Dictionary $config The configuration used to connect to the database
      * @return WASP\DB\DB The initalized DB object
      */
     public static function get(Dictionary $config = null)

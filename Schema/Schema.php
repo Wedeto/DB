@@ -25,8 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Schema;
 
-use WASP\Dictionary;
-use WASP\Cache;
+use WASP\Util\Dictionary;
+use WASP\Util\Cache;
 use WASP\DB\DBException;
 use WASP\DB\Driver\Driver;
 
