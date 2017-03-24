@@ -25,6 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
+use WASP\Util\Functions as WF;
+
 class HavingClause extends Clause
 {
     protected $condition;
@@ -42,7 +44,7 @@ class HavingClause extends Clause
         if (!(is_string($condition) || $condition instanceof Expression))
         {
             throw new \InvalidArgumentException(
-                "Invalid HAVING condition: " . \WASP\str($condition)
+                "Invalid HAVING condition: " . WF::str($condition)
             );
         }
             

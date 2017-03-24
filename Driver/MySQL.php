@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Driver;
 
-use WASP\Debug\LoggerAwareStaticTrait;
+use WASP\Log\LoggerAwareStaticTrait;
 
 use WASP\DB\DB;
 use WASP\DB\TableNotExists;

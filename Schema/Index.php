@@ -25,6 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Schema;
 
+use WASP\Util\Functions as WF;
 use WASP\DB\Schema\Column\Column;
 use WASP\DB\DBException;
 
@@ -147,7 +148,7 @@ class Index implements \Serializable, \JSONSerializable
 
     public static function strToType($str)
     {
-        if (\WASP\is_int_val($str) && $str >= Index::PRIMARY && $str <= Index::INDEX)
+        if (WF::is_int_val($str) && $str >= Index::PRIMARY && $str <= Index::INDEX)
             return $str;
 
         $name = get_called_class() . "::" . $str;

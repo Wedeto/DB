@@ -27,6 +27,8 @@ namespace WASP\DB\Query;
 
 use DomainException;
 
+use WASP\Util\Functions as WF;
+
 class Delete extends Query
 {
     protected $table;
@@ -52,7 +54,7 @@ class Delete extends Query
             elseif (is_string($table))
                 $table = new SourceTableClause($table);
             else
-                throw new \InvalidArgumentException("Invalid table: " . \WASP\str($table));
+                throw new \InvalidArgumentException("Invalid table: " . WF::str($table));
         }
         $this->table = $table;
     }

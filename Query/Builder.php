@@ -25,6 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
+use WASP\Util\Functions as WF;
+
 class Builder
 {
     public static function select()
@@ -33,7 +35,7 @@ class Builder
         $non_field = false;
         foreach (func_get_args() as $arg)
         {
-            $arg = \WASP\cast_array($arg);
+            $arg = WF::cast_array($arg);
             foreach ($arg as $arg_val)
             {
                 if (!is_string($arg_val) && !($arg_val instanceof FieldName) && !($arg_val instanceof FieldAlias))
@@ -53,7 +55,7 @@ class Builder
         $u = new Update;
         foreach (func_get_args() as $arg)
         {
-            $arg = \WASP\cast_array($arg);
+            $arg = WF::cast_array($arg);
             foreach ($arg as $arg_val)
                 $u->add($arg_val);
         }

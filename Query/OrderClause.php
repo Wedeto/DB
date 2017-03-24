@@ -25,13 +25,15 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
+use WASP\Util\Functions as WF;
+
 class OrderClause extends Clause
 {
     protected $clauses = array();
 
     public function __construct(...$args)
     {
-        $args = \WASP\flatten_array($args);
+        $args = WF::flatten_array($args);
 
         foreach ($args as $k => $arg)
         {
@@ -42,7 +44,7 @@ class OrderClause extends Clause
             elseif (is_string($arg) || $arg instanceof Direction)
                 $this->addClause($arg);
             else
-                throw new \InvalidArgumentException("Invalid order: " . \WASP\str($arg));
+                throw new \InvalidArgumentException("Invalid order: " . WF::str($arg));
         }
     }
 

@@ -25,6 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
+use WASP\Util\Functions as WF;
+
 class ConstantValue extends Expression
 {
     protected $value;
@@ -53,7 +55,7 @@ class ConstantValue extends Expression
             $value = $value->format(\DateTime::ISO8601);
 
         if (!is_scalar($value) && $value !== null)
-            throw new \InvalidArgumentException("Invalid data type for constant: " . \WASP\str($value));
+            throw new \InvalidArgumentException("Invalid data type for constant: " . WF::str($value));
 
         $this->value = $value;
         $this->update();

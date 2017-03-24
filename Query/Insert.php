@@ -26,6 +26,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace WASP\DB\Query;
 
 use DomainException;
+
+use WASP\Util\Functions as WF;
 use WASP\DB\DAO;
 
 class Insert extends Query
@@ -46,7 +48,7 @@ class Insert extends Query
         if ($record instanceof DAO)
             $record = $record->getRecord();
         else
-            $record = \WASP\to_array($record);
+            $record = WF::to_array($record);
 
         $this->table = $table;
         $this->fields = array();

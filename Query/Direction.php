@@ -25,6 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
+use WASP\Util\Functions as WF;
+
 class Direction extends Clause
 {
     protected $direction;
@@ -36,7 +38,7 @@ class Direction extends Clause
     {
         $direction = strtoupper($direction);
         if (!in_array($direction, self::$valid_directions))
-            throw new \InvalidArgumentException("Invalid direction: " . \WASP\str($direction));
+            throw new \InvalidArgumentException("Invalid direction: " . WF::str($direction));
 
         $this->direction = $direction;
         $this->operand = $this->toExpression($operand, false);

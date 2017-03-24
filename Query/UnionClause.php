@@ -27,6 +27,8 @@ namespace WASP\DB\Query;
 
 use InvalidArgumentException;
 
+use WASP\Util\Functions as WF;
+
 class UnionClause extends Expression
 {
     protected static $valid_types = array(
@@ -47,7 +49,7 @@ class UnionClause extends Expression
     public function setType(string $type)
     {
         if (!isset(self::$valid_types[$type]))
-            throw new \InvalidArgumentException('Invalid UNION type: ' . \WASP\str($type));
+            throw new \InvalidArgumentException('Invalid UNION type: ' . WF::str($type));
         $this->type = self::$valid_types[$type];
         return $this;
     }

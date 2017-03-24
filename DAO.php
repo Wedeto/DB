@@ -28,6 +28,8 @@ namespace WASP\DB;
 use PDOException;
 use DateTime;
 
+use WASP\Util\Functions as WF;
+
 use WASP\Auth\ACL\Entity;
 use WASP\DB\Query;
 use WASP\DB\Query\Builder as QB;
@@ -144,7 +146,7 @@ abstract class DAO
     public static function getSelector($pkey, array $record)
     {
         if ($pkey !== null && !is_array($pkey))
-            throw new \InvalidArgumentException("Invalid primary key: " . \WASP\str($pkey));
+            throw new \InvalidArgumentException("Invalid primary key: " . WF::str($pkey));
 
         // When no primary key is available, we match on all fields
         $is_primary_key = true;
@@ -289,7 +291,7 @@ abstract class DAO
         $condition = static::getSelector($pkey, $id);
         $rec = static::fetchSingle(QB::where($condition), $database);
         if (empty($rec))
-            throw new DAOEXception("Object not found with " . \WASP\str($id));
+            throw new DAOEXception("Object not found with " . WF::str($id));
 
         $this->assignRecord($rec, $database);
     }
@@ -468,7 +470,7 @@ abstract class DAO
      */
     public static function select(...$args)
     {
-        $args = \WASP\flatten_array($args);
+        $args = WF::flatten_array($args);
         $database = null;
         foreach ($args as $idx => $val)
         {
@@ -824,7 +826,3 @@ abstract class DAO
         self::$classesnames[$cl] = $name;
     }
 }
-
-// @codeCoverageIgnoreStart
-\WASP\Functions::load();
-// @codeCoverageIgnoreEnd

@@ -33,8 +33,6 @@ use WASP\DB\Schema\Index;
 use WASP\DB\Schema\ForeignKey;
 use WASP\DB\Schema\Column\Column;
 
-use WASP\Debug\Logger;
-
 use WASP\DB\Query;
 use WASP\DB\Query\Parameters;
 

@@ -25,7 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Driver;
 
-use WASP\Debug\LoggerAwareStaticTrait;
+use WASP\Log\LoggerAwareStaticTrait;
+use WASP\Util\Functions as WF;
 
 use WASP\DB\DB;
 use WASP\DB\TableNotExists;
@@ -112,7 +113,7 @@ class PGSQL extends Driver
                 throw new \DomainException("Invalid IP-address specified for 'hostaddr': " . $config['hostaddr']);
         }
 
-        if (!empty($config['port']) && \WASP\is_int_val($config['port']))
+        if (!empty($config['port']) && WF::is_int_val($config['port']))
             $dsn['port'] = (int)$config['port'];
 
         if (isset($config['ssl']) && (bool)$config['ssl'])
@@ -122,7 +123,7 @@ class PGSQL extends Driver
         elseif (isset($config['sslmode']))
         {
             if (!in_array($config['ssl'], ['prefer', 'disable', 'allow', 'require']))
-                throw new \Domainexception("Invalid value for sslmode: " . \WASP\str($config['ssl']));
+                throw new \Domainexception("Invalid value for sslmode: " . WF::str($config['ssl']));
             $dsn['sslmode'] = $config['sslmode'];
         }
 

@@ -25,6 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Schema;
 
+use WASP\Util\Functions as WF;
 use WASP\DB\DBException;
 
 class ForeignKey implements \Serializable, \JSONSerializable
@@ -244,7 +245,7 @@ class ForeignKey implements \Serializable, \JSONSerializable
 
     public static function strToPolicy($str)
     {
-        if (\WASP\is_int_val($str) && $str >= self::DO_CASCADE && $str <= self::DO_NULL)
+        if (WF::is_int_val($str) && $str >= self::DO_CASCADE && $str <= self::DO_NULL)
             return $str;
         if ($str === "CASCADE") return self::DO_CASCADE;
         if ($str === "RESTRICT") return self::DO_RESTRICT;

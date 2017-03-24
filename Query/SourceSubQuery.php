@@ -25,6 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
+use WASP\Util\Functions as WF;
 use WASP\DB\DB;
 
 class SourceSubQuery extends SourceTableClause
@@ -46,7 +47,7 @@ class SourceSubQuery extends SourceTableClause
             $subquery = new SubQuery($subquery);
 
         if (!($subquery instanceof SubQuery))
-            throw new \DomainException("Provide a subquery as argument to SourceSubQuery, not: " . \WASP\str($subquery));
+            throw new \DomainException("Provide a subquery as argument to SourceSubQuery, not: " . WF::str($subquery));
 
         $this->query = $subquery;
         return $this;

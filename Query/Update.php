@@ -27,6 +27,8 @@ namespace WASP\DB\Query;
 
 use DomainException;
 
+use WASP\Util\Functions as WF;
+
 class Update extends Query
 {
     protected $table;
@@ -51,7 +53,7 @@ class Update extends Query
         elseif ($clause instanceof UpdateField)
             $this->updates[] = $clause;
         else
-            throw new \InvalidArgumentException("Unknown clause: " . \WASP\str(get_class($clause)));
+            throw new \InvalidArgumentException("Unknown clause: " . WF::str(get_class($clause)));
     }
 
     public function setTable($table)
@@ -63,7 +65,7 @@ class Update extends Query
             elseif (is_string($table))
                 $table = new SourceTableClause($table);
             else
-                throw new \InvalidArgumentException("Invalid table: " . \WASP\str($table));
+                throw new \InvalidArgumentException("Invalid table: " . WF::str($table));
         }
 
         $this->table = $table;

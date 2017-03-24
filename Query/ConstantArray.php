@@ -27,6 +27,8 @@ namespace WASP\DB\Query;
 
 use InvalidArgumentException;
 
+use WASP\Util\Functions as WF;
+
 class ConstantArray extends ConstantValue
 {
     public function __construct($value, ...$values)
@@ -36,15 +38,15 @@ class ConstantArray extends ConstantValue
 
     public function setValue($value)
     {
-        if (!\WASP\is_array_like($value))
+        if (!WF::is_array_like($value))
             throw new InvalidArgumentException("Cannot assign non-array to ConstantArray");
 
-        $args = \WASP\flatten_array(func_get_args());
+        $args = WF::flatten_array(func_get_args());
         $this->value = array();
         foreach ($args as $arg)
         {
             if (!is_scalar($arg))
-                throw new InvalidArgumentException("Not a scalar: " . \WASP\str($arg));
+                throw new InvalidArgumentException("Not a scalar: " . WF::str($arg));
             $this->value[] = $arg;
         }
 

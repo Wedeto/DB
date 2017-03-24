@@ -27,6 +27,8 @@ namespace WASP\DB\Query;
 
 use InvalidArgumentException;
 
+use WASP\Util\Functions as WF;
+
 abstract class Clause
 {
     public function toExpression($var, bool $constant)
@@ -40,6 +42,6 @@ abstract class Clause
         elseif ($var instanceof Expression)
             return $var;
         else
-            throw new InvalidArgumentException("Invalid value for expression: " . \WASP\str($var));
+            throw new InvalidArgumentException("Invalid value for expression: " . WF::str($var));
     }
 }

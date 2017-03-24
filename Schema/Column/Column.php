@@ -25,10 +25,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Schema\Column;
 
+use DateTime;
+
+use WASP\Util\Functions as WF;
 use WASP\DB\Schema\Table;
 use WASP\DB\DBException;
 
-use DateTime;
 
 class Column implements \Serializable, \JSONSerializable
 {
@@ -78,7 +80,7 @@ class Column implements \Serializable, \JSONSerializable
         $this->numeric_precision = $numeric_precision;
         $this->numeric_scale = $numeric_scale;
         var_dump($nullable);
-        $this->nullable = \WASP\parse_bool($nullable);
+        $this->nullable = WF::parse_bool($nullable);
         var_dump($this->nullable);
         $this->default = $default;
         $this->serial = $serial == true;
@@ -200,15 +202,15 @@ class Column implements \Serializable, \JSONSerializable
         {
             case Column::FLOAT:
                 if (!is_numeric($value))
-                    throw new DBException("Invalid float value for {$this->name}: " . \WASP\str($value));
+                    throw new DBException("Invalid float value for {$this->name}: " . WF::str($value));
                 break;
             case Column::INT:
-                if (!\WASP\is_int_val($value))
-                    throw new DBException("Invalid int value for {$this->name}: " . \WASP\str($value));
+                if (!WF::is_int_val($value))
+                    throw new DBException("Invalid int value for {$this->name}: " . WF::str($value));
                 break;
             case Column::BOOLEAN:
                 if (!is_bool($value))
-                    throw new DBException("Invalid bool value for {$this->name}: " . \WASP\str($value));
+                    throw new DBException("Invalid bool value for {$this->name}: " . WF::str($value));
                 break;
             case Column::DATETIME:
             case Column::DATETIMETZ:
@@ -217,7 +219,7 @@ class Column implements \Serializable, \JSONSerializable
                 if (!$value instanceof DateTime)
                     throw new DBException(
                         "Invalid " . strtolower(Column::typeToStr($this->getType())) 
-                        . " value for {$this->name}: " . \WASP\str($value)
+                        . " value for {$this->name}: " . WF::str($value)
                     );
                 break;
             case Column::CHAR:
@@ -226,13 +228,13 @@ class Column implements \Serializable, \JSONSerializable
                 if ($tp !== Column::TEXT || strpos($this->name, "json") === false)
                 {
                     if (!is_string($value))
-                        throw new DBException("Invalid string value for {$this->name}: " . \WASP\str($value));
+                        throw new DBException("Invalid string value for {$this->name}: " . WF::str($value));
                     break;
                 }
                 // Falling through
             case Column::JSON:
                 if (!is_scalar($value) && !is_array($value) && (!is_object($value) || !($value instanceof JsonSerializable)))
-                    throw new DBException("Invalid JSON value for {$this->name}: " . \WASP\str($value));
+                    throw new DBException("Invalid JSON value for {$this->name}: " . WF::str($value));
                 break;
         }
         return true;
@@ -364,7 +366,7 @@ class Column implements \Serializable, \JSONSerializable
 
     public static function strToType($type)
     {
-        if (\WASP\is_int_val($type) && $type >= Column::CHAR && $type <= Column::TEXT)
+        if (WF::is_int_val($type) && $type >= Column::CHAR && $type <= Column::TEXT)
             return $type;
 
         $name = static::class . "::" . $type;

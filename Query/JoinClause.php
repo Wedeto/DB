@@ -25,6 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
+use WASP\Util\Functions as WF;
+
 class JoinClause extends Clause
 {
     protected $table;
@@ -42,7 +44,7 @@ class JoinClause extends Clause
     public function __construct(string $type, $table, Expression $expression)
     {
         if (!array_key_exists($type, self::$valid_types))
-            throw new \InvalidArgumentException("Invalid join type: " . \WASP\str($type));
+            throw new \InvalidArgumentException("Invalid join type: " . WF::str($type));
 
         $this->type = $type;
         if (is_string($table))
@@ -59,7 +61,7 @@ class JoinClause extends Clause
         }
         else
         {
-            throw new \DomainException("Invalid table type: " . \WASP\str($table));
+            throw new \DomainException("Invalid table type: " . WF::str($table));
         }
 
         $this->condition = $expression;

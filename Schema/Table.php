@@ -25,13 +25,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Schema;
 
+use WASP\Util\Functions as WF;
 use WASP\DB\DBException;
 use WASP\DB\Schema\Column\Column;
 use WASP\DB\Schema\Index;
 use WASP\DB\Schema\ForeignKey;
 
-use WASP\Debug\Logger;
-use WASP\Debug\LoggerAwareStaticTrait;
+use WASP\Log\Logger;
+use WASP\Log\LoggerAwareStaticTrait;
 
 class Table implements \Serializable, \JSONSerializable
 {
@@ -66,7 +67,7 @@ class Table implements \Serializable, \JSONSerializable
             elseif ($arg instanceof ForeignKey)
                 $this->addForeignKey($arg);
             else
-                throw new DBException("Invalid argument: " . \WASP\str($arg));
+                throw new DBException("Invalid argument: " . WF::str($arg));
         }
     }
 

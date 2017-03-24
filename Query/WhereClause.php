@@ -25,6 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
+use WASP\Util\Functions as WF;
+
 class WhereClause extends Clause
 {
     protected $operand;
@@ -38,7 +40,7 @@ class WhereClause extends Clause
         elseif (is_array($operand))
             $this->initFromArray($operand);
         else
-            throw new \InvalidArgumentException("Invalid operand: " . \WASP\str($operand));
+            throw new \InvalidArgumentException("Invalid operand: " . WF::str($operand));
     }
 
     public function getOperand()

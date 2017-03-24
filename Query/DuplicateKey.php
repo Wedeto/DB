@@ -27,6 +27,8 @@ namespace WASP\DB\Query;
 
 use DomainException;
 
+use WASP\Util\Functions as WF;
+
 class DuplicateKey extends Clause
 {
     protected $fields = array();
@@ -35,7 +37,7 @@ class DuplicateKey extends Clause
     public function __construct($field, ...$updates)
     {
         $this->addConflictingField($field);
-        $updates = \WASP\flatten_array($updates);
+        $updates = WF::flatten_array($updates);
         foreach ($updates as $up)
             $this->addUpdate($up);
     }

@@ -25,6 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
+use WASP\Util\Functions as WF;
+
 class OffsetClause extends Clause
 {
     protected $number;
@@ -36,7 +38,7 @@ class OffsetClause extends Clause
         elseif ($value instanceof ConstantValue)
             $this->number = $value;
         else
-            throw new \InvalidArgumentException("Invalid value for offset: " . \WASP\str($value));
+            throw new \InvalidArgumentException("Invalid value for offset: " . WF::str($value));
     }
     
     public function getOffset()

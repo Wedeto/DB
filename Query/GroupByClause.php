@@ -25,6 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace WASP\DB\Query;
 
+use WASP\Util\Functions as WF;
+
 class GroupByClause extends Clause
 {
     protected $groups;
@@ -35,7 +37,7 @@ class GroupByClause extends Clause
         if (count($conditions) === 0)
             throw new \InvalidArgumentException("Specify at least one group by condition");
 
-        $conditions = \WASP\flatten_array($conditions);
+        $conditions = WF::flatten_array($conditions);
         foreach ($conditions as $condition)
         {
             if ($condition instanceof HavingClause)
@@ -49,7 +51,7 @@ class GroupByClause extends Clause
             else
             {
                 throw new \InvalidArgumentException(
-                    "Invalid parameter: " . \WASP\str($condition)
+                    "Invalid parameter: " . WF::str($condition)
                 );
             }
         }
