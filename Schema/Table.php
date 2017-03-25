@@ -31,8 +31,7 @@ use WASP\DB\Schema\Column\Column;
 use WASP\DB\Schema\Index;
 use WASP\DB\Schema\ForeignKey;
 
-use WASP\Log\Logger;
-use WASP\Log\LoggerAwareStaticTrait;
+use WASP\Util\LoggerAwareStaticTrait;
 
 class Table implements \Serializable, \JSONSerializable
 {

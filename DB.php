@@ -28,7 +28,7 @@ namespace WASP\DB;
 use PDO;
 
 use WASP\Util\Dictionary;
-use WASP\Log\LoggerAwareStaticTrait;
+use WASP\Util\LoggerAwareStaticTrait;
 use WASP\Platform\System;
 use WASP\DB\Schema\Schema;
 
