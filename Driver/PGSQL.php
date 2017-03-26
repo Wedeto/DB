@@ -728,5 +728,5 @@ class PGSQL extends Driver
 }
 
 // @codeCoverageIgnoreStart
-PGSQL::setLogger();
+PGSQL::getLogger();
 // @codeCoverageIgnoreEnd

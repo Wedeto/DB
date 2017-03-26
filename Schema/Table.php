@@ -47,6 +47,7 @@ class Table implements \Serializable, \JSONSerializable
 
     public function __construct($name)
     {
+        static::getLogger();
         if (is_array($name))
         {
             $this->initFromArray($name);
@@ -361,5 +362,3 @@ class Table implements \Serializable, \JSONSerializable
             $fk = clone $fk;
     }
 }
-
-Table::setLogger();

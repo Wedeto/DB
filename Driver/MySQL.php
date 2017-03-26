@@ -606,5 +606,5 @@ class MySQL extends Driver
 }
 
 // @codeCoverageIgnoreStart
-MySQL::setLogger();
+MySQL::getLogger();
 // @codeCoverageIgnoreEnd

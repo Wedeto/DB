@@ -79,9 +79,7 @@ class Column implements \Serializable, \JSONSerializable
         $this->max_length = $max_length;
         $this->numeric_precision = $numeric_precision;
         $this->numeric_scale = $numeric_scale;
-        var_dump($nullable);
         $this->nullable = WF::parse_bool($nullable);
-        var_dump($this->nullable);
         $this->default = $default;
         $this->serial = $serial == true;
     }

@@ -57,6 +57,7 @@ class DB
      */
     private function __construct(Dictionary $config)
     {
+        $this->getLogger();
         $this->config = $config;
         if ($this->config->dget('sql', 'lazy', true) == false)
             $this->connect();
@@ -234,7 +235,3 @@ class DB
         return array('dsn' => $this->dsn, 'driver' => $drv);
     }
 }
-
-// @codeCoverageIgnoreStart
-DB::setLogger();
-// @codeCoverageIgnoreEnd

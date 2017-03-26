@@ -96,7 +96,6 @@ class Schema
     {
         if (!$this->tables->has('tables', $table_name))
         {
-			echo "TABLE $table_name HEb ik NIET voorhanden!\n";
             if ($this->db !== null)
             {
                 $table = $this->db->loadTable($table_name);
@@ -105,8 +104,6 @@ class Schema
             else
                 throw new DBException("Table $table not ofund");
         }
-		else
-			echo "TABLE $table_name HEb ik voorhanden!\n";
 
         return $this->tables->get('tables', $table_name);
     }
