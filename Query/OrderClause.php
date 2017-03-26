@@ -41,7 +41,7 @@ class OrderClause extends Clause
                 $this->initFromArray($arg);
             elseif (is_string($arg) && is_numeric($k))
                 $this->addClause(new Direction("ASC", $arg)); 
-            elseif (is_string($arg) || $arg instanceof Direction)
+            elseif (is_string($arg) || $arg instanceof Direction || $arg instanceof CustomSQL)
                 $this->addClause($arg);
             else
                 throw new \InvalidArgumentException("Invalid order: " . WF::str($arg));
