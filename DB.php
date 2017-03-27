@@ -29,7 +29,6 @@ use PDO;
 
 use WASP\Util\Dictionary;
 use WASP\Util\LoggerAwareStaticTrait;
-use WASP\Platform\System;
 use WASP\DB\Schema\Schema;
 
 /**
@@ -141,22 +140,17 @@ class DB
     }
 
     /**
-     * Get a DB object for the provided configuration
+     * Get a DB object for the provided configuration. If the configuration is omitted,
+     * the default DB will be returned if available. The first database created is automatically
+     * set as default DB. You can change this using DB#setDefaultDB.
      *
      * @param WASP\Util\Dictionary $config The configuration used to connect to the database
      * @return WASP\DB\DB The initalized DB object
      */
     public static function get(Dictionary $config = null)
     {
-        $default = false;
         if ($config === null)
-        {
-            if (self::$default_db)
-                return self::$default_db;
-
-            $config = System::config();
-            $default = true;
-        }
+            return self::getDefault();
 
         if (!$config->has('sql', 'pdo'))
         {
@@ -166,7 +160,31 @@ class DB
         else
             $db = $config->get('sql', 'pdo');
 
+        if (empty(self::$default_db))
+            self::$default_db = $db;
+
         return $db;
+    }
+
+    /**
+     * Update the default database 
+     *
+     * @param DB $database The database to set as default
+     */
+    public static function setDefault(DB $database)
+    {
+        self::$default_db = $database;
+    }
+
+    /** 
+     * @return DB The default database
+     */
+    public static function getDefault()
+    {
+        if (empty(self::$default_db))
+            throw new \RuntimeException("No database connection available");
+
+        return self::$default_db;
     }
 
     /**
