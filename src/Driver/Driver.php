@@ -1,6 +1,6 @@
 <?php
 /*
-This is part of WASP, the Web Application Software Platform.
+This is part of Wedeto, the WEb DEvelopment TOolkit.
 It is published under the MIT Open Source License.
 
 Copyright 2017, Egbert van der Wal
@@ -23,18 +23,18 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\Driver;
+namespace Wedeto\DB\Driver;
 
-use WASP\DB\DB;
-use WASP\DB\DBException;
+use Wedeto\DB\DB;
+use Wedeto\DB\DBException;
 
-use WASP\DB\Schema\Table;
-use WASP\DB\Schema\Index;
-use WASP\DB\Schema\ForeignKey;
-use WASP\DB\Schema\Column\Column;
+use Wedeto\DB\Schema\Table;
+use Wedeto\DB\Schema\Index;
+use Wedeto\DB\Schema\ForeignKey;
+use Wedeto\DB\Schema\Column\Column;
 
-use WASP\DB\Query;
-use WASP\DB\Query\Parameters;
+use Wedeto\DB\Query;
+use Wedeto\DB\Query\Parameters;
 
 use PDO;
 use PDOException;

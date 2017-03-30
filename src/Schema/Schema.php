@@ -1,6 +1,6 @@
 <?php
 /*
-This is part of WASP, the Web Application Software Platform.
+This is part of Wedeto, the WEb DEvelopment TOolkit.
 It is published under the MIT Open Source License.
 
 Copyright 2017, Egbert van der Wal
@@ -23,12 +23,12 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\Schema;
+namespace Wedeto\DB\Schema;
 
-use WASP\Util\Dictionary;
-use WASP\Util\Cache;
-use WASP\DB\DBException;
-use WASP\DB\Driver\Driver;
+use Wedeto\Util\Dictionary;
+use Wedeto\Util\Cache;
+use Wedeto\DB\DBException;
+use Wedeto\DB\Driver\Driver;
 
 class Schema
 {
@@ -53,8 +53,8 @@ class Schema
     
     /**
      * Set the database driver that can be used to obtain schemas
-     * @param WASP\DB\Driver\Driver The database driver
-     * @return WASP\DB\Schema\Schema Provides fluent interface
+     * @param Wedeto\DB\Driver\Driver The database driver
+     * @return Wedeto\DB\Schema\Schema Provides fluent interface
      */
     public function setDBDriver(Driver $drv)
     {
@@ -63,7 +63,7 @@ class Schema
     }
 
     /**
-     * @return WASP\DB\Driver\Driver the database driver
+     * @return Wedeto\DB\Driver\Driver the database driver
      */
     public function getDBDriver()
     {
@@ -111,7 +111,7 @@ class Schema
     /**
      * Add a table to the schema
      *
-     * @return WASP\DB\Schema\Schema Provides fluent interface
+     * @return Wedeto\DB\Schema\Schema Provides fluent interface
      */
     public function putTable(Table $table)
     {
@@ -122,7 +122,7 @@ class Schema
     /**
      * Remove a schema from the table definition
      * @param string|Table The table to remove
-     * @return WASP\DB\Schema\Schema Provides fluent interface
+     * @return Wedeto\DB\Schema\Schema Provides fluent interface
      */
     public function removeTable($table)
     {

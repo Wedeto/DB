@@ -1,6 +1,6 @@
 <?php
 /*
-This is part of WASP, the Web Application Software Platform.
+This is part of Wedeto, the WEb DEvelopment TOolkit.
 It is published under the MIT Open Source License.
 
 Copyright 2017, Egbert van der Wal
@@ -23,14 +23,14 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\Query;
+namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
-use WASP\DB\Query\Builder as Q;
+use Wedeto\DB\Query\Builder as Q;
 
 /**
- * @covers WASP\DB\Query\Select
+ * @covers Wedeto\DB\Query\Select
  */
 class SelectTest extends TestCase
 {
@@ -170,7 +170,7 @@ class SelectTest extends TestCase
         $this->assertInstanceOf(FieldName::class, $groups[0]);
         $this->assertEquals("id", $groups[0]->getField());
 
-        $this->expectException(\WASP\DB\DBException::class);
+        $this->expectException(\Wedeto\DB\DBException::class);
         $this->expectExceptionMessage("Forming count query for queries including group by or union distinct is not supported");
         $cq = Select::countQuery($q);
     }

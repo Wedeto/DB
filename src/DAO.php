@@ -1,6 +1,6 @@
 <?php
 /*
-This is part of WASP, the Web Application Software Platform.
+This is part of Wedeto, the WEb DEvelopment TOolkit.
 It is published under the MIT Open Source License.
 
 Copyright 2017, Egbert van der Wal
@@ -23,19 +23,19 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB;
+namespace Wedeto\DB;
 
 use PDOException;
 use DateTime;
 
-use WASP\Util\Functions as WF;
+use Wedeto\Util\Functions as WF;
 
-use WASP\Auth\ACL\Entity;
-use WASP\DB\Query;
-use WASP\DB\Query\Builder as QB;
-use WASP\DB\Schema\Column\Column;
-use WASP\DB\Schema\Index;
-use WASP\ACL\Rule;
+use Wedeto\Auth\ACL\Entity;
+use Wedeto\DB\Query;
+use Wedeto\DB\Query\Builder as QB;
+use Wedeto\DB\Schema\Column\Column;
+use Wedeto\DB\Schema\Index;
+use Wedeto\ACL\Rule;
 
 /**
  * DAO (Data Access Object) allows for simple persistence of PHP objects to
@@ -82,7 +82,7 @@ abstract class DAO
 
     /**
      * Return the active connectio
-     * @return WASP\DB\DB An active database connection
+     * @return Wedeto\DB\DB An active database connection
      */
     public static function db()
     {
@@ -106,7 +106,7 @@ abstract class DAO
 
     /**
      * Get the table specification
-     * @param WASP\DB\DB $database The database to get the columns from. If
+     * @param Wedeto\DB\DB $database The database to get the columns from. If
      *                             null, the default is used.
      */
     public static function getTable(DB $database = null)
@@ -119,7 +119,7 @@ abstract class DAO
     }
 
     /**
-     * @param WASP\DB\DB $database The database to get the columns from. If
+     * @param Wedeto\DB\DB $database The database to get the columns from. If
      *                             null, the default is used.
      * @return array The set of columns associated with this table
      */
@@ -129,7 +129,7 @@ abstract class DAO
     }
 
     /**
-     * @param WASP\DB\DB $database The database to get the primary key from. If
+     * @param Wedeto\DB\DB $database The database to get the primary key from. If
      *                             null, the default is used.
      * @return array Associative array with column names as keys and their
      *               column definitions as value.
@@ -184,7 +184,7 @@ abstract class DAO
      * Databases will be linked to a specific instance. If you want to set the
      * database for all tables, you can call this directly on DAO.
      *
-     * @param WASP\DB\DB $db The database connection
+     * @param Wedeto\DB\DB $db The database connection
      */
     public static function setDB(DB $db)
     {
@@ -197,8 +197,8 @@ abstract class DAO
     /**
      * Set the database this object came from
      *
-     * @param WASP\DB\DB $db The database connection
-     * @return WASP\DB\DAO PRovides fluent interface
+     * @param Wedeto\DB\DB $db The database connection
+     * @return Wedeto\DB\DAO PRovides fluent interface
      */
     public function setSourceDB(DB $db)
     {
@@ -209,7 +209,7 @@ abstract class DAO
     }
 
     /**
-     * @return WASP\DB\DB The database this object was retrieved from
+     * @return Wedeto\DB\DB The database this object was retrieved from
      */
     public function getSourceDB()
     {
@@ -218,13 +218,13 @@ abstract class DAO
 
     /**
      * Save the current record to the database.
-     * @param WASP\DB\DB $database The database to save to. When you specify this,
+     * @param Wedeto\DB\DB $database The database to save to. When you specify this,
      *                             an insert is implied. When not specified,
      *                             the source database is used to update, when
      *                             availabe, and the default database is used
      *                             to insert when no source database is
      *                             available.
-     * @return WASP\DB\DAO Provides fluent interface
+     * @return Wedeto\DB\DAO Provides fluent interface
      */
     public function save(DB $database = null)
     {
@@ -270,7 +270,7 @@ abstract class DAO
      *                  type should match the primary key: scalar for unary
      *                  primary keys, associative array for combined primary
      *                  keys.
-     * @param WASP\DB\DB $database The database load from. This is set as
+     * @param Wedeto\DB\DB $database The database load from. This is set as
      *                             source database. When not specified, the
      *                             default database is used.
      */
@@ -300,8 +300,8 @@ abstract class DAO
     /** 
      * Assign the provided record to this object.
      * @param array $record The record obtained from the database.
-     * @param WASP\DB\DB $database The database this record comes from
-     * @return WASP\DB\DAO Provides fluent interface
+     * @param Wedeto\DB\DB $database The database this record comes from
+     * @return Wedeto\DB\DAO Provides fluent interface
      */
     public function assignRecord(array $record, DB $database)
     {
@@ -398,7 +398,7 @@ abstract class DAO
      * Retrieve a set of records, create object from them and return the resulting list.
      * @param $args The provided arguments for the select query.
      * @return array The retrieved DAO objects
-     * @seealso WASP\DB\DAO::select
+     * @seealso Wedeto\DB\DAO::select
      */
     public static function getAll(...$args)
     {
@@ -417,7 +417,7 @@ abstract class DAO
     /** 
      * Find a database object in a set of arguments
      * @param array $args The list of arguments that may contain a DB object
-     * @return WASP\DB\DB The database object if found, false otherwise.
+     * @return Wedeto\DB\DB The database object if found, false otherwise.
      */
     protected static function getDBFromList(array $args)
     {
@@ -437,7 +437,7 @@ abstract class DAO
      *
      * @param $args The provided arguments for the select query.
      * @return array The retrieved record
-     * @seealso WASP\DB\DAO::select
+     * @seealso Wedeto\DB\DAO::select
      */
     protected static function fetchSingle(...$args)
     { 
@@ -450,7 +450,7 @@ abstract class DAO
      * Execute a query, retrieve all records and return them in an array.
      * @param $args The provided arguments for the select query.
      * @return array The retrieved records.
-     * @seealso WASP\DB\DAO::select
+     * @seealso Wedeto\DB\DAO::select
      */
     protected static function fetchAll(...$args)
     {
@@ -464,10 +464,10 @@ abstract class DAO
      * @param $args The provided arguments should contain query parts passed to the
      *              Select constructor. These can be objects such as:
      *              FieldName, JoinClause, WhereClause, OrderClause, LimitClause,
-     *              OffsetClause. A WASP\DB\DB object can also be passed in to
+     *              OffsetClause. A Wedeto\DB\DB object can also be passed in to
      *              use as a Database.
      *
-     * @seealso WASP\DB\Query\Select
+     * @seealso Wedeto\DB\Query\Select
      */
     public static function select(...$args)
     {
@@ -505,7 +505,7 @@ abstract class DAO
      *                      keys are fieldnames, values are the values to update them to.
      *                      Should also contain the value for the primary key.
      *                      which will be used to find the record to be updated.
-     * @param WASP\DB\DB $database The DB on which to perform the operation
+     * @param Wedeto\DB\DB $database The DB on which to perform the operation
      */
     public static function update($id, array $record, DB $database)
     {
@@ -549,7 +549,7 @@ abstract class DAO
      *
      * @param array $record The record to insert. Keys should be fieldnames,
      *                      values the values to insert.
-     * @param WASP\DB\DB $database The DB on which to perform the operation
+     * @param Wedeto\DB\DB $database The DB on which to perform the operation
      * @return int A generated serial, if available
      */
     protected static function insert(array &$record, DB $database)
@@ -602,8 +602,8 @@ abstract class DAO
     /**
      * Delete records from the database.
      *
-     * @param WASP\DB\Query\WhereClause Specifies which records to delete. You can use
-     *                                  WASP\DB\Query\Builder to create it, or provide a
+     * @param Wedeto\DB\Query\WhereClause Specifies which records to delete. You can use
+     *                                  Wedeto\DB\Query\Builder to create it, or provide a
      *                                  string that will be interpreted as custom SQL. A third
      *                                  option is to provide an associative array where keys
      *                                  indicate field names and values their
@@ -652,7 +652,7 @@ abstract class DAO
      * calling validate.
      * @param string $field The field to retrieve
      * @param mixed $value The value to set it to.
-     * @return WASP\DB\DAO Provides fluent interface.
+     * @return Wedeto\DB\DAO Provides fluent interface.
      */
     public function setField(string $field, $value)
     {
@@ -709,7 +709,7 @@ abstract class DAO
      *
      * @param string $field The field to set
      * @param mixed $value What to set the field to
-     * @seealso WASP\DB\DAO
+     * @seealso Wedeto\DB\DAO
      */
     public function __set($field, $value)
     {
@@ -742,10 +742,10 @@ abstract class DAO
      * is not loaded, true will be returned.
      *
      * @param $action scalar The action to be performed
-     * @param $role WASP\ACL\Role The role that wants to perform an action. 
+     * @param $role Wedeto\ACL\Role The role that wants to perform an action. 
      *                           If not specified, the current user is used.
      * @return boolean True if the action is allowed, false if it is not
-     * @throws WASP\ACL\Exception When the role or the action is invalid
+     * @throws Wedeto\ACL\Exception When the role or the action is invalid
      */
     public function isAllowed($action, $role = null)
     {
@@ -758,7 +758,7 @@ abstract class DAO
         }
 
         if ($role === null)
-            $role = WASP\Request::$current_role;
+            $role = Wedeto\Request::$current_role;
 
         return $this->acl_entity->isAllowed($role, $action, array(get_class($this), "loadByACLID"));
     }
@@ -784,7 +784,7 @@ abstract class DAO
     /**
      * Return the ACL Entity that manages permissions on this object
      *
-     * @return WASP\ACL\Entity The ACL Entity that manages permissions
+     * @return Wedeto\ACL\Entity The ACL Entity that manages permissions
      */
     public function getACL()
     {

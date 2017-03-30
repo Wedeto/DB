@@ -1,6 +1,6 @@
 <?php
 /*
-This is part of WASP, the Web Application Software Platform.
+This is part of Wedeto, the WEb DEvelopment TOolkit.
 It is published under the MIT Open Source License.
 
 Copyright 2017, Egbert van der Wal
@@ -23,38 +23,38 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\Driver;
+namespace Wedeto\DB\Driver;
 
-use WASP\DB\DBException;
-use WASP\DB\Query\Clause;
-use WASP\DB\Query\ConstantValue;
-use WASP\DB\Query\ConstantArray;
-use WASP\DB\Query\CustomSQL;
-use WASP\DB\Query\Delete;
-use WASP\DB\Query\Direction;
-use WASP\DB\Query\EqualsOneOf;
-use WASP\DB\Query\FieldName;
-use WASP\DB\Query\GetClause;
-use WASP\DB\Query\GroupByClause;
-use WASP\DB\Query\HavingClause;
-use WASP\DB\Query\Insert;
-use WASP\DB\Query\JoinClause;
-use WASP\DB\Query\LimitClause;
-use WASP\DB\Query\OffsetClause;
-use WASP\DB\Query\Operator;
-use WASP\DB\Query\OrderClause;
-use WASP\DB\Query\Query;
-use WASP\DB\Query\Select;
-use WASP\DB\Query\SourceTableClause;
-use WASP\DB\Query\SQLFunction;
-use WASP\DB\Query\SubQuery;
-use WASP\DB\Query\Parameters;
-use WASP\DB\Query\TableClause;
-use WASP\DB\Query\UnionClause;
-use WASP\DB\Query\Update;
-use WASP\DB\Query\UpdateField;
-use WASP\DB\Query\WhereClause;
-use WASP\DB\Query\Wildcard;
+use Wedeto\DB\DBException;
+use Wedeto\DB\Query\Clause;
+use Wedeto\DB\Query\ConstantValue;
+use Wedeto\DB\Query\ConstantArray;
+use Wedeto\DB\Query\CustomSQL;
+use Wedeto\DB\Query\Delete;
+use Wedeto\DB\Query\Direction;
+use Wedeto\DB\Query\EqualsOneOf;
+use Wedeto\DB\Query\FieldName;
+use Wedeto\DB\Query\GetClause;
+use Wedeto\DB\Query\GroupByClause;
+use Wedeto\DB\Query\HavingClause;
+use Wedeto\DB\Query\Insert;
+use Wedeto\DB\Query\JoinClause;
+use Wedeto\DB\Query\LimitClause;
+use Wedeto\DB\Query\OffsetClause;
+use Wedeto\DB\Query\Operator;
+use Wedeto\DB\Query\OrderClause;
+use Wedeto\DB\Query\Query;
+use Wedeto\DB\Query\Select;
+use Wedeto\DB\Query\SourceTableClause;
+use Wedeto\DB\Query\SQLFunction;
+use Wedeto\DB\Query\SubQuery;
+use Wedeto\DB\Query\Parameters;
+use Wedeto\DB\Query\TableClause;
+use Wedeto\DB\Query\UnionClause;
+use Wedeto\DB\Query\Update;
+use Wedeto\DB\Query\UpdateField;
+use Wedeto\DB\Query\WhereClause;
+use Wedeto\DB\Query\Wildcard;
 
 use OutOfRangeException;
 

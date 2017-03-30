@@ -1,6 +1,6 @@
 <?php
 /*
-This is part of WASP, the Web Application Software Platform.
+This is part of Wedeto, the WEb DEvelopment TOolkit.
 It is published under the MIT Open Source License.
 
 Copyright 2017, Egbert van der Wal
@@ -23,13 +23,13 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB;
+namespace Wedeto\DB;
 
 use PDO;
 
-use WASP\Util\Dictionary;
-use WASP\Util\LoggerAwareStaticTrait;
-use WASP\DB\Schema\Schema;
+use Wedeto\Util\Dictionary;
+use Wedeto\Util\LoggerAwareStaticTrait;
+use Wedeto\DB\Schema\Schema;
 
 /**
  * The DB class wraps a PDO allowing for lazy connecting.  The configuration is
@@ -52,7 +52,7 @@ class DB
     /**
      * Create a new DB object for a specific configuration set.
      *
-     * @param WASP\Util\Dictionary $config The configuration for this connection
+     * @param Wedeto\Util\Dictionary $config The configuration for this connection
      */
     private function __construct(Dictionary $config)
     {
@@ -65,12 +65,12 @@ class DB
     /**
      * Find a proper driver based on the 'type' parameter in the configuration.
      * @param string $type The type / driver name.
-     * @return WASP\DB\Driver\Driver A initialized driver object
-     * @throws WASP\DB\DBException When no driver could be found
+     * @return Wedeto\DB\Driver\Driver A initialized driver object
+     * @throws Wedeto\DB\DBException When no driver could be found
      */
     protected function getDriver(string $type)
     {
-        $driver = "WASP\\DB\\Driver\\" . $type;
+        $driver = "Wedeto\\DB\\Driver\\" . $type;
         if (class_exists($driver))
             return new $driver($this);
 
@@ -88,7 +88,7 @@ class DB
             $filename = basename($filename, '.php');
             if (strtolower($filename) === strtolower($type))
             {
-                $driver = "WASP\\DB\\Driver\\" . $filename;
+                $driver = "Wedeto\\DB\\Driver\\" . $filename;
                 break;
             }
         }
@@ -144,8 +144,8 @@ class DB
      * the default DB will be returned if available. The first database created is automatically
      * set as default DB. You can change this using DB#setDefaultDB.
      *
-     * @param WASP\Util\Dictionary $config The configuration used to connect to the database
-     * @return WASP\DB\DB The initalized DB object
+     * @param Wedeto\Util\Dictionary $config The configuration used to connect to the database
+     * @return Wedeto\DB\DB The initalized DB object
      */
     public static function get(Dictionary $config = null)
     {
@@ -188,7 +188,7 @@ class DB
     }
 
     /**
-     * @return WASP\DB\Driver\Driver The driver associated with this database connection.
+     * @return Wedeto\DB\Driver\Driver The driver associated with this database connection.
      */
     public function driver()
     {

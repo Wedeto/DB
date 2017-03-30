@@ -1,6 +1,6 @@
 <?php
 /*
-This is part of WASP, the Web Application Software Platform.
+This is part of Wedeto, the WEb DEvelopment TOolkit.
 It is published under the MIT Open Source License.
 
 Copyright 2017, Egbert van der Wal
@@ -23,12 +23,12 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace WASP\DB\Query;
+namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers WASP\DB\Query\WhereClause
+ * @covers Wedeto\DB\Query\WhereClause
  */
 class WhereClauseTest extends TestCase
 {
