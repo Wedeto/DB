@@ -792,6 +792,28 @@ abstract class DAO
     }
 
     /**
+     * Generate a ACL Class name for the called DAO class. It will be composed
+     * of the first part of the namespace and the classname by default, but
+     * subclasses may override this to alter this behaviour. It should
+     * return a unique name
+     * 
+     * @return string The ACL class name for this DAO
+     */
+    public static function getACLClass()
+    {
+        $cl = get_called_class();
+        $parts = explode("\\", $cl);
+
+        if (count($parts) === 1)
+            return $parts[0];
+
+        $first = reset($parts);
+        $last = end($parts);
+
+        return $first . "_" . $last;
+    }
+
+    /**
      * Set up the ACL entity. This is called after the init() method,
      * so that ID and parents can be set up before calling.
      */
