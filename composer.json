@@ -8,6 +8,10 @@
         "Wedeto/Util": "0.9.*",
         "php": ">=7.0.0"
     },
+    "suggest": {
+        "php-mysqli": "Allows connecting with MySQL databases",
+        "php-pgsql": "Allow connecting with PostgreSQL databases"
+    },
     "autoload": {
         "psr-4": {
             "Wedeto\\DB\\": "src/"
