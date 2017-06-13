@@ -28,6 +28,7 @@ namespace Wedeto\DB;
 use PDO;
 
 use Wedeto\Util\Dictionary;
+use Wedeto\Util\Type;
 use Wedeto\Util\LoggerAwareStaticTrait;
 use Wedeto\DB\Schema\Schema;
 
@@ -115,7 +116,7 @@ class DB
         $database = $this->config->get('sql', 'database');
         $schema = $this->config->get('sql', 'schema');
         $this->dsn = $this->config->get('sql', 'dsn');
-        if (!$this->config->has('sql', 'type', Dictionary::TYPE_STRING))
+        if (!$this->config->has('sql', 'type', Type::STRING))
             throw new DBException("Please specify the database type in the configuration section [sql]");
 
         $type = $this->config->getString('sql', 'type');
