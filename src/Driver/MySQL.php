@@ -137,7 +137,9 @@ class MySQL extends Driver
 
         $this->logger->info("Model.DAO", "Preparing delete query {0}", [$sql]);
         $st = $this->db->prepare($q);
-        $st->execute($params->getParameters());
+        foreach ($parameters as $key => $value)
+            $st->bindValue($key, $value, $parameters->parameterType());
+        $st->execute();
 
         return $st->rowCount();
     }
@@ -148,7 +150,9 @@ class MySQL extends Driver
         $sql = $this->insertToSQL($parameters, $query);
 
         $st = $this->db->prepare($sql);
-        $st->execute($parameters->getParameters());
+        foreach ($parameters as $key => $value)
+            $st->bindValue($key, $value, $parameters->parameterType());
+        $st->execute();
 
         $query->setInsertId($this->db->lastInsertId());
         return $query->getInsertId();
@@ -160,7 +164,9 @@ class MySQL extends Driver
         $sql = $query->selectToSQL($parameters);
 
         $st = $this->db->prepare($sql);
-        $st->execute($parameters->getParameters());
+        foreach ($parameters as $key => $value)
+            $st->bindValue($key, $value, $parameters->parameterType());
+        $st->execute();
         return $st;
     }
 
@@ -170,7 +176,9 @@ class MySQL extends Driver
         $sql = $this->updateToSQL($parameters, $query);
     
         $st = $this->db->prepare($sql);
-        $st->execute($parameters->getParameters());
+        foreach ($parameters as $key => $value)
+            $st->bindValue($key, $value, $parameters->parameterType());
+        $st->execute();
 
         return $st->rowCount();
     }
