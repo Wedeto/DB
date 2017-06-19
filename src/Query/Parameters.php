@@ -43,10 +43,11 @@ class Parameters implements \Iterator
     /** For the iterator interface */
     protected $iterator = null;
 
-    public function assign($value)
+    public function assign($value, $type = PDO::PARAM_STR)
     {
         $key = $this->getNextKey();
         $this->params[$key] = $value;
+        $this->param_types[$key] = $type;
         return $key;
     }
 
@@ -175,17 +176,20 @@ class Parameters implements \Iterator
 
     public function next()
     {
+        echo "NEXT\n";
         $this->iterator->next();
     }
 
     public function rewind()
     {
+        echo "REWIND!\n";
         $this->iterator = new ArrayIterator($this->params);
         $this->iterator->rewind();
     }
 
     public function valid()
     {
+        echo "VALID\n";
         return $this->iterator->valid();
     }
 

@@ -116,7 +116,7 @@ trait StandardSQLTrait
                 $val = $val->format(\DateTimeInterface::ATOM);
             elseif ($val === false)
                 $val = 0;
-            $key = $params->assign($val);
+            $key = $params->assign($val, $expression->getParameterType());
         }
         $expression->bind($params, $key, null);
 
@@ -349,8 +349,9 @@ trait StandardSQLTrait
         $query[] = '(' . implode(', ', $fields) . ')';
         $query[] = 'VALUES';
 
-        $values = $insert->getValues();
-        foreach ($values as $key => $value)
+        $insert_values = $insert->getValues();
+        $values = [];
+        foreach ($insert_values as $key => $value)
             $values[$key] = $this->toSQL($params, $value);
 
         $query[] = '(' . implode(', ', $values) . ')';

@@ -70,6 +70,11 @@ class Builder
 
     public static function insert($table, $record, $id_field = "")
     {
+        if (empty($id_field))
+            $id_field = [];
+        elseif (is_string($id_field))
+            $id_field = [$id_field];
+
         return new Insert($table, $record, $id_field);
     }
 

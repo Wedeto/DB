@@ -26,16 +26,19 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Query;
 
 use Wedeto\Util\Functions as WF;
+use PDO;
 
 class ConstantValue extends Expression
 {
     protected $value;
+    protected $parameter_type;
     protected $target_key = null;
     protected $parameters = null;
     protected $formatter = null;
 
-    public function __construct($value)
+    public function __construct($value, $type = PDO::PARAM_STR)
     {
+        $this->parameter_type = $type;
         $this->setValue($value);
     }
 
@@ -49,12 +52,28 @@ class ConstantValue extends Expression
         return $this->target_key;
     }
 
+    public function getParameterType()
+    {
+        return $this->parameter_type;
+    }
+
+    public function setParameterType($type)
+    {
+        $this->parameter_type = $type;
+        return $this;
+    }
+
     public function setValue($value)
     {
         if ($value instanceof \DateTime)
             $value = $value->format(\DateTime::ISO8601);
 
-        if (!is_scalar($value) && $value !== null)
+        if (is_resource($value))
+        {
+            if ($this->parameter_type !== PDO::PARAM_LOB)
+                throw new \InvalidArgumentException("A resource can only be used for a PARAM_LOB type parameter");
+        }
+        elseif (!is_scalar($value) && $value !== null)
             throw new \InvalidArgumentException("Invalid data type for constant: " . WF::str($value));
 
         $this->value = $value;
@@ -79,7 +98,7 @@ class ConstantValue extends Expression
     {
         $value = empty($this->formatter) ? $this->value : ($this->formatter)($this->value);
         if (!empty($this->parameters))
-            $this->parameters->set($this->target_key, $value);
+            $this->parameters->set($this->target_key, $value, $this->parameter_type);
     }
 }
 
