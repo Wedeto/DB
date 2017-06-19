@@ -54,6 +54,14 @@ class ParameterTest extends TestCase
         $p->get('foo');
     }
 
+    public function testGetParameterTypeInvalidKey()
+    {
+        $p = new Parameters();
+        $this->expectException(\OutOfRangeException::class);
+        $this->expectExceptionMessage("Invalid key: foo");
+        $p->getParameterType('foo');
+    }
+
     public function testTableRegistration()
     {
         $a = new Parameters();
@@ -140,7 +148,7 @@ class ParameterTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage("No table identifier provided");
-        $a->resolveTable(null);
+        $a->resolveTable('');
     }
 
     public function testGetDefaultTable()
@@ -171,5 +179,29 @@ class ParameterTest extends TestCase
         $def = $a->getDefaultTable();
         $this->assertInstanceOf(TableClause::class, $def);
         $this->assertEquals('foo', $def->getTable());
+    }
+
+    public function testIterator()
+    {
+        $a = new Parameters;
+
+        $str = fopen('php://memory', 'rw');
+
+        $a->set('foo', 'bar');
+        $a->set('foo2', 3, \PDO::PARAM_INT);
+        $a->set('foo3', $str, \PDO::PARAM_LOB);
+
+        $keys = ['foo', 'foo2', 'foo3'];
+        $vals = ['bar', 3, $str];
+        $types = [\PDO::PARAM_STR, \PDO::PARAM_INT, \PDO::PARAM_LOB];
+
+        foreach ($a as $k => $v)
+        {
+            $this->assertEquals(array_shift($keys), $k);
+            $this->assertEquals(array_shift($vals), $v);
+            $this->assertEquals(array_shift($types), $a->parameterType());
+        }
+
+        $this->assertEmpty($keys);
     }
 }

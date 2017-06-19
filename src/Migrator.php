@@ -26,9 +26,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB;
 
 use Wedeto\DB\Migration;
-use Wedeto\Task;
 
-class Migrator extends Task
+class Migrator
 {
     public function run()
     {

@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class DateTimeColumn extends Column
+class DateTimeTZColumn extends Column
 {
     public function __construct($name, $nullable = false, $default = null)
     {

@@ -28,14 +28,20 @@ namespace Wedeto\DB\Query;
 use Wedeto\DB\Driver\Driver;
 use InvalidArgumentException;
 use OutOfRangeException;
+use ArrayIterator;
+use PDO;
 
-class Parameters
+class Parameters implements \Iterator
 {
     protected $params = array();
+    protected $param_types = array();
     protected $tables = array();
     protected $aliases = array();
     protected $column_counter = 0;
     protected $table_counter = 0;
+
+    /** For the iterator interface */
+    protected $iterator = null;
 
     public function assign($value)
     {
@@ -44,7 +50,7 @@ class Parameters
         return $key;
     }
 
-    public function get($key)
+    public function get(string $key)
     {
         if (!array_key_exists($key, $this->params))
             throw new OutOfRangeException("Invalid key: $key");
@@ -52,9 +58,18 @@ class Parameters
         return $this->params[$key];
     }
 
-    public function set($key, $value)
+    public function getParameterType(string $key)
+    {
+        if (!array_key_exists($key, $this->params))
+            throw new OutOfRangeException("Invalid key: $key");
+
+        return $this->param_types[$key];
+    }
+
+    public function set(string $key, $value, $type = PDO::PARAM_STR)
     {
         $this->params[$key] = $value;
+        $this->param_types[$key] = $type;
         return $this;
     }
 
@@ -110,7 +125,7 @@ class Parameters
         }
     }
 
-    public function resolveTable($name)
+    public function resolveTable(string $name)
     {
         if (!empty($name) && is_string($name))
         {
@@ -146,6 +161,37 @@ class Parameters
             return new TableClause($first);
         else
             return new TableClause($alias);
+    }
+
+    public function current()
+    {
+        return $this->iterator->current();
+    }
+
+    public function key()
+    {
+        return $this->iterator->key();
+    }
+
+    public function next()
+    {
+        $this->iterator->next();
+    }
+
+    public function rewind()
+    {
+        $this->iterator = new ArrayIterator($this->params);
+        $this->iterator->rewind();
+    }
+
+    public function valid()
+    {
+        return $this->iterator->valid();
+    }
+
+    public function parameterType()
+    {
+        return $this->getParameterType($this->key());
     }
 }
 

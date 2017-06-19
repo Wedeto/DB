@@ -206,7 +206,9 @@ class PGSQL extends Driver
 
         $this->logger->info("Model.DAO", "Preparing delete query {0}", [$sql]);
         $st = $this->db->prepare($q);
-        $st->execute($params->getParameters());
+        foreach ($parameters as $key => $value)
+            $st->bindValue($key, $value, $parameters->parameterType());
+        $st->execute();
 
         return $st->rowCount();
     }
@@ -227,7 +229,9 @@ class PGSQL extends Driver
         }
 
         $st = $this->db->prepare($sql);
-        $st->execute($parameters->getParameters());
+        foreach ($parameters as $key => $value)
+            $st->bindValue($key, $value, $parameters->parameterType());
+        $st->execute();
 
         $id = null;
         if ($retval)
@@ -247,7 +251,9 @@ class PGSQL extends Driver
         $sql = $this->selectToSQL($parameters, $query);
 
         $st = $this->db->prepare($sql);
-        $st->execute($parameters->getParameters());
+        foreach ($parameters as $key => $value)
+            $st->bindValue($key, $value, $parameters->parameterType());
+        $st->execute();
         return $st;
     }
 
@@ -257,7 +263,9 @@ class PGSQL extends Driver
         $sql = $this->updateToSQL($parameters, $query);
     
         $st = $this->db->prepare($sql);
-        $st->execute($parameters->getParameters());
+        foreach ($parameters as $key => $value)
+            $st->bindValue($key, $value, $parameters->parameterType());
+        $st->execute();
 
         return $st->rowCount();
     }
