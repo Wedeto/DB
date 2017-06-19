@@ -176,20 +176,17 @@ class Parameters implements \Iterator
 
     public function next()
     {
-        echo "NEXT\n";
         $this->iterator->next();
     }
 
     public function rewind()
     {
-        echo "REWIND!\n";
         $this->iterator = new ArrayIterator($this->params);
         $this->iterator->rewind();
     }
 
     public function valid()
     {
-        echo "VALID\n";
         return $this->iterator->valid();
     }
 

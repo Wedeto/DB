@@ -176,14 +176,14 @@ class PGSQL extends Driver
         return '{' . implode(',', $vals) . '}';
     }
 
-    public function duplicateKeyToSQL(Parameters $parameters, Query\DuplicateKey $duplicate)
+    public function duplicateKeyToSQL(Parameters $params, Query\DuplicateKey $duplicate)
     {
         $query = array("ON CONFLICT");
 
         $conflicts = $duplicate->getConflictingFields();
         $parts = array();
         foreach ($conflicts as $c)
-            $parts[] = $this->toSQL($parameters, $c, false);
+            $parts[] = $this->toSQL($params, $c, false);
 
         $query[] = "(" . implode(', ', $parts) . ")";
         $query[] = "DO UPDATE";
@@ -192,7 +192,7 @@ class PGSQL extends Driver
         $updates = $duplicate->getUpdates();
         $parts = array();
         foreach ($updates as $up)
-            $parts[] = $this->updateFieldToSQL($parameters, $up);
+            $parts[] = $this->updateFieldToSQL($params, $up);
 
         $query[] = implode(", " , $parts);
 
@@ -202,12 +202,11 @@ class PGSQL extends Driver
     public function delete(Query\Delete $query)
     {
         $params = new Parameters($this);
-        $sql = $this->deleteToSQL($params, $d);
+        $sql = $this->deleteToSQL($params, $query);
 
-        $this->logger->info("Model.DAO", "Preparing delete query {0}", [$sql]);
-        $st = $this->db->prepare($q);
-        foreach ($parameters as $key => $value)
-            $st->bindValue($key, $value, $parameters->parameterType());
+        $st = $this->db->prepare($sql);
+        foreach ($params as $key => $value)
+            $st->bindValue($key, $value, $params->parameterType());
         $st->execute();
 
         return $st->rowCount();
@@ -215,8 +214,8 @@ class PGSQL extends Driver
 
     public function insert(Query\Insert $query, $pkey = null)
     {
-        $parameters = new Parameters($this);
-        $sql = $this->insertToSQL($parameters, $query);
+        $params = new Parameters($this);
+        $sql = $this->insertToSQL($params, $query);
 
         $retval = !empty($pkey);
         if ($retval)
@@ -229,9 +228,12 @@ class PGSQL extends Driver
         }
 
         $st = $this->db->prepare($sql);
-        foreach ($parameters as $key => $value)
-            $st->bindValue($key, $value, $parameters->parameterType());
+        foreach ($params as $key => $value)
+            $st->bindValue($key, $value, $params->parameterType());
         $st->execute();
+
+        if ($st === false)
+            throw new DBException("Query failed: " . $sql);
 
         $id = null;
         if ($retval)
@@ -240,31 +242,42 @@ class PGSQL extends Driver
             $query->setInsertId($id);
         }
         else
-            $id = $this->db->lastInsertId();
+        {
+            try
+            {
+                $id = $this->db->lastInsertId();
+            }
+            catch (PDOException $pdoex)
+            {
+                // This fails when a row has been inserted without generating a new ID.
+                // In this case, there is no ID known. The called should already expect this,
+                // based on database structure.
+            }
+        }
 
         return $id;
     }
 
     public function select(Query\Select $query)
     {
-        $parameters = new Parameters($this);
-        $sql = $this->selectToSQL($parameters, $query);
+        $params = new Parameters($this);
+        $sql = $this->selectToSQL($params, $query);
 
         $st = $this->db->prepare($sql);
-        foreach ($parameters as $key => $value)
-            $st->bindValue($key, $value, $parameters->parameterType());
+        foreach ($params as $key => $value)
+            $st->bindValue($key, $value, $params->parameterType());
         $st->execute();
         return $st;
     }
 
     public function update(Query\Update $query)
     {
-        $parameters = new Parameters($this);
-        $sql = $this->updateToSQL($parameters, $query);
+        $params = new Parameters($this);
+        $sql = $this->updateToSQL($params, $query);
     
         $st = $this->db->prepare($sql);
-        foreach ($parameters as $key => $value)
-            $st->bindValue($key, $value, $parameters->parameterType());
+        foreach ($params as $key => $value)
+            $st->bindValue($key, $value, $params->parameterType());
         $st->execute();
 
         return $st->rowCount();
