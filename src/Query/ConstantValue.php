@@ -81,15 +81,11 @@ class ConstantValue extends Expression
         return $this;
     }
 
-    public function bind(Parameters $params, string $key, $formatter)
+    public function bind(Parameters $params, string $key, callable $formatter = null)
     {
         $this->parameters = $params;
         if (!empty($formatter))
-        {
-            if (!is_callable($formatter))
-                throw new \InvalidArgumentException("Formatter must be callable");
             $this->formatter = $formatter;
-        }
         $this->target_key = $key;
         $this->update();
     }

@@ -46,6 +46,18 @@ class BuilderTest extends TestCase
         $this->assertInstanceOf(Select::class, $q);
         $this->assertEquals(1, count($q->getFields()));
 
+        $order = $q->getOrder();
+        $clauses = $order->getClauses();
+        $this->assertEquals(2, count($clauses));
+
+        $cl1 = $clauses[0];
+        $this->assertEquals('val', $cl1->getOperand()->getField());
+        $this->assertEquals('ASC', $cl1->getDirection());
+
+        $cl2 = $clauses[1];
+        $this->assertEquals('val2', $cl2->getOperand()->getField());
+        $this->assertEquals('DESC', $cl2->getDirection());
+
         $q = Q::select(
             'foo',
             'bar',

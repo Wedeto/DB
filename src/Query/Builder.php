@@ -153,6 +153,7 @@ class Builder
         if (is_string($order) && count($args) === 0)
             return new OrderClause(new CustomSQL($order));
 
+        array_unshift($args, $order);
         return new OrderClause($args);
     }
 

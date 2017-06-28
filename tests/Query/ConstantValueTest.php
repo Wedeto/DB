@@ -57,7 +57,7 @@ class ConstantValueTest extends TestCase
     public function testUpdateInParameters()
     {
         $mock = $this->prophesize(Parameters::class);
-        $mock->set('fookey', 'foo')->shouldBeCalled();
+        $mock->set('fookey', 'foo', \PDO::PARAM_STR)->shouldBeCalled();
         $params = $mock->reveal();
 
         $const = new ConstantValue('foo');
@@ -65,7 +65,7 @@ class ConstantValueTest extends TestCase
 
         $const->bind($params, 'fookey',  null);
 
-        $mock->set('fookey', 'baz')->shouldBeCalled();
+        $mock->set('fookey', 'baz', \PDO::PARAM_STR)->shouldBeCalled();
         $const->setValue('baz');
 
         $this->assertEquals('fookey', $const->getKey());
@@ -81,7 +81,7 @@ class ConstantValueTest extends TestCase
         $const = new ConstantValue('foo');
         $this->assertEquals('foo', $const->getValue());
 
-        $mock->set('fookey', 'foobarbaz')->shouldBeCalled();
+        $mock->set('fookey', 'foobarbaz', \PDO::PARAM_STR)->shouldBeCalled();
         $const->bind($params, 'fookey',  $fmt);
     }
 
@@ -97,7 +97,7 @@ class ConstantValueTest extends TestCase
         $const = new ConstantValue('foo');
         $this->assertEquals('foo', $const->getValue());
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\TypeError::class);
         $const->bind($params, 'fookey',  $func);
     }
 }

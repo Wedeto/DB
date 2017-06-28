@@ -77,10 +77,10 @@ class ConstantArrayTest extends TestCase
         $params = $mock->reveal();
 
         $a = new ConstantArray([]);
-        $mock->set('fookey', '')->shouldBeCalled();
+        $mock->set('fookey', '', null)->shouldBeCalled();
         $a->bind($params, 'fookey', $func);
 
-        $mock->set('fookey', '1-2-3-4')->shouldBeCalled();
+        $mock->set('fookey', '1-2-3-4', null)->shouldBeCalled();
         $a->setValue([1, 2, 3, 4]);
     }
 }
