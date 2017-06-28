@@ -66,6 +66,7 @@ class PGSQL extends Driver
         Column::BIGINT => 'bigint',
         Column::FLOAT => 'double precision',
         Column::DECIMAL => 'decimal',
+        Column::DECIMAL => 'numeric',
 
         Column::DATETIME => 'timestamp without time zone',
         Column::DATETIMETZ => 'timestamp with time zone',
@@ -266,6 +267,7 @@ class PGSQL extends Driver
         $st = $this->db->prepare($sql);
         foreach ($params as $key => $value)
             $st->bindValue($key, $value, $params->parameterType());
+
         $st->execute();
         return $st;
     }
