@@ -33,6 +33,7 @@ class ConstantArray extends ConstantValue
 {
     public function __construct($value, ...$values)
     {
+        $this->parameter_type = \PDO::PARAM_STR;
         $this->setValue(func_get_args());
     }
 

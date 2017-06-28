@@ -162,7 +162,8 @@ trait StandardSQLTrait
         $expr = $expression->getExpression();
         $alias = $expression->getAlias();
 
-        return $this->toSQL($expr) . ' AS ' . $this->identQuote($alias);
+        $expr = $this->toSQL($params, $expr);
+        return empty($alias) ? $expr : $expr . ' AS ' . $this->identQuote($alias);
     }
 
     /**
