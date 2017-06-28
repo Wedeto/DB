@@ -309,6 +309,9 @@ abstract class Driver
         if ($clause instanceof Query\FieldName)
             return $this->fieldToSQL($params, $clause);
 
+        if ($clause instanceof Query\FieldAlias)
+            return $this->aliasToSQL($params, $clause);
+
         if ($clause instanceof Query\EqualsOneOf)
             return $this->equalsOneOfToSQL($params, $clause, $inner_clause);
 
@@ -329,6 +332,7 @@ abstract class Driver
 
     abstract public function constantToSQL(Parameters $params, Query\ConstantValue $expression);
     abstract public function fieldToSQL(Parameters $params, Query\FieldName $expression);
+    abstract public function aliasToSQL(Parameters $params, Query\FieldAlias $expression);
     abstract public function functionToSQL(Parameters $params, Query\SQLFunction $expression);
     abstract public function constantArrayToSQL(Parameters $params, Query\ConstantArray $list);
     abstract public function customToSQL(Parameters $params, Query\CustomSQL $custom, $inner_clause);

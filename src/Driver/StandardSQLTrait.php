@@ -33,6 +33,7 @@ use Wedeto\DB\Query\CustomSQL;
 use Wedeto\DB\Query\Delete;
 use Wedeto\DB\Query\Direction;
 use Wedeto\DB\Query\EqualsOneOf;
+use Wedeto\DB\Query\FieldAlias;
 use Wedeto\DB\Query\FieldName;
 use Wedeto\DB\Query\GetClause;
 use Wedeto\DB\Query\GroupByClause;
@@ -148,6 +149,20 @@ trait StandardSQLTrait
         }
 
         return $this->identQuote($field);
+    }
+
+    /**
+     * Write a field alias as SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @param FieldAlias $expression The field to write
+     * @return string The generated SQL
+     */
+    public function aliasToSQL(Parameters $params, FieldAlias $expression)
+    {
+        $expr = $expression->getExpression();
+        $alias = $expression->getAlias();
+
+        return $this->toSQL($expr) . ' AS ' . $this->identQuote($alias);
     }
 
     /**
