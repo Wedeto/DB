@@ -27,6 +27,8 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+use Wedeto\DB\Driver\PGSQL;
+
 /**
  * @covers Wedeto\DB\Query\GetClause
  */
@@ -40,4 +42,22 @@ class GetClauseTest extends TestCase
         $this->assertInstanceOf(FieldName::class, $expr);
         $this->assertEquals("bar", $a->getAlias());
     }
+
+    public function testToSQL()
+    {
+        $drv = new PGSQL(new MockDB);
+
+        $get = new GetClause("foo", "bar");
+        $params = new Parameters;
+        $params->setDriver($drv);
+
+        $sql = $get->toSQL($params, false);
+        $this->assertEquals('"foo" AS "bar"', $sql);
+    }
+}
+
+class MockDB extends \Wedeto\DB\DB
+{
+    public function __construct()
+    {}
 }

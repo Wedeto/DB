@@ -100,4 +100,9 @@ class ConstantValueTest extends TestCase
         $this->expectException(\TypeError::class);
         $const->bind($params, 'fookey',  $func);
     }
+
+    public function testToSQL()
+    {
+        
+    }
 }

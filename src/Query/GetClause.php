@@ -59,8 +59,9 @@ class GetClause extends Clause
         $expr = $this->getExpression();
         $alias = $this->getAlias();
 
-        $expr = $params->getDriver()->toSQL($params, $expr);
-        return empty($alias) ? $expr : $expr . ' AS ' . $this->identQuote($alias);
+        $drv = $params->getDriver();
+        $expr = $drv->toSQL($params, $expr);
+        return empty($alias) ? $expr : $expr . ' AS ' . $drv->identQuote($alias);
     }
 
     /**
