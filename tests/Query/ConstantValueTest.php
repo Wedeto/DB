@@ -28,6 +28,9 @@ namespace Wedeto\DB\Query;
 use PHPUnit\Framework\TestCase;
 use Wedeto\DB\Driver\Driver;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 class ConstantValueTest extends TestCase
 {
     public function testConstruct()
@@ -42,7 +45,7 @@ class ConstantValueTest extends TestCase
         $this->assertEquals("foo", $a->getValue());
 
         $dt = new \DateTime();
-        $expected = $dt->format(\DateTime::ISO8601);
+        $expected = $dt->format(\DateTime::ATOM);
         $a = new ConstantValue($dt);
         $this->assertEquals($expected, $a->getValue());
     }
@@ -103,6 +106,58 @@ class ConstantValueTest extends TestCase
 
     public function testToSQL()
     {
-        
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $val = new ConstantValue("foo");
+        $sql = $val->toSQL($params, false);
+
+        $this->assertEquals(":c0", $sql);
+        $this->assertEquals('foo', $params->get('c0'));
+
+        $val = new ConstantValue("foo2");
+        $sql = $val->toSQL($params, false);
+
+        $this->assertEquals(":c1", $sql);
+        $this->assertEquals('foo2', $params->get('c1'));
+
+
+        $str = fopen("php://memory", "rw");
+        fwrite($str, 'foo');
+
+        $val = new ConstantValue($str, \PDO::PARAM_LOB);
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals(":c2", $sql);
+        $this->assertSame($str, $params->get('c2'));
+
+        // Repeating should give the same output
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals(":c2", $sql);
+        $this->assertSame($str, $params->get('c2'));
+
+        // Repeating with different parameter object should reset the key
+        $params = new Parameters($drv);
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals(":c0", $sql);
+        $this->assertSame($str, $params->get('c0'));
+
+        $val = new ConstantValue(true);
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals(":c1", $sql);
+        $this->assertEquals(1, $params->get('c1'));
+
+        $val = new ConstantValue(false);
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals(":c2", $sql);
+        $this->assertEquals(0, $params->get('c2'));
+
+        $now = new \DateTime;
+        $atom = $now->format(\DateTime::ATOM);
+
+        $val = new ConstantValue($now);
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals(":c3", $sql);
+        $this->assertEquals($atom, $params->get('c3'));
     }
 }

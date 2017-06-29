@@ -49,7 +49,7 @@ class DB
     protected static $default_db = null;
     protected $pdo;
     protected $dsn;
-    protected $qdriver;
+    protected $driver;
     protected $config;
     protected $schema;
 
@@ -72,7 +72,7 @@ class DB
      * @return Wedeto\DB\Driver\Driver A initialized driver object
      * @throws Wedeto\DB\Exception\DriverException When no driver could be found
      */
-    protected function getDriver(string $type)
+    protected function setupDriver(string $type)
     {
         $driver = "Wedeto\\DB\\Driver\\" . $type;
         if (class_exists($driver))
@@ -125,12 +125,12 @@ class DB
         $type = $this->config->getString('sql', 'type');
 
         // Set up the driver
-        $this->qdriver = $this->getDriver($type);
-        $this->qdriver->setTablePrefix($this->config->dget('sql', 'prefix', ''));
+        $this->driver = $this->setupDriver($type);
+        $this->driver->setTablePrefix($this->config->dget('sql', 'prefix', ''));
             
         if (!$this->dsn)
         {
-            $this->dsn = $this->qdriver->generateDSN($this->config->getArray('sql'));
+            $this->dsn = $this->driver->generateDSN($this->config->getArray('sql'));
             self::$logger->info("Generated DSN: {0}", [$this->dsn]);
             $this->config->set('sql', 'dsn', $this->dsn);
         }
@@ -194,12 +194,12 @@ class DB
     /**
      * @return Wedeto\DB\Driver\Driver The driver associated with this database connection.
      */
-    public function driver()
+    public function getDriver()
     {
-        if ($this->qdriver === null)
+        if ($this->driver === null)
             $this->connect();
 
-        return $this->qdriver;
+        return $this->driver;
     }
     
     /**
@@ -220,14 +220,14 @@ class DB
     {
         if ($this->schema === null)
         {
-            $drv = $this->driver();
+            $drv = $this->getDriver();
             $database = $drv->getDatabaseName();
             $schema = $drv->getSchemaName();
             $type = $this->config->get('sql', 'type');
             $schema_name = sprintf("%s_%s_%s", $type, $database, $schema);
 
             $this->schema = new Schema($schema_name, true);
-            $this->schema->setDBDriver($this->qdriver);
+            $this->schema->setDBDriver($this->driver);
         }
 
         return $this->schema;
@@ -253,7 +253,7 @@ class DB
 
     public function __debuginfo()
     {
-        $drv = get_class($this->driver());
+        $drv = get_class($this->getDriver());
         return array('dsn' => $this->dsn, 'driver' => $drv);
     }
 }

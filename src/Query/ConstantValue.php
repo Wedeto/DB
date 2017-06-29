@@ -41,7 +41,7 @@ class ConstantValue extends Expression
 
     public function __construct($value, $type = PDO::PARAM_STR)
     {
-        $this->parameter_type = $type;
+        $this->setParameterType($type);
         $this->setValue($value);
     }
 
@@ -69,7 +69,7 @@ class ConstantValue extends Expression
     public function setValue($value)
     {
         if ($value instanceof \DateTime)
-            $value = $value->format(\DateTime::ISO8601);
+            $value = $value->format(\DateTime::ATOM);
 
         if (is_resource($value))
         {
@@ -122,10 +122,8 @@ class ConstantValue extends Expression
         if ($key === null)
         {
             $val = $this->getValue();
-            if ($val instanceof \DateTimeInterface)
-                $val = $val->format(\DateTimeInterface::ATOM);
-            elseif ($val === false)
-                $val = 0;
+            if (is_bool($val))
+                $val = $val ? 1 : 0;
             $key = $params->assign($val, $this->getParameterType());
         }
         $this->bind($params, $key, null);

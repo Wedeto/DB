@@ -48,6 +48,12 @@ class Parameters implements \Iterator
     /** For the iterator interface */
     protected $iterator = null;
 
+
+    public function __construct(Driver $driver = null)
+    {
+        $this->driver = $driver;
+    }
+
     public function assign($value, $type = PDO::PARAM_STR)
     {
         $key = $this->getNextKey();
@@ -207,6 +213,8 @@ class Parameters implements \Iterator
 
     public function getDriver()
     {
+        if ($this->driver === null)
+            throw new QueryException("No database driver provided to format query");
         return $this->driver;
     }
 
