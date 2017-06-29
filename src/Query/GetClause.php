@@ -27,7 +27,7 @@ namespace Wedeto\DB\Query;
 
 use InvalidArgumentException;
 
-class FieldAlias extends Clause
+class GetClause extends Clause
 {
     protected $expression;
     protected $alias;
@@ -46,5 +46,41 @@ class FieldAlias extends Clause
     public function getAlias()
     {
         return $this->alias;
+    }
+
+    /**
+     * Write a field alias as SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @param bool $inner_clause Unused
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $expr = $this->getExpression();
+        $alias = $this->getAlias();
+
+        $expr = $params->getDriver()->toSQL($params, $expr);
+        return empty($alias) ? $expr : $expr . ' AS ' . $this->identQuote($alias);
+    }
+
+    /**
+     * Write a select return clause as SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @return string The generated SQL
+     */
+    public function getToSQL(Parameters $params, bool $inner_clause)
+    {
+        $alias = $this->alias;
+
+        $drv = $params->getDriver();
+        $sql = $drv->toSQL($params, $this->expression, true);
+
+        if (empty($this->alias))
+            $this->alias = $params->generateAlias($this->expression);
+
+        if ($this->alias)
+            return $sql . ' AS ' . $drv->identQuote($alias);
+
+        return $sql;
     }
 }

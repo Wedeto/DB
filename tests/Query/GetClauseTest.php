@@ -25,37 +25,19 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Query;
 
-use Wedeto\Util\Functions as WF;
+use PHPUnit\Framework\TestCase;
 
-class LimitClause extends Clause
+/**
+ * @covers Wedeto\DB\Query\GetClause
+ */
+class GetClauseTest extends TestCase
 {
-    protected $number;
-
-    public function __construct($value)
+    public function testGetClause()
     {
-        if (is_int($value))
-            $this->number = new ConstantValue($value);
-        elseif ($value instanceof ConstantValue)
-            $this->number = $value;
-        else
-            throw new \InvalidArgumentException("Invalid value for limit: " . WF::str($value));
-    }
+        $a = new GetClause("foo", "bar");
 
-    public function getLimit()
-    {
-        return $this->number;
+        $expr = $a->getExpression();
+        $this->assertInstanceOf(FieldName::class, $expr);
+        $this->assertEquals("bar", $a->getAlias());
     }
-
-    /**
-     * Write a LIMIT clause to SQL query syntax
-     * @param Parameters $params The query parameters: tables and placeholder values
-     * @param bool $inner_caluse Unused
-     * @return string The generated SQL
-     */
-    public function toSQL(Parameters $params, bool $inner_clause)
-    {
-        return "LIMIT " . $params->getDriver()->toSQL($params, $this->getLimit());
-    }
-
 }
-

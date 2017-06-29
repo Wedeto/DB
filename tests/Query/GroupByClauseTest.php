@@ -27,6 +27,9 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+use Wedeto\DB\Exception\QueryException;
+use Wedeto\DB\Exception\InvalidTypeException;
+
 /**
  * @covers Wedeto\DB\Query\GroupByClause
  */
@@ -51,14 +54,14 @@ class GroupByClauseTest extends TestCase
 
     public function testEmptyConstructorThrowsException()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Specify at least one group by condition");
         $gb = new GroupByClause();
     }
 
     public function testInvalidConstructorArgumentThrowsException()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidTypeException::class);
         $this->expectExceptionMessage("Invalid parameter");
         $gb = new GroupByClause(new \StdClass);
     }

@@ -27,6 +27,7 @@ namespace Wedeto\DB\Query;
 
 use Wedeto\Util\Functions as WF;
 use Wedeto\DB\DB;
+use Wedeto\DB\Exception\QueryException;
 
 class SourceSubQuery extends SourceTableClause
 {
@@ -35,7 +36,7 @@ class SourceSubQuery extends SourceTableClause
     public function __construct(Clause $subquery, string $alias)
     {
         if (empty($alias))
-            throw new \InvalidArgumentException("Subqueries must have an alias");
+            throw new QueryException("Subqueries must have an alias");
 
         $this->setSubQuery($subquery);
         $this->setAlias($alias);
@@ -47,7 +48,7 @@ class SourceSubQuery extends SourceTableClause
             $subquery = new SubQuery($subquery);
 
         if (!($subquery instanceof SubQuery))
-            throw new \DomainException("Provide a subquery as argument to SourceSubQuery, not: " . WF::str($subquery));
+            throw new QueryException("Provide a subquery as argument to SourceSubQuery, not: " . WF::str($subquery));
 
         $this->query = $subquery;
         return $this;
@@ -56,5 +57,18 @@ class SourceSubQuery extends SourceTableClause
     public function getSubQuery()
     {
         return $this->query;
+    }
+
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $subquery = $this->getSubQuery();
+        $alias = $this->getAlias();
+
+        if (!empty($alias))
+            throw new QueryException("A subquery must have an alias");
+
+        $drv = $params->getDriver();
+        $sql = $drv->toSQL($params, $subquery);
+        return $sql . ' AS ' . $drv->identQuote($alias);
     }
 }

@@ -28,6 +28,7 @@ namespace Wedeto\DB\Query;
 use PHPUnit\Framework\TestCase;
 
 use Wedeto\DB\Query\Builder as Q;
+use Wedeto\DB\Exception\QueryException;
 
 /**
  * @covers Wedeto\DB\Query\UnionClause
@@ -65,7 +66,7 @@ class UnionClauseTest extends TestCase
             )
         );
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage('Invalid UNION type');
         $union = new UnionClause('FOO', $s);
     }

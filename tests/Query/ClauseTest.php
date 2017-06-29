@@ -27,6 +27,7 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 use Wedeto\DB\Driver\Driver;
+use Wedeto\DB\Exception\InvalidTypeException;
 
 /**
  * @covers Wedeto\DB\Query\Clause
@@ -84,9 +85,12 @@ class ClauseTest extends TestCase
     {
         $a = new TestClause();
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidTypeException::class);
         $actual = $a->toExpression(new \StdClass, false);
     }
 }
 
-class TestClause extends Clause {}
+class TestClause extends Clause {
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {}
+}

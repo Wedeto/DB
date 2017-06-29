@@ -258,107 +258,10 @@ abstract class Driver
      */
     public function toSQL(Parameters $params, Query\Clause $clause, bool $inner_clause = false)
     {
-        if ($clause instanceof Query\Query)
-            return $this->queryToSQL($params, $clause);
-
-        if ($clause instanceof Query\DuplicateKey)
-            return $this->duplicateKeyToSQL($params, $clause);
-
-        if ($clause instanceof Query\GetClause)
-            return $this->getToSQL($params, $clause);
-
-        if ($clause instanceof Query\TableClause)
-            return $this->tableToSQL($params, $clause);
-
-        if ($clause instanceof Query\WhereClause)
-            return $this->whereToSQL($params, $clause);
-
-        if ($clause instanceof Query\OrderClause)
-            return $this->orderToSQL($params, $clause);
-
-        if ($clause instanceof Query\Direction)
-            return $this->directionToSQL($params, $clause);
-
-        if ($clause instanceof Query\LimitClause)
-            return $this->limitToSQL($params, $clause);
-
-        if ($clause instanceof Query\OffsetClause)
-            return $this->offsetToSQL($params, $clause);
-
-        if ($clause instanceof Query\ConstantValue)
-            return $this->constantToSQL($params, $clause);
-
-        if ($clause instanceof Query\Operator)
-            return $this->operatorToSQL($params, $clause, $inner_clause);
-
-        if ($clause instanceof Query\SQLFunction)
-            return $this->functionToSQL($params, $clause);
-
-        if ($clause instanceof Query\SubQuery)
-            return $this->subQueryToSQL($params, $clause);
-
-        if ($clause instanceof Query\UnionClause)
-            return $this->unionToSQL($params, $clause);
-
-        if ($clause instanceof Query\HavingClause)
-            return $this->havingToSQL($params, $clause);
-
-        if ($clause instanceof Query\GroupByClause)
-            return $this->groupByToSQL($params, $clause);
-
-        if ($clause instanceof Query\FieldName)
-            return $this->fieldToSQL($params, $clause);
-
-        if ($clause instanceof Query\FieldAlias)
-            return $this->aliasToSQL($params, $clause);
-
-        if ($clause instanceof Query\EqualsOneOf)
-            return $this->equalsOneOfToSQL($params, $clause, $inner_clause);
-
-        if ($clause instanceof Query\CustomSQL)
-            return $this->customToSQL($params, $clause, $inner_clause);
-
-        if ($clause instanceof Query\UpdateField)
-            return $this->updateFieldToSQL($params, $clause, $inner_clause);
-
-        if ($clause instanceof Query\NullValue)
-            return "NULL";
-
-        if ($clause instanceof Query\Wildcard)
-            return "*";
-
+        $params->setDriver($this);
+        return $clause->toSQL($params, $inner_clause);
         throw new \InvalidArgumentException("Unknown clause: " . get_class($clause));
     }
-
-    abstract public function constantToSQL(Parameters $params, Query\ConstantValue $expression);
-    abstract public function fieldToSQL(Parameters $params, Query\FieldName $expression);
-    abstract public function aliasToSQL(Parameters $params, Query\FieldAlias $expression);
-    abstract public function functionToSQL(Parameters $params, Query\SQLFunction $expression);
-    abstract public function constantArrayToSQL(Parameters $params, Query\ConstantArray $list);
-    abstract public function customToSQL(Parameters $params, Query\CustomSQL $custom, $inner_clause);
-    abstract public function directionToSQL(Parameters $params, Query\Direction $dir);
-    abstract public function duplicateKeyToSQL(Parameters $params, Query\DuplicateKey $duplicate);
-    abstract public function equalsOneOfToSQL(Parameters $params, Query\EqualsOneOf $matcher, bool $inner_clause);
-    abstract public function getToSQL(Parameters $params, Query\GetClause $get);
-    abstract public function joinToSQL(Parameters $params, Query\JoinClause $join);
-    abstract public function limitToSQL(Parameters $params, Query\LimitClause $limit);
-    abstract public function offsetToSQL(Parameters $params, Query\OffsetClause $offset);
-    abstract public function operatorToSQL(Parameters $params, Query\Operator $expression, bool $inner_clause);
-    abstract public function orderToSQL(Parameters $params, Query\OrderClause $order);
-    abstract public function queryToSQL(Parameters $params, Query\Query $query);
-    abstract public function updateFieldToSQL(Parameters $params, Query\UpdateField $query);
-
-    abstract public function subqueryToSQL(Parameters $params, Query\SubQuery $expression);
-    abstract public function unionToSQL(Parameters $params, Query\UnionClause $expression);
-    abstract public function tableToSQL(Parameters $params, Query\TableClause $table);
-    abstract public function whereToSQL(Parameters $params, Query\WhereClause $where);
-    abstract public function groupByToSQL(Parameters $params, Query\GroupByClause $where);
-    abstract public function havingToSQL(Parameters $params, Query\HavingClause $where);
-
-    abstract public function deleteToSQL(Parameters $params, Query\Delete $query);
-    abstract public function insertToSQL(Parameters $params, Query\Insert $query);
-    abstract public function selectToSQL(Parameters $params, Query\Select $query);
-    abstract public function updateToSQL(Parameters $params, Query\Update $query);
 
     abstract public function formatArray(array $values);
     abstract public function matchMultipleValues(Query\FieldName $field, Query\ConstantArray $list);

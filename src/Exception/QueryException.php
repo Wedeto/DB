@@ -23,21 +23,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace Wedeto\DB\Query;
+namespace Wedeto\DB\Exception;
 
-use PHPUnit\Framework\TestCase;
-
-/**
- * @covers Wedeto\DB\Query\FieldAlias
- */
-class FieldAliasTest extends TestCase
-{
-    public function testFieldAlias()
-    {
-        $a = new FieldAlias("foo", "bar");
-
-        $expr = $a->getExpression();
-        $this->assertInstanceOf(FieldName::class, $expr);
-        $this->assertEquals("bar", $a->getAlias());
-    }
-}
+class QueryException extends \RuntimeException implements DBException
+{}

@@ -54,4 +54,33 @@ class ConstantArray extends ConstantValue
         if (!empty($this->formatter))
             $this->update();
     }
+
+    /**
+     * Write a constant array clause as SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        if ($key = $this->getKey())
+        {
+            try
+            {
+                $key = $params->get($key);
+            }
+            catch (OutOfRangeException $e)
+            {
+                // Not a valid key, replace
+                $key = null;
+            }
+        }
+
+        if (!$key)
+            $key = $params->assign(null);
+
+        // Rebind, to be sure
+        $this->bind($params, $key, array($this, 'formatArray'));
+        return ':' . $key;
+    }
+
 }

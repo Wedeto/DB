@@ -25,8 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Query;
 
-use DomainException;
-
+use Wedeto\DB\Exception\QueryException;
 use Wedeto\Util\Functions as WF;
 
 class Delete extends Query
@@ -54,7 +53,7 @@ class Delete extends Query
             elseif (is_string($table))
                 $table = new SourceTableClause($table);
             else
-                throw new \InvalidArgumentException("Invalid table: " . WF::str($table));
+                throw new QueryException("Invalid table: " . WF::str($table));
         }
         $this->table = $table;
     }
@@ -69,5 +68,11 @@ class Delete extends Query
         if (!($where instanceof WhereClause))
             $where = new WhereClause($where);
         $this->where = $where;
+    }
+
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $drv = $params->getDriver();
+        return "DELETE FROM " . $drv->toSQL($params, $this->getTable()) . " " . $drv->toSQL($params, $this->getWhere());
     }
 }

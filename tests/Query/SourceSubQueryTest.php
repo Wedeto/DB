@@ -28,6 +28,7 @@ namespace Wedeto\DB\Query;
 use PHPUnit\Framework\TestCase;
 
 use Wedeto\DB\Query\Builder as Q;
+use Wedeto\DB\Exception\QueryException;
 
 /**
  * @covers Wedeto\DB\Query\SourceSubQuery
@@ -78,7 +79,7 @@ class SourceSubQueryTest extends TestCase
             Q::from('test')
         );
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Subqueries must have an alias");
         new SourceSubQuery($q, '');
     }
@@ -87,7 +88,7 @@ class SourceSubQueryTest extends TestCase
     {
         $q = new Delete('test', ['foo' => 'bar']);
 
-        $this->expectException(\DomainException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Provide a subquery as argument to SourceSubQuery");
         new SourceSubQuery($q, 'q');
     }

@@ -26,5 +26,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Query;
 
 class NullValue extends Expression
-{}
+{
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        return "NULL";
+    }
+}
 

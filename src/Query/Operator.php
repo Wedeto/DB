@@ -25,8 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Query;
 
-use InvalidArgumentException;
-
+use Wedeto\DB\Exception\QueryException;
 use Wedeto\Util\Functions as WF;
 
 class Operator extends Expression
@@ -40,7 +39,7 @@ class Operator extends Expression
     public function __construct($operator, $lhs, $rhs)
     {
         if (!in_array($operator, static::$valid_operators, true))
-            throw new InvalidArgumentException("Invalid operator: " . WF::str($operator));
+            throw new QueryException("Invalid operator: " . WF::str($operator));
 
         if ($lhs !== null)
             $this->lhs = $this->toExpression($lhs, false);
@@ -61,6 +60,32 @@ class Operator extends Expression
     public function getOperator()
     {
         return $this->operator;
+    }
+
+    /**
+     * Write an operator expression as SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @param bool $inner_clause Whether this is a inner or outer clause. An
+     *                           inner clause will be wrapped in braces when
+     *                           it's a binary operator.
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $driver = $params->getDriver();
+        $lhs = $drv->toSQL($params, $this->getLHS(), true);
+        $rhs = $drv->toSQL($params, $this->getRHS(), true);
+
+        $op = $this->getOperator();
+        if ($lhs !== null)
+        {
+            $sql = $lhs . ' ' . $op . ' ' . $rhs;
+            if ($inner_clause)
+                return '(' . $sql . ')';
+            return $sql;
+        }
+        
+        return $op . ' ' . $rhs;
     }
 }
 

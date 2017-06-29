@@ -26,19 +26,24 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Query;
 
 use Wedeto\DB\Driver\Driver;
-use InvalidArgumentException;
+use Wedeto\DB\Exception\QueryException;
+use Wedeto\DB\Exception\ImplementationException;
+
 use OutOfRangeException;
 use ArrayIterator;
 use PDO;
 
 class Parameters implements \Iterator
 {
+    protected $driver = null;
     protected $params = array();
     protected $param_types = array();
     protected $tables = array();
     protected $aliases = array();
     protected $column_counter = 0;
     protected $table_counter = 0;
+
+    protected $field_aliases = [];
 
     /** For the iterator interface */
     protected $iterator = null;
@@ -104,11 +109,11 @@ class Parameters implements \Iterator
         if (isset($this->tables[$name]))
         {
             if (empty($alias))
-                throw new InvalidArgumentException("Duplicate table without an alias: $name");
+                throw new QueryException("Duplicate table without an alias: $name");
             if (isset($this->tables[$name][$alias]))
-                throw new InvalidArgumentException("Duplicate alias $alias for table $name");
+                throw new QueryException("Duplicate alias $alias for table $name");
             if (isset($this->tables[$name][$name]))
-                throw new InvalidArgumentException("All instances of a table reference must be aliased if used more than once");
+                throw new QueryException("All instances of a table reference must be aliased if used more than once");
 
             $this->tables[$name][$alias] = true;
             $this->aliases[$alias] = $name;
@@ -116,7 +121,7 @@ class Parameters implements \Iterator
         elseif (!empty($alias) && is_string($alias))
         {
             if (isset($this->aliases[$alias]))
-                throw new InvalidArgumentException("Duplicate alias $alias for table $name - also referring to {$this->aliases[$alias]}");
+                throw new QueryException("Duplicate alias $alias for table $name - also referring to {$this->aliases[$alias]}");
             $this->aliases[$alias] = $name;
             $this->tables[$name][$alias] = true;
         }
@@ -137,14 +142,13 @@ class Parameters implements \Iterator
             {
                 if (count($this->tables[$name]) === 1)
                     return array($name, null);
-
-                throw new InvalidArgumentException("Multiple references to $name, use the appropriate alias");
+                throw new QueryException("Multiple references to $name, use the appropriate alias");
             }
 
-            throw new InvalidArgumentException("Unknown source table $name");
+            throw new QueryException("Unknown source table $name");
         }
 
-        throw new InvalidArgumentException("No table identifier provided");
+        throw new QueryException("No table identifier provided");
     }
 
     public function getDefaultTable()
@@ -193,6 +197,49 @@ class Parameters implements \Iterator
     public function parameterType()
     {
         return $this->getParameterType($this->key());
+    }
+
+    public function setDriver(Driver $driver)
+    {
+        $this->driver = $driver;
+        return $this;
+    }
+
+    public function getDriver()
+    {
+        return $this->driver;
+    }
+
+    public function generateAlias(Clause $clause)
+    {
+        if ($clause instanceof FieldName)
+        {
+            $table = $clause->getTable();
+            if (empty($table))
+            {
+                // When no table is defined, it means only one table is being
+                // used in the query. Aliases will not be required
+                return "";
+            }
+
+            $prefix = $table->getPrefix();
+            $alias = $prefix . '_' . $clause->getField();
+        }
+        elseif ($clause instanceof SQLFunction)
+        {
+            $func = $clause->getFunction();
+            $alias = strtolower($func);
+        }
+        else
+            throw new ImplementationException("No alias generation implemented for: " . get_class($clause));
+
+        $cnt = 0;
+        $base_alias = $alias;
+        while (isset($this->field_aliases[$alias]))
+            $alias = $base_alias . (++$cnt);
+
+        $this->field_aliases[$alias] = true;
+        return $alias;
     }
 }
 

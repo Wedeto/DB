@@ -27,6 +27,8 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+use Wedeto\DB\Exception\QueryException;
+
 /**
  * @covers Wedeto\DB\Query\Operator
  */
@@ -49,7 +51,7 @@ class OperatorTest extends TestCase
 
     public function testInvalidOperator()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Invalid operator");
         $a = new MockTestOperatorOperator('baz', 'field', 'value');
         

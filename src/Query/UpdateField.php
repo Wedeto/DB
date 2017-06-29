@@ -60,4 +60,20 @@ class UpdateField extends Clause
     {
         return $this->value;
     }
+
+    /**
+     * Write a update assignment as SQL query syntax
+     * @param Parameters $params THe query parameters: tables and placeholder values
+     * @param UpdateField $update The field to update and the new value
+     * @param bool $inner_clause Unused
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $drv = $params->getDriver();
+        $fieldname = $drv->toSQL($params, $this->getField());
+        $value = $drv->toSQL($params, $this->getValue());
+
+        return $fieldname . ' = ' . $value;
+    }
 }

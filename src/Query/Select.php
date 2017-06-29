@@ -25,8 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Query;
 
-use DomainException;
-use Wedeto\DB\Exception\InvalidTypeException;
+use Wedeto\DB\Exception\QueryException;
 
 class Select extends Query
 {
@@ -57,12 +56,12 @@ class Select extends Query
     public static function countQuery(Select $query)
     {
         if ((!empty($query->union) && $query->union->getType() !== "ALL") || !empty($query->groupby))
-            throw new InvalidTypeException("Forming count query for queries including group by or union distinct is not supported");
+            throw new QueryException("Forming count query for queries including group by or union distinct is not supported");
 
         $cq = new Select;
         $count_func = new SQLFunction("COUNT");
         $count_func->addArgument(new Wildcard());
-        $cq->fields = array(new FieldAlias($count_func, "COUNT"));
+        $cq->fields = array(new GetClause($count_func, "COUNT"));
         $cq->table = $query->table;
         $cq->joins = $query->joins;
         $cq->where = $query->where;
@@ -73,7 +72,7 @@ class Select extends Query
             
             $main_q = new Select;
             $add_q = new ArithmeticOperator("+", new SubQuery($cq), new SubQuery($rcq));
-            $main_q->add(new FieldAlias($add_q, "COUNT"));
+            $main_q->add(new GetClause($add_q, "COUNT"));
             return $main_q;
         }
 
@@ -86,10 +85,10 @@ class Select extends Query
             $this->where = $clause;
         elseif ($clause instanceof TableClause)
             $this->table = $clause;
-        elseif ($clause instanceof FieldAlias)
+        elseif ($clause instanceof GetClause)
             $this->fields[] = $clause;
         elseif ($clause instanceof FieldName)
-            $this->fields[] = new FieldAlias($clause, "");
+            $this->fields[] = new GetClause($clause, "");
         elseif ($clause instanceof JoinClause)
             $this->joins[] = $clause;
         elseif ($clause instanceof GroupByClause)
@@ -103,7 +102,7 @@ class Select extends Query
         elseif ($clause instanceof OffsetClause)
             $this->offset = $clause;
         else
-            throw new DomainException("Unknown clause: " . get_class($clause));
+            throw new QueryException("Unknown clause: " . get_class($clause));
 
         return $this;
     }
@@ -196,5 +195,60 @@ class Select extends Query
     public function getOffset()
     {
         return $this->offset;
+    }
+
+    /**
+     * Write a select query as SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @param bool $inner_clause Unused
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $drv = $params->getDriver();
+        // First get the source tables: FROM and JOIN clauses
+        $source = array();
+
+        if ($table = $this->getTable())
+            $source[] = "FROM " . $drv->toSQL($params, $table);
+
+        foreach ($this->getJoins() as $join)
+            $source[] = $drv->toSQL($params, $join);
+
+        // Now build the start of the query, all tables should be known
+        $parts = array();
+
+        $parts[] = "SELECT";
+        $fields = $this->getFields();
+        if (!empty($fields))
+        {
+            $field_parts = array();
+            foreach ($fields as $field)
+                $field_parts[] = $drv->toSQL($params, $field);
+            $parts[] = implode(", ", $field_parts);
+        }
+        else
+            $parts[] = "*";
+
+        // Add the source tables and joins to the query
+        foreach ($source as $part)
+            $parts[] = $part;
+
+        if ($where = $this->getWhere())
+            $parts[] = $drv->toSQL($params, $where);
+
+        if ($union = $this->getUnion())
+            $parts[] = $drv->toSQL($params, $union);
+        
+        if ($order = $this->getOrder())
+            $parts[] = $drv->toSQL($params, $order);
+
+        if ($limit = $this->getLimit())
+            $parts[] = $drv->toSQL($params, $limit);
+        
+        if ($offset = $this->getOffset())
+            $parts[] = $drv->toSQL($params, $offset);
+        
+        return implode(" ", $parts);
     }
 }

@@ -48,5 +48,33 @@ class FieldName extends Expression
     {
         return $this->field;
     }
+
+    /**
+     * Write a field name as SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @param bool $inner_clause Unused
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $field = $this->getField();
+        $table = $this->getTable();
+        if (empty($table))
+            $table = $params->getDefaultTable();
+
+        $drv = $params->getDriver();
+        if (!empty($table))
+        {
+            list($table, $alias) = $params->resolveTable($table->getPrefix());
+            if ($alias)
+                $table_ref = $drv->identQuote($alias);
+            else
+                $table_ref = $drv->getName($table);
+
+            return $table_ref . '.' . $drv->identQuote($field);
+        }
+
+        return $drv->identQuote($field);
+    }
 }
 

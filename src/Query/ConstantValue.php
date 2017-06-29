@@ -26,7 +26,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Query;
 
 use Wedeto\Util\Functions as WF;
+use Wedeto\DB\Exception\QueryException;
+
 use PDO;
+use InvalidArgumentException;
 
 class ConstantValue extends Expression
 {
@@ -71,10 +74,10 @@ class ConstantValue extends Expression
         if (is_resource($value))
         {
             if ($this->parameter_type !== PDO::PARAM_LOB)
-                throw new \InvalidArgumentException("A resource can only be used for a PARAM_LOB type parameter");
+                throw new QueryException("A resource can only be used for a PARAM_LOB type parameter");
         }
         elseif (!is_scalar($value) && $value !== null)
-            throw new \InvalidArgumentException("Invalid data type for constant: " . WF::str($value));
+            throw new InvalidArgumentException("Invalid data type for constant: " . WF::str($value));
 
         $this->value = $value;
         $this->update();
@@ -96,5 +99,39 @@ class ConstantValue extends Expression
         if (!empty($this->parameters))
             $this->parameters->set($this->target_key, $value, $this->parameter_type);
     }
+
+    /**
+     * Write a constant as SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        if ($key = $this->getKey())
+        {
+            try
+            {
+                $v = $params->get($key);
+            }
+            catch (\OutOfRangeException $e)
+            {
+                $key = null;
+            }
+        }
+
+        if ($key === null)
+        {
+            $val = $this->getValue();
+            if ($val instanceof \DateTimeInterface)
+                $val = $val->format(\DateTimeInterface::ATOM);
+            elseif ($val === false)
+                $val = 0;
+            $key = $params->assign($val, $this->getParameterType());
+        }
+        $this->bind($params, $key, null);
+
+        return ':' . $key;
+    }
+
 }
 

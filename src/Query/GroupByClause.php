@@ -27,6 +27,9 @@ namespace Wedeto\DB\Query;
 
 use Wedeto\Util\Functions as WF;
 
+use Wedeto\DB\Exception\QueryException;
+use Wedeto\DB\Exception\InvalidTypeException;
+
 class GroupByClause extends Clause
 {
     protected $groups;
@@ -35,7 +38,7 @@ class GroupByClause extends Clause
     public function __construct(...$conditions)
     {
         if (count($conditions) === 0)
-            throw new \InvalidArgumentException("Specify at least one group by condition");
+            throw new QueryException("Specify at least one group by condition");
 
         $conditions = WF::flatten_array($conditions);
         foreach ($conditions as $condition)
@@ -50,7 +53,7 @@ class GroupByClause extends Clause
             }
             else
             {
-                throw new \InvalidArgumentException(
+                throw new InvalidTypeException(
                     "Invalid parameter: " . WF::str($condition)
                 );
             }
@@ -77,5 +80,30 @@ class GroupByClause extends Clause
     public function getHaving()
     {
         return $this->having;
+    }
+
+    /**
+     * Write a GROUPBY clause as SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @param bool $inner_clause Unused
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $groups = $this->getGroups();
+        $having = $this->getHaving();
+
+        if (count($groups) === 0)
+            throw new QueryException("No groups in GROUP BY clause");
+
+        $parts = array();
+        foreach ($groups as $group)
+        {
+            $parts[] = $this->toSQL($group);
+        }
+        
+        $having = !empty($having) ? $params->getDriver()->toSQL($params, $having) : "";
+
+        return "GROUP BY " . implode(", ", $parts) . $having;
     }
 }

@@ -26,6 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Query;
 
 use Wedeto\Util\Functions as WF;
+use Wedeto\DB\Exception\QueryException;
 
 class Direction extends Clause
 {
@@ -38,7 +39,7 @@ class Direction extends Clause
     {
         $direction = strtoupper($direction);
         if (!in_array($direction, self::$valid_directions))
-            throw new \InvalidArgumentException("Invalid direction: " . WF::str($direction));
+            throw new QueryException("Invalid direction: " . WF::str($direction));
 
         $this->direction = $direction;
         $this->operand = $this->toExpression($operand, false);
@@ -53,5 +54,20 @@ class Direction extends Clause
     {
         return $this->direction;
     }
+
+    /**
+     * Write a order direction clause as SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @param bool $inner_clause Unused
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $expr = $this->getOperand();
+        $direction = $this->getDirection();
+
+        return $params->getDriver()->toSQL($params, $expr, false) . " " . $direction;
+    }
+
 }
 

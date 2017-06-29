@@ -26,6 +26,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Query;
 
 use Wedeto\Util\Functions as WF;
+use Wedeto\DB\Exception\QueryException;
+use Wedeto\DB\Exception\InvalidTypeException;
 
 class HavingClause extends Clause
 {
@@ -39,11 +41,11 @@ class HavingClause extends Clause
     public function setCondition($condition)
     {
         if (empty($condition))
-            throw new \InvalidArgumentException("Provide HAVING condition");
+            throw new QueryException("Empty HAVING condition");
 
         if (!(is_string($condition) || $condition instanceof Expression))
         {
-            throw new \InvalidArgumentException(
+            throw new InvalidTypeException(
                 "Invalid HAVING condition: " . WF::str($condition)
             );
         }
@@ -56,4 +58,10 @@ class HavingClause extends Clause
     {
         return $this->condition;
     }
+
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        return "HAVING " . $params->getDriver()->toSQL($params, $cond);
+    }
+
 }

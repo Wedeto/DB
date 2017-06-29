@@ -26,6 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
+use Wedeto\DB\Exception\QueryException;
 
 /**
  * @covers Wedeto\DB\Query\WhereClause
@@ -81,7 +82,7 @@ class WhereClauseTest extends TestCase
 
     public function testWhereWithInvalidOperand()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Invalid operand");
         $a = new WhereClause(new \StdClass);
     }

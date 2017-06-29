@@ -46,5 +46,17 @@ class SubQuery extends Expression
         $this->select = $query;
         return $this;
     }
+
+    /**
+     * Write a sub query as SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @param SubQuery $query The query to write
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $q = $this->getQuery();
+        return '(' . $params->getDriver()->toSQL($params, $q, false) . ')';
+    }
 }
 

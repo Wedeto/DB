@@ -23,39 +23,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace Wedeto\DB\Query;
+namespace Wedeto\DB\Exception;
 
-use Wedeto\Util\Functions as WF;
-
-class LimitClause extends Clause
-{
-    protected $number;
-
-    public function __construct($value)
-    {
-        if (is_int($value))
-            $this->number = new ConstantValue($value);
-        elseif ($value instanceof ConstantValue)
-            $this->number = $value;
-        else
-            throw new \InvalidArgumentException("Invalid value for limit: " . WF::str($value));
-    }
-
-    public function getLimit()
-    {
-        return $this->number;
-    }
-
-    /**
-     * Write a LIMIT clause to SQL query syntax
-     * @param Parameters $params The query parameters: tables and placeholder values
-     * @param bool $inner_caluse Unused
-     * @return string The generated SQL
-     */
-    public function toSQL(Parameters $params, bool $inner_clause)
-    {
-        return "LIMIT " . $params->getDriver()->toSQL($params, $this->getLimit());
-    }
-
-}
-
+class ImplementationException extends \RuntimeException implements DBException
+{}

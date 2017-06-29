@@ -26,6 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Query;
 
 use Wedeto\Util\Functions as WF;
+use Wedeto\DB\Exception\QueryException;
 
 class JoinClause extends Clause
 {
@@ -44,7 +45,7 @@ class JoinClause extends Clause
     public function __construct(string $type, $table, Expression $expression)
     {
         if (!array_key_exists($type, self::$valid_types))
-            throw new \InvalidArgumentException("Invalid join type: " . WF::str($type));
+            throw new QueryException("Invalid join type: " . WF::str($type));
 
         $this->type = $type;
         if (is_string($table))
@@ -61,7 +62,7 @@ class JoinClause extends Clause
         }
         else
         {
-            throw new \DomainException("Invalid table type: " . WF::str($table));
+            throw new QueryException("Invalid table type: " . WF::str($table));
         }
 
         $this->condition = $expression;
@@ -81,5 +82,18 @@ class JoinClause extends Clause
     {
         return $this->type;
     }
+
+    /**
+     * Write a JOIN clause to SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @param bool $inner_clause
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $drv = $params->getDriver();
+        return $this->getType() . " JOIN " . $drv->toSQL($params, $this->getTable()) . " ON " . $drv->toSQL($params, $this->getCondition());
+    }
+
 }
 

@@ -25,8 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Query;
 
-use InvalidArgumentException;
-
+use Wedeto\DB\Exception\QueryException;
 use Wedeto\Util\Functions as WF;
 
 class UnionClause extends Expression
@@ -49,7 +48,7 @@ class UnionClause extends Expression
     public function setType(string $type)
     {
         if (!isset(self::$valid_types[$type]))
-            throw new \InvalidArgumentException('Invalid UNION type: ' . WF::str($type));
+            throw new QueryException('Invalid UNION type: ' . WF::str($type));
         $this->type = self::$valid_types[$type];
         return $this;
     }
@@ -69,5 +68,20 @@ class UnionClause extends Expression
         $this->select = $query;
         return $this;
     }
+
+    /**
+     * Write a UNION clause as SQL query synta
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @param bool $inner_clause Unused
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $q = $this->getQuery();
+        $t = $this->getType();
+
+        return $t . ' (' . $params->getDriver()->toSQL($params, $q) . ')';
+    }
+
 }
 

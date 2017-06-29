@@ -132,4 +132,32 @@ class Insert extends Query
     {
         return $this->on_duplicate;
     }
+
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $drv = $params->getDriver();
+        $query = array("INSERT INTO");
+        $query[] = $drv->toSQL($params, $this->getTable());
+
+        $fields = $this->getFields();
+        foreach ($fields as $key => $field)
+            $fields[$key] = $drv->toSQL($params, $field);
+
+        $query[] = '(' . implode(', ', $fields) . ')';
+        $query[] = 'VALUES';
+
+        $insert_values = $this->getValues();
+        $values = [];
+        foreach ($insert_values as $key => $value)
+            $values[$key] = $drv->toSQL($params, $value);
+
+        $query[] = '(' . implode(', ', $values) . ')';
+
+        $dup = $this->getOnDuplicate();
+        if ($dup)
+            $query[] = $drv->toSQL($params, $dup);
+
+        return implode(' ', $query);
+    }
+
 }

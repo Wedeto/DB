@@ -27,6 +27,8 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+use Wedeto\DB\Exception\QueryException;
+
 /**
  * @covers Wedeto\DB\Query\OrderClause
  */
@@ -50,7 +52,7 @@ class OrderTest extends TestCase
 
     public function testOrderWithInvalidArgument()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Invalid order");
         $a = new OrderClause(new \StdClass);
     }
@@ -64,7 +66,7 @@ class OrderTest extends TestCase
         $this->assertEquals(1, count($clauses));
         $this->assertEquals("TEST ASC", $clauses[0]->getSQL());
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("No clause provided");
         $a->addClause(new \StdClass);
     }

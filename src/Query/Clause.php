@@ -25,9 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Query;
 
-use InvalidArgumentException;
-
 use Wedeto\Util\Functions as WF;
+use Wedeto\DB\Exception\InvalidTypeException;
 
 abstract class Clause
 {
@@ -42,6 +41,8 @@ abstract class Clause
         elseif ($var instanceof Expression)
             return $var;
         else
-            throw new InvalidArgumentException("Invalid value for expression: " . WF::str($var));
+            throw new InvalidTypeException("Invalid value for expression: " . WF::str($var));
     }
+
+    abstract public function toSQL(Parameters $params, bool $inner_clause);
 }

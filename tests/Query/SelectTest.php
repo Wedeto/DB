@@ -28,6 +28,7 @@ namespace Wedeto\DB\Query;
 use PHPUnit\Framework\TestCase;
 
 use Wedeto\DB\Query\Builder as Q;
+use Wedeto\DB\Exception\QueryException;
 
 /**
  * @covers Wedeto\DB\Query\Select
@@ -38,7 +39,7 @@ class SelectTest extends TestCase
     {
         $q = Q::select(
             Q::field('barbaz'),
-            Q::alias('foobar', 'baz'),
+            Q::get('foobar', 'baz'),
             Q::from('test', 't1'),
             Q::where(
                 Q::equals(
@@ -74,8 +75,8 @@ class SelectTest extends TestCase
 
         $fields = $q->getFields();
         $this->assertEquals(2, count($fields));
-        $this->assertInstanceOf(FieldAlias::class, $fields[0]);
-        $this->assertInstanceOf(FieldAlias::class, $fields[1]);
+        $this->assertInstanceOf(GetClause::class, $fields[0]);
+        $this->assertInstanceOf(GetClause::class, $fields[1]);
 
         $this->assertInstanceOf(LimitClause::class, $q->getLimit());
         $this->assertInstanceOf(OffsetClause::class, $q->getOffset());
@@ -151,7 +152,7 @@ class SelectTest extends TestCase
 
         $q
             ->add(new FieldName('id'))
-            ->add(new FieldAlias(new SQLFunction('COUNT', '*'), 'ROWCOUNT'))
+            ->add(new GetClause(new SQLFunction('COUNT', '*'), 'ROWCOUNT'))
             ->from(new TableClause('test_table'))
             ->groupBy('id', new HavingClause(Q::greaterThan('ROWCOUNT', 10)));
 
@@ -170,7 +171,7 @@ class SelectTest extends TestCase
         $this->assertInstanceOf(FieldName::class, $groups[0]);
         $this->assertEquals("id", $groups[0]->getField());
 
-        $this->expectException(\Wedeto\DB\Exception\DBException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Forming count query for queries including group by or union distinct is not supported");
         $cq = Select::countQuery($q);
     }
@@ -210,7 +211,7 @@ class SelectTest extends TestCase
     public function testInvalidArgument()
     {
         $q = new Select;
-        $this->expectException(\DomainException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Unknown clause");
         $q->add(new HavingClause(Q::equals('foo', 'bar')));
     }

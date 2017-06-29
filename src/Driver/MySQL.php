@@ -113,29 +113,11 @@ class MySQL extends Driver
         return implode(',', $values);
     }
 
-    public function duplicateKeyToSQL(Parameters $parameters, Query\DuplicateKey $duplicate)
-    {
-        $query = array("ON DUPLICATE KEY");
-
-        // MySQL doesn't care if you know which fields conflict
-        $query[] = "UPDATE";
-
-        $updates = $duplicate->getUpdates();
-        $parts = array();
-        foreach ($updates as $up)
-            $parts[] = $this->updateFieldToSQL($parameters, $up);
-
-        $query[] = implode(", " , $parts);
-
-        return implode(" ", $query);
-    }
-
     public function delete(Query\Delete $query)
     {
         $params = new Parameters($this);
         $sql = $this->deleteToSQL($params, $d);
 
-        $this->logger->info("Model.DAO", "Preparing delete query {0}", [$sql]);
         $st = $this->db->prepare($q);
         foreach ($parameters as $key => $value)
             $st->bindValue($key, $value, $parameters->parameterType());

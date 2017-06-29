@@ -45,5 +45,16 @@ class OffsetClause extends Clause
     {
         return $this->number;
     }
+
+    /**
+     * Write a OFFSET clause to SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        return "OFFSET " . $params->getDriver()->toSQL($params, $this->getOffset());
+    }
+
 }
 

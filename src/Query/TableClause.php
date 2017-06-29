@@ -75,4 +75,24 @@ class TableClause extends Clause
     {
         return $this->dont_prefix;
     }
+
+    /**
+     * Write an function as SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @param bool $inner_clause Unused
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $name = $this->getTable();
+        $alias = $this->getAlias();
+        $prefix_disabled = $this->getDisablePrefixing();
+
+        $drv = $params->getDriver();
+        list($tname, $talias) = $params->resolveTable($name, $alias);
+        if ($talias !== $tname)
+            return $drv->identQuote($talias);
+        return $prefix_disabled ? $drv->identQuote($tname) : $drv->getName($tname);
+    }
+
 }

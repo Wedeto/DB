@@ -26,6 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Query;
 
 use Wedeto\Util\Functions as WF;
+use Wedeto\DB\Exception\QueryException;
 
 class OrderClause extends Clause
 {
@@ -44,7 +45,7 @@ class OrderClause extends Clause
             elseif (is_string($arg) || $arg instanceof Direction || $arg instanceof CustomSQL)
                 $this->addClause($arg);
             else
-                throw new \InvalidArgumentException("Invalid order: " . WF::str($arg));
+                throw new QueryException("Invalid order: " . WF::str($arg));
         }
     }
 
@@ -53,7 +54,7 @@ class OrderClause extends Clause
         if (is_string($clause))
             $clause = new CustomSQL($clause);
         if (!($clause instanceof Clause))
-            throw new \InvalidArgumentException("No clause provided to order by");
+            throw new QueryException("No clause provided to order by");
 
         $this->clauses[] = $clause;
     }
@@ -73,5 +74,27 @@ class OrderClause extends Clause
     {
         return $this->clauses;
     }
+
+    /**
+     * Write a order clause as SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @param bool $inner_clause Unused
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $drv = $params->getDriver();
+        $clauses = $this->getClauses();
+
+        $strs = array();
+        foreach ($clauses as $clause)
+            $strs[] = $drv->toSQL($params, $clause);
+
+        if (count($strs) === 0)
+            return;
+
+        return "ORDER BY " . implode(", ", $strs);
+    }
+
 }
 

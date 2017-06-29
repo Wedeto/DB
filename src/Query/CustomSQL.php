@@ -38,4 +38,17 @@ class CustomSQL extends Expression
     {
         return $this->sql;
     }
+
+    /**
+     * Add a custom SQL string to the query
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        if ($inner_clause)
+            return '(' . $this->getSQL() . ')';
+        return $this->getSQL();
+    }
+
 }

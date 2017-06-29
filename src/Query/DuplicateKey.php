@@ -28,6 +28,9 @@ namespace Wedeto\DB\Query;
 use DomainException;
 
 use Wedeto\Util\Functions as WF;
+use Wedeto\DB\Driver\PGSQL;
+use Wedeto\DB\Driver\MySQL;
+use Wedeto\DB\Exception\ImplementationException;
 
 class DuplicateKey extends Clause
 {
@@ -70,5 +73,52 @@ class DuplicateKey extends Clause
     public function getUpdates()
     {
         return $this->updates;
+    }
+
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $drv = $params->getDriver();
+        if (get_class($drv) === \Wedeto\DB\Driver\PGSQL::class)
+        {
+            $query = array("ON CONFLICT");
+
+            $conflicts = $duplicate->getConflictingFields();
+            $parts = array();
+            foreach ($conflicts as $c)
+                $parts[] = $this->toSQL($params, $c, false);
+
+            $query[] = "(" . implode(', ', $parts) . ")";
+            $query[] = "DO UPDATE";
+            $query[] = "SET";
+
+            $updates = $duplicate->getUpdates();
+            $parts = array();
+            foreach ($updates as $up)
+                $parts[] = $this->toSQL($params, $up);
+
+            $query[] = implode(", " , $parts);
+
+            return implode(" ", $query);
+        }
+        elseif (get_class($drv) === \Wedeto\DB\Driver\MySQL::class)
+        {
+            $query = array("ON DUPLICATE KEY");
+
+            // MySQL doesn't care if you know which fields conflict
+            $query[] = "UPDATE";
+
+            $updates = $duplicate->getUpdates();
+            $parts = array();
+            foreach ($updates as $up)
+                $parts[] = $this->toSQL($parameters, $up);
+
+            $query[] = implode(", " , $parts);
+
+            return implode(" ", $query);
+        }
+        else
+        {
+            throw new ImplementationException("On duplicate key not implemented for: " . get_class($drv));
+        }
     }
 }

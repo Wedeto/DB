@@ -27,6 +27,8 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+use Wedeto\DB\Exception\QueryException;
+
 /**
  * @covers Wedeto\DB\Query\JoinClause
  */
@@ -67,7 +69,7 @@ class JoinClauseTest extends TestCase
         $field2 = new FieldName("key2", $table2);
 
         $expr = new ComparisonOperator("=", $field1, $field2);
-        $this->expectException(\DomainException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Invalid table type");
         $a = new JoinClause("LEFT", new \StdClass, $expr);
     }
@@ -100,7 +102,7 @@ class JoinClauseTest extends TestCase
 
         $expr = new ComparisonOperator("=", $field1, $field2);
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Invalid join type");
         $a = new JoinClause("FOOJOIN", $table2, $expr);
     }

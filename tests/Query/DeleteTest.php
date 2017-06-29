@@ -27,6 +27,8 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+use Wedeto\DB\Exception\QueryException;
+
 /**
  * @covers Wedeto\DB\Query\Delete
  */
@@ -76,7 +78,7 @@ class DeleteTest extends TestCase
         $table = new \StdClass;
         $where = "foo = bar";
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Invalid table");
         $d = new Delete($table, $where);
     }

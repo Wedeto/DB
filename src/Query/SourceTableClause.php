@@ -38,4 +38,23 @@ class SourceTableClause extends TableClause
 
         $this->setAlias($alias);
     }
+
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $name = $this->getTable();
+        $alias = $this->getAlias();
+        $prefix_disabled = $this->getDisablePrefixing();
+
+        $drv = $params->getDriver();
+        $sql = $prefix_disabled ? $drv->identQuote($name) : $drv->getName($name);
+        if (!empty($alias))
+        {
+            $params->registerTable($name, $alias);
+            $sql .= ' AS ' . $drv->identQuote($alias);
+        }
+        else
+            $params->registerTable($name, null);
+
+        return $sql;
+    }
 }

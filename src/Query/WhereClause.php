@@ -26,6 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Query;
 
 use Wedeto\Util\Functions as WF;
+use Wedeto\DB\Exception\QueryException;
 
 class WhereClause extends Clause
 {
@@ -40,7 +41,7 @@ class WhereClause extends Clause
         elseif (is_array($operand))
             $this->initFromArray($operand);
         else
-            throw new \InvalidArgumentException("Invalid operand: " . WF::str($operand));
+            throw new QueryException("Invalid operand: " . WF::str($operand));
     }
 
     public function getOperand()
@@ -61,6 +62,11 @@ class WhereClause extends Clause
         }
 
         $this->operand = $lhs;
+    }
+
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        return "WHERE " . $params->getDriver()->toSQL($params, $this->getOperand());
     }
 }
 

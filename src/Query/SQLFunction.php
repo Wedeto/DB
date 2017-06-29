@@ -52,4 +52,22 @@ class SQLFunction extends Expression
     {
         return $this->arguments; 
     }
+
+    /**
+     * Write a function as SQL query syntax
+     * @param Parameters $params The query parameters: tables and placeholder values
+     * @param SQLFunction $expression The function to write
+     * @return string The generated SQL
+     */
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $func = $this->getFunction();
+        $arguments = $this->getArguments();
+        
+        $args = array();
+        foreach ($arguments as $arg)
+            $args[] = $params->getDriver()->toSQL($params, $arg, false);
+
+        return $func . '(' . implode(', ', $args) . ')';
+    }
 }

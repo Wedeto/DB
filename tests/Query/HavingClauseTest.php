@@ -27,6 +27,9 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+use Wedeto\DB\Exception\QueryException;
+use Wedeto\DB\Exception\InvalidTypeException;
+
 /**
  * @covers Wedeto\DB\Query\HavingClause
  */
@@ -49,8 +52,8 @@ class HavingClauseTest extends TestCase
     {
         $h = new HavingClause("foo");
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage("Provide HAVING condition");
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessage("Empty HAVING condition");
         $h->setCondition("");
     }
 
@@ -58,7 +61,7 @@ class HavingClauseTest extends TestCase
     {
         $h = new HavingClause("foo");
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidTypeException::class);
         $this->expectExceptionMessage("Invalid HAVING condition");
         $h->setCondition(3.5);
     }

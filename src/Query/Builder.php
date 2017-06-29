@@ -38,7 +38,7 @@ class Builder
             $arg = WF::cast_array($arg);
             foreach ($arg as $arg_val)
             {
-                if (!is_string($arg_val) && !($arg_val instanceof FieldName) && !($arg_val instanceof FieldAlias))
+                if (!is_string($arg_val) && !($arg_val instanceof FieldName) && !($arg_val instanceof GetClause))
                     $non_field = true;
                 if ($non_field === false && is_string($arg_val))
                     $arg_val = new FieldName($arg_val);
@@ -157,9 +157,9 @@ class Builder
         return new OrderClause($args);
     }
 
-    public static function alias($expression, string $alias)
+    public static function get($expression, string $alias)
     {
-        return new FieldAlias($expression, $alias);
+        return new GetClause($expression, $alias);
     }
 
     public static function field($field, $table = null)
@@ -302,7 +302,7 @@ class Builder
     public static function subquery(Select $query, $alias = null)
     {
         if (!empty($alias))
-            return new FieldAlias(new SubQuery($query), $alias);
+            return new SourceSubQuery(new SubQuery($query), $alias);
 
         return new SubQuery($query);
     }

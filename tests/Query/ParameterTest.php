@@ -27,6 +27,8 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+use Wedeto\DB\Exception\QueryException;
+
 /**
  * @covers Wedeto\DB\Query\Parameters
  */
@@ -84,7 +86,7 @@ class ParameterTest extends TestCase
         $this->assertEquals(['f' => true, 'f3' => true], $a->getTable('foo'));
 
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Unknown source table f2");
         $actual = $a->resolveTable('f2');
     }
@@ -95,7 +97,7 @@ class ParameterTest extends TestCase
 
         $a->registerTable('foo', null);
         
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Duplicate table without an alias");
         $a->registerTable('foo', null);
     }
@@ -105,7 +107,7 @@ class ParameterTest extends TestCase
         $a = new Parameters();
 
         $a->registerTable('foo', 'f');
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Duplicate alias f for table foo");
         $a->registerTable('foo', 'f');
     }
@@ -115,7 +117,7 @@ class ParameterTest extends TestCase
         $a = new Parameters();
 
         $a->registerTable('foo', null);
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("All instances of a table reference must be aliased if used more than once");
         $a->registerTable('foo', 'f');
     }
@@ -125,7 +127,7 @@ class ParameterTest extends TestCase
         $a = new Parameters();
 
         $a->registerTable('foo', 'fb');
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Duplicate alias fb for table bar - also referring to foo");
         $a->registerTable('bar', 'fb');
     }
@@ -137,7 +139,7 @@ class ParameterTest extends TestCase
         $a->registerTable('foo', 'f1');
         $a->registerTable('foo', 'f2');
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Multiple references to foo, use the appropriate alias");
         $resolve = $a->resolveTable('foo');
     }
@@ -146,7 +148,7 @@ class ParameterTest extends TestCase
     {
         $a = new Parameters();
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage("No table identifier provided");
         $a->resolveTable('');
     }

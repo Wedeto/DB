@@ -26,6 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
+use Wedeto\DB\Exception\QueryException;
 
 /**
  * @covers Wedeto\DB\Query\Direction
@@ -55,7 +56,7 @@ class DirectionTest extends TestCase
 
     public function testInvalidDirection()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(QueryException::class);
         $this->expectExceptionMessage('Invalid direction');
         $a = new Direction("FOOBAR", 'foo');
     }

@@ -177,29 +177,6 @@ class PGSQL extends Driver
         return '{' . implode(',', $vals) . '}';
     }
 
-    public function duplicateKeyToSQL(Parameters $params, Query\DuplicateKey $duplicate)
-    {
-        $query = array("ON CONFLICT");
-
-        $conflicts = $duplicate->getConflictingFields();
-        $parts = array();
-        foreach ($conflicts as $c)
-            $parts[] = $this->toSQL($params, $c, false);
-
-        $query[] = "(" . implode(', ', $parts) . ")";
-        $query[] = "DO UPDATE";
-        $query[] = "SET";
-
-        $updates = $duplicate->getUpdates();
-        $parts = array();
-        foreach ($updates as $up)
-            $parts[] = $this->updateFieldToSQL($params, $up);
-
-        $query[] = implode(", " , $parts);
-
-        return implode(" ", $query);
-    }
-
     public function delete(Query\Delete $query)
     {
         $params = new Parameters($this);

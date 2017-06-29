@@ -29,6 +29,9 @@ use DomainException;
 
 use Wedeto\Util\Functions as WF;
 
+use Wedeto\DB\Exception\QueryException;
+use Wedeto\DB\Exception\InvalidTypeException;
+
 class Update extends Query
 {
     protected $table;
@@ -53,7 +56,7 @@ class Update extends Query
         elseif ($clause instanceof UpdateField)
             $this->updates[] = $clause;
         else
-            throw new \InvalidArgumentException("Unknown clause: " . WF::str(get_class($clause)));
+            throw new InvalidTypeException("Unknown clause: " . WF::str(get_class($clause)));
     }
 
     public function setTable($table)
@@ -65,7 +68,7 @@ class Update extends Query
             elseif (is_string($table))
                 $table = new SourceTableClause($table);
             else
-                throw new \InvalidArgumentException("Invalid table: " . WF::str($table));
+                throw new InvalidTypeException("Invalid table: " . WF::str($table));
         }
 
         $this->table = $table;
@@ -94,5 +97,28 @@ class Update extends Query
     public function getJoins()
     {
         return $this->joins;
+    }
+
+    public function toSQL(Parameters $params, bool $inner_clause)
+    {
+        $drv = $params->getDriver();
+        $query = array("UPDATE");
+        $query[] = $drv->toSQL($params, $this->getTable());
+        foreach ($this->getJoins() as $join)
+            $query[] = $drv->toSQL($params, $join);
+
+        $query[] = "SET";
+        $updates = array();
+        foreach ($this->getUpdates() as $update_fld)
+            $updates[] = $drv->toSQL($params, $update_fld);
+        $query[] = implode(", ", $updates);
+        if (count($updates) === 0)
+            throw new QueryException("Nothing to update");
+        
+        $where = $this->getWhere();
+        if ($where)
+            $query[] = $drv->toSQL($params, $where);
+
+        return implode(" ", $query);
     }
 }
