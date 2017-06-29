@@ -25,11 +25,28 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
+use Wedeto\Util\Functions as WF;
+
 class TChar extends Column
 {
     public function __construct(string $name, int $max_length = 16, $default = null, bool $nullable = false)
     {
         parent::__construct($name, Column::CHAR, $default, $nullable);
         $this->setMaxLength($max_length);
+    }
+
+    public function validate($value)
+    {
+        parent::validate();
+        if ($value === null)
+            return true;
+
+        if (!is_string($value) && !is_numeric($value))
+            throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));
+
+        if (strlen($value) !== $this->max_length)
+            throw new InvalidValueException("Invalid string length for " . $this->type . ": " . WF::str($value));
+
+        return true;
     }
 }

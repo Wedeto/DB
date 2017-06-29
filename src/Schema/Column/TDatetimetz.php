@@ -29,6 +29,19 @@ class TDatetimetz extends TDatetime
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::DATETIMETZ, $default, $nullable);
+        parent::__construct($name, $default, $nullable);
+        $this->type = Column::DATETIMETZ;
+    }
+
+    public function beforeInsertFilter($value)
+    {
+        if ($value === null)
+        {
+            if (!$this->isNullabe())
+                throw new DBException("Column must not be null: {$this->name}");
+            return null;
+        }
+
+        return $value->format(\DateTime::ATOM);
     }
 }

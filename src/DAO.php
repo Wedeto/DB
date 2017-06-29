@@ -35,6 +35,8 @@ use Wedeto\DB\Query;
 use Wedeto\DB\Query\Builder as QB;
 use Wedeto\DB\Schema\Column\Column;
 use Wedeto\DB\Schema\Index;
+use Wedeto\DB\Exception\InvalidValueException;
+use Wedeto\DB\Exception\DAOException;
 use Wedeto\ACL\Rule;
 
 /**
@@ -561,7 +563,7 @@ abstract class DAO
         foreach ($columns as $field => $def)
         {
             if (!isset($record[$field]) && !$def->isNullable() && $def->getDefault() === null && !$def->getSerial())
-                throw new DBException("Column must not be null: {$field}");
+                throw new InvalidValueException("Column must not be null: {$field}");
         }
 
         foreach ($record as $field => $value)

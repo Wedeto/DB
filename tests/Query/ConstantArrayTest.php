@@ -77,10 +77,10 @@ class ConstantArrayTest extends TestCase
         $params = $mock->reveal();
 
         $a = new ConstantArray([]);
-        $mock->set('fookey', '', null)->shouldBeCalled();
+        $mock->set('fookey', '', \PDO::PARAM_STR)->shouldBeCalled();
         $a->bind($params, 'fookey', $func);
 
-        $mock->set('fookey', '1-2-3-4', null)->shouldBeCalled();
+        $mock->set('fookey', '1-2-3-4', \PDO::PARAM_STR)->shouldBeCalled();
         $a->setValue([1, 2, 3, 4]);
     }
 }

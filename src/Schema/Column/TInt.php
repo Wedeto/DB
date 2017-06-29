@@ -25,11 +25,32 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
+use Wedeto\Util\Functions as WF;
+use Wedeto\DB\Exception\InvalidValueException;
+
 class TInt extends Column
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
         parent::__construct($name, Column::INT, $default, $nullable);
         $this->setNumericPrecision(10);
+    }
+
+    public function validate($value)
+    {
+        parent::validate();
+
+        if ($value === null)
+            return true;
+
+        if (!WF::is_int_val($value))
+            throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));
+
+        $precision = $this->numeric_precision;
+        $str = (string)$value;
+        if (strlen($str) > $precision)
+            throw new InvalidValueException("Value out of range for " . $this->type . ": " . $value);
+
+        return true;
     }
 }

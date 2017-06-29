@@ -26,7 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Query;
 
 use DomainException;
-use Wedeto\DB\DBException;
+use Wedeto\DB\Exception\InvalidTypeException;
 
 class Select extends Query
 {
@@ -57,7 +57,7 @@ class Select extends Query
     public static function countQuery(Select $query)
     {
         if ((!empty($query->union) && $query->union->getType() !== "ALL") || !empty($query->groupby))
-            throw new DBException("Forming count query for queries including group by or union distinct is not supported");
+            throw new InvalidTypeException("Forming count query for queries including group by or union distinct is not supported");
 
         $cq = new Select;
         $count_func = new SQLFunction("COUNT");

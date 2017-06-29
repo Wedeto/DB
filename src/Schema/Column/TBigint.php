@@ -25,11 +25,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class TBigint extends Column
+use Wedeto\Util\Functions as WF;
+
+class TBigint extends TInt
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::BIGINT, $default, $nullable);
+        parent::__construct($name, $default, $nullable);
+        $this->type = Column::BIGINT;
         $this->setNumericPrecision(19);
     }
 }

@@ -32,6 +32,9 @@ use Wedeto\Util\Type;
 use Wedeto\Util\LoggerAwareStaticTrait;
 use Wedeto\DB\Schema\Schema;
 
+use Wedeot\DB\Exception\ConfigurationException;
+use Wedeot\DB\Exception\DriverException;
+
 /**
  * The DB class wraps a PDO allowing for lazy connecting.  The configuration is
  * passed at initialization time, but the connection is not established until
@@ -67,7 +70,7 @@ class DB
      * Find a proper driver based on the 'type' parameter in the configuration.
      * @param string $type The type / driver name.
      * @return Wedeto\DB\Driver\Driver A initialized driver object
-     * @throws Wedeto\DB\DBException When no driver could be found
+     * @throws Wedeto\DB\Exception\DriverException When no driver could be found
      */
     protected function getDriver(string $type)
     {
@@ -96,7 +99,7 @@ class DB
 
         // Check if a driver was found
         if (empty($driver) || !class_exists($driver))
-            throw new DBException("No driver available for database type $type");
+            throw new DriverException("No driver available for database type $type");
 
         return new $driver($this);
     }
@@ -117,7 +120,7 @@ class DB
         $schema = $this->config->get('sql', 'schema');
         $this->dsn = $this->config->get('sql', 'dsn');
         if (!$this->config->has('sql', 'type', Type::STRING))
-            throw new DBException("Please specify the database type in the configuration section [sql]");
+            throw new ConfgurationException("Please specify the database type in the configuration section [sql]");
 
         $type = $this->config->getString('sql', 'type');
 
@@ -183,7 +186,7 @@ class DB
     public static function getDefault()
     {
         if (empty(self::$default_db))
-            throw new \RuntimeException("No database connection available");
+            throw new ConfigurationException("No database connection available");
 
         return self::$default_db;
     }

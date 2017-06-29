@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class TSmallint extends Column
+class TSmallint extends TInt
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {

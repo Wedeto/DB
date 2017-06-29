@@ -25,11 +25,24 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
+use Wedeto\Util\Functions as WF;
+use Wedeto\DB\Exception\InvalidValueException;
+
 class TEnum extends Column
 {
     public function __construct(string $name, array $values = [], $default = null, bool $nullable = false)
     {
         parent::__construct($name, Column::ENUM, $default, $nullable);
         $this->setEnumValues($values);
+    }
+
+    public function validate($value)
+    {
+        parent::validate();
+
+        if ($value !== null && !in_array($value, $this->enum_valueS))
+            throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));
+
+        return true;
     }
 }

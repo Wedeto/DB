@@ -23,7 +23,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace Wedeto\DB;
+namespace Wedeto\DB\Exception;
 
-class DBException extends \RuntimeException
+class DriverException extends \RuntimeException implements DBException
 {}

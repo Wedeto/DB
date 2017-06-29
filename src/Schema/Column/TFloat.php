@@ -25,11 +25,24 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
+use Wedeto\Util\Functions as WF;
+use Wedeto\DB\Exception\InvalidValueException;
+
 class TFloat extends Column
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
         parent::__construct($name, Column::FLOAT, $default, $nullable);
         $this->setNumericPrecision(53);
+    }
+
+    public function validate($value)
+    {
+        parent::validate();
+
+        if ($value !== null && !is_numeric($value))
+            throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));
+
+        return true;
     }
 }

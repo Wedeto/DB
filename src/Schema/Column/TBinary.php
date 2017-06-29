@@ -25,10 +25,22 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
+use Wedeto\Util\Functions as WF;
+
 class TBinary extends Column
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
         parent::__construct($name, Column::BINARY, $default, $nullable);
+    }
+
+    public function validate($value)
+    {
+        parent::validate();
+
+        if ($value !== null && is_string($value) && !is_resource($value))
+            throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));
+        
+        return true;
     }
 }

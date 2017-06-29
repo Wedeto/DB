@@ -25,11 +25,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class TMediumint extends Column
+class TMediumint extends TInt
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::MEDIUMINT, $default, $nullable);
+        parent::__construct($name, $default, $nullable);
+        $this->type = Column::MEDIUMINT;
         $this->setNumericPrecision(8);
     }
 }

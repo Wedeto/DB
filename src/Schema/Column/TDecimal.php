@@ -25,34 +25,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class TTime extends Column
+class TDecimal extends TFloat
 {
-    public function __construct(string $name, $default = null, bool $nullable = false)
+    public function __construct(string $name, int $precision = 10, int $scale = 5, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::TIME, $default, $nullable);
-    }
-
-    public function validate($value)
-    {
-        parent::validate();
-
-        if ($value === null)
-            return true;
-
-        if (!$value instanceof DateTime)
-            throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));
-
-        return true;
-    }
-
-    public function afterFetchFilter($value)
-    {
-        return $value !== null ? new DateTime($value) : null;
-    }
-
-    public function beforeInsertFilter($value)
-    {
-        $value = parent::beforeInsertFilter($value);
-        return $value !== null ? $value->format("H:i:s") : null;
+        parent::__construct($name, $default, $nullable);
+        $this->type = Column::DECIMAL;
+        $this->setNumericPrecision($precision)
+            ->setNumericScale($scale);
     }
 }

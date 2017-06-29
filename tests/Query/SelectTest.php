@@ -170,7 +170,7 @@ class SelectTest extends TestCase
         $this->assertInstanceOf(FieldName::class, $groups[0]);
         $this->assertEquals("id", $groups[0]->getField());
 
-        $this->expectException(\Wedeto\DB\DBException::class);
+        $this->expectException(\Wedeto\DB\Exception\DBException::class);
         $this->expectExceptionMessage("Forming count query for queries including group by or union distinct is not supported");
         $cq = Select::countQuery($q);
     }

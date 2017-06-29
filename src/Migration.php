@@ -25,6 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB;
 
+use Wedeto\DB\Exception\MigrationException;
+use Wedeto\DB\Exception\InvalidTypeException;
 use Wedeto\Model\DBVersion;
 
 class Migration
@@ -72,13 +74,13 @@ class Migration
     public function upgradeTo($version)
     {
         if (!is_int($version))
-            throw new DBException("Version is not an integer");
+            throw new InvalidTypeException("Version is not an integer");
 
         if ($version <= 0 || $version > $this->max_version)
-            throw new DBException("Module cannot be upgraded beyond the maximum version");
+            throw new MigrationException("Module cannot be upgraded beyond the maximum version");
 
         if (method_exists($this, "upgradeToV" . $version))
-            throw new DBException("Upgrade to version $version not implemented");
+            throw new MigrationException("Upgrade to version $version not implemented");
 
         $db = DB::get();
         $current_version = $this->db_version->version;
@@ -107,12 +109,12 @@ class Migration
     public function downgradeTo($version)
     {
         if (!is_int($version))
-            throw new DBException("Version is not an integer");
+            throw new InvalidTypeException("Version is not an integer");
         if ($version < 0 || $version > $this->max_version)
-            throw new DBException("Invalid module version number");
+            throw new MigrationException("Invalid module version number");
 
         if (!method_exists($this, "downgradeToV" . $version))
-            throw new DBException("Downgrade to version $version is not implemented");
+            throw new MigrationException("Downgrade to version $version is not implemented");
 
         $db = DB::get();
         for ($v = $current_version - 1; $v >= $version; --$v)

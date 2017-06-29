@@ -25,11 +25,32 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
+use Wedeto\Util\Functions as WF;
+
 class TBool extends Column
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
         parent::__construct($name, Column::BOOLEAN, $default, $nullable);
         $this->setNumericPrecision(1);
+    }
+
+    public function validate($value)
+    {
+        parent::validate();
+
+        if ($value !== null && !is_bool($value))
+            throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));
+
+        return true;
+    }
+
+    public function beforeInsertFilter($value)
+    {
+        $value = parent::beforeInsertFilter($value);
+        if ($value === null)
+            return null;
+        
+        return $value ? 1 : 0;
     }
 }

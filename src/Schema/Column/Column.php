@@ -28,9 +28,9 @@ namespace Wedeto\DB\Schema\Column;
 use DateTime;
 
 use Wedeto\Util\Functions as WF;
+use Wedeto\Util\Hook;
 use Wedeto\DB\Schema\Table;
 use Wedeto\DB\DBException;
-
 
 abstract class Column implements \Serializable, \JSONSerializable
 {
@@ -198,72 +198,12 @@ abstract class Column implements \Serializable, \JSONSerializable
         if ($value === null && !$this->is_nullable)
             throw new DBException("Column must not be null: {$this->name}");
 
-        $tp = $this->getType();
-        switch ($tp)
-        {
-            case Column::DECIMAL:
-            case Column::FLOAT:
-                if (!is_numeric($value))
-                    throw new DBException("Invalid float value for {$this->name}: " . WF::str($value));
-                break;
-            case Column::INT:
-                if (!WF::is_int_val($value))
-                    throw new DBException("Invalid int value for {$this->name}: " . WF::str($value));
-                break;
-            case Column::BOOLEAN:
-                if (!is_bool($value))
-                    throw new DBException("Invalid bool value for {$this->name}: " . WF::str($value));
-                break;
-            case Column::DATETIME:
-            case Column::DATETIMETZ:
-            case Column::DATE:
-            case Column::TIME:
-                if (!$value instanceof DateTime)
-                    throw new DBException(
-                        "Invalid " . strtolower($this->getType()) 
-                        . " value for {$this->name}: " . WF::str($value)
-                    );
-                break;
-            case Column::CHAR:
-            case Column::VARCHAR:
-            case Column::TEXT:
-                if ($tp !== Column::TEXT || strpos($this->name, "json") === false)
-                {
-                    if (!is_string($value))
-                        throw new DBException("Invalid string value for {$this->name}: " . WF::str($value));
-                    break;
-                }
-                // Falling through
-            case Column::JSON:
-                if (!is_scalar($value) && !is_array($value) && (!is_object($value) || !($value instanceof JsonSerializable)))
-                    throw new DBException("Invalid JSON value for {$this->name}: " . WF::str($value));
-                break;
-        }
         return true;
     }
 
     public function afterFetchFilter($value)
     {
-        if ($value === null)
-            return null;
-
-        $tp = $this->getType();
-        switch ($tp)
-        {
-            case Column::DATETIME:
-            case Column::DATETIMETZ:
-            case Column::DATE:
-            case Column::TIME:
-                return new DateTime($value);
-            case Column::TEXT:
-                if (strpos($this->name, "json") === false)
-                    return $value;
-                // Falling through
-            case Column::JSON:
-                return json_decode($value, true);
-            default:
-                return $value;
-        }
+        return $value;
     }
 
     public function beforeInsertFilter($value)
@@ -275,30 +215,12 @@ abstract class Column implements \Serializable, \JSONSerializable
             return null;
         }
 
-        $tp = $this->getType();
-        switch ($tp)
-        {
-            case Column::BOOLEAN:
-                return $value ? 1 : 0;
-            case Column::DATETIME:
-                return $value->format("Y-m-d\TH:i:s");
-            case Column::DATETIMETZ:
-                return $value->format(\DateTime::ATOM);
-            case Column::DATE:
-                return $value->format("Y-m-d");
-            case Column::TIME:
-                return $value->format("H:i:s");
-            case Column::TEXT:
-                if (strpos($this->name, "json") === false)
-                    return $value;
-                // Falling through
-            case Column::JSON:
-                return json_encode($value);
-            default:
-                return $value;
-        }
+        return $value;
     }
 
+    /**
+     * @return array A serializable array representation of this column
+     */
     public function toArray()
     {
         $arr = array(
@@ -320,6 +242,11 @@ abstract class Column implements \Serializable, \JSONSerializable
         return $arr;
     }
 
+    /**
+     * Parse deserialized array into valid arguments for column properties.
+     * @param array $data The unserialized array
+     * @param array A normalized array containing all fields
+     */
     public static function parseArray(array $data)
     {
         $type = strtoupper($data['data_type']);
@@ -339,16 +266,26 @@ abstract class Column implements \Serializable, \JSONSerializable
         );
     }
 
+    /** 
+     * @return array A JSON-serializable version of this column
+     */
     public function jsonSerialize()
     {
         return $this->toArray();
     }
 
+    /**
+     * @return array A PHP-serializable version of this column
+     */
     public function serialize()
     {
         return serialize($this->toArray());
     }
 
+    /**
+     * Restore the column from its serialize form
+     * @param string $data The serialized data
+     */
     public function unserialize($data)
     {
         $data = unserialize($data);
@@ -364,23 +301,31 @@ abstract class Column implements \Serializable, \JSONSerializable
         return $col;
     }
 
-    public static function strToType($type)
-    {
-        if (WF::is_int_val($type) && $type >= Column::CHAR && $type <= Column::TEXT)
-            return $type;
-
-        $name = static::class . "::" . $type;
-        if (defined($name))
-            return constant($name);
-        throw new DBException("Invalid type: $type");
-    }
-
+    /**
+     * Create a column instance from an array.
+     * @param array $data The column specification containing name. type,
+     *                    maximum length, numeric scale and precision, default
+     *                    value, nullability and such.
+     * @return Column An instantiated column object
+     */
     public static function factory(array $data)
     {
         $type = ucfirst(strtolower($data['data_type']));
         $args = self::parseArray($data);
 
+        // Execute hook to allow for additional column types or modifications
         $classname = __NAMESPACE__ . "\\T" . $args['type'];
+        $params = Hook::execute(
+            'Wedeto.DB.Schema.Column.Column.FindClass', 
+            ['column_defition' => $args, 'input_data' => $data, 'classname' => $classname, 'instance' => null]
+        );
+
+        // Check if a hook has already provided an instance
+        if ($params['instance'] !== null && $params['instance'] instanceof Column)
+            return $params['instance'];
+
+        // Get the selected classname
+        $classname = $params['classname'];
         if (!class_exists($classname))
             throw new DBException("Unsupported column type: " . $args['type']);
 
