@@ -25,10 +25,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class BoolColumn extends Column
+class TDatetimetz extends TDatetime
 {
-    public function __construct($name, $nullable = false, $default = null)
+    public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::BOOLEAN, 1, null, null, $nullable, $default);
+        parent::__construct($name, Column::DATETIMETZ, $default, $nullable);
     }
 }

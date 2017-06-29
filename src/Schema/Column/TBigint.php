@@ -25,11 +25,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class EnumColumn extends Column
+class TBigint extends Column
 {
-    public function __construct($name, array $values, $nullable = false, $default = null)
+    public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::ENUM, null, null, null, $nullable, $default);
-        $this->setEnumValues($values);
+        parent::__construct($name, Column::BIGINT, $default, $nullable);
+        $this->setNumericPrecision(19);
     }
 }

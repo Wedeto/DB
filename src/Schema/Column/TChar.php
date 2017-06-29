@@ -25,10 +25,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class CharColumn extends Column
+class TChar extends Column
 {
-    public function __construct($name, $max_length, $nullable = false, $default = null)
+    public function __construct(string $name, int $max_length = 16, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::CHAR, $max_length, null, null, $nullable, $default);
+        parent::__construct($name, Column::CHAR, $default, $nullable);
+        $this->setMaxLength($max_length);
     }
 }

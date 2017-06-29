@@ -25,10 +25,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class StringColumn extends Column
+class TBinary extends Column
 {
-    public function __construct($name, $max_length = 100, $nullable = false, $default = null)
+    public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::VARCHAR, $max_length, null, null, $nullable, $default);
+        parent::__construct($name, Column::BINARY, $default, $nullable);
     }
 }

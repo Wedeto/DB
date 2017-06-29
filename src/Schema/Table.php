@@ -82,7 +82,7 @@ class Table implements \Serializable, \JSONSerializable
         foreach ($cols as $name => $col)
         {
             $col['column_name'] = $name;
-            $this->addColumn(Column::fromArray($col));
+            $this->addColumn(Column::factory($col));
         }
 
         foreach ($indexes as $idx)

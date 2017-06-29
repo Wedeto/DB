@@ -25,11 +25,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class BigSerialColumn extends IntColumn
+class TDatetime extends TDate
 {
-    public function __construct($name, $nullable = false, $default = null)
+    public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::BIGINT, null, 19, null, $nullable, $default);
-        $this->setSerial();
+        parent::__construct($name, Column::DATETIME, $default, $nullable);
     }
 }

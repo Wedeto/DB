@@ -25,10 +25,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class BinaryColumn extends Column
+class TBigserial extends TBigint
 {
-    public function __construct($name, $nullable = false, $default = null)
+    public function __construct(string $name)
     {
-        parent::__construct($name, Column::BINARY, null, null, null, $nullable, $default);
+        parent::__construct($name, false, null);
+        $this->setSerial();
     }
 }

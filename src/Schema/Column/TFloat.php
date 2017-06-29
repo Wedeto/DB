@@ -25,10 +25,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class IntColumn extends Column
+class TFloat extends Column
 {
-    public function __construct($name, $nullable = false, $default = null)
+    public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::INT, null, 10, null, $nullable, $default);
+        parent::__construct($name, Column::FLOAT, $default, $nullable);
+        $this->setNumericPrecision(53);
     }
 }

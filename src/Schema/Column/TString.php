@@ -25,10 +25,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class BigIntColumn
+class TString extends Column
 {
-    public function __construct($name, $nullable = false, $default = null)
+    public function __construct(string $name, int $max_length = 100, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::BIGINT, null, 19, null, $nullable, $default);
+        parent::__construct($name, Column::VARCHAR, $default, $nullable);
+        $this->setMaxLength($max_length);
     }
 }

@@ -32,29 +32,29 @@ use Wedeto\DB\Schema\Table;
 use Wedeto\DB\DBException;
 
 
-class Column implements \Serializable, \JSONSerializable
+abstract class Column implements \Serializable, \JSONSerializable
 {
-    const CHAR       =  1;
-    const VARCHAR    =  2;
-    const TEXT       =  3;
-    const JSON       =  4;
-    const ENUM       =  5;
+    const CHAR       = "CHAR";
+    const VARCHAR    = "VARCHAR";
+    const TEXT       = "TEXT";
+    const JSON       = "JSON";
+    const ENUM       = "ENUM";
 
-    const BOOLEAN    =  6;
-    const TINYINT    =  7;
-    const SMALLINT   =  8;
-    const MEDIUMINT  =  9;
-    const INT        = 10;
-    const BIGINT     = 11;
-    const FLOAT      = 12;
-    const DECIMAL    = 13;
+    const BOOLEAN    = "BOOL";
+    const TINYINT    = "TINYINT";
+    const SMALLINT   = "SMALLINT";
+    const MEDIUMINT  = "MEDIUMINT";
+    const INT        = "INT";
+    const BIGINT     = "BIGINT";
+    const FLOAT      = "FLOAT";
+    const DECIMAL    = "DECIMAL";
  
-    const DATE       = 14;
-    const DATETIME   = 15;
-    const DATETIMETZ = 16;
-    const TIME       = 17;
+    const DATE       = "DATE";
+    const DATETIME   = "DATETIME";
+    const DATETIMETZ = "DATETIMETZ";
+    const TIME       = "TIME";
 
-    const BINARY     = 18;
+    const BINARY     = "BINARY";
 
     protected $table;
 
@@ -72,19 +72,15 @@ class Column implements \Serializable, \JSONSerializable
     protected $serial = null;
     protected $enum_values = null;
 
-    public function __construct($name, $type, $max_length, $numeric_precision, $numeric_scale, $nullable, $default, $serial = false)
+    public function __construct(string $name, string $type, $default, bool $nullable)
     {
         $this->name = $name;
         $this->type = $type;
-        $this->max_length = $max_length;
-        $this->numeric_precision = $numeric_precision;
-        $this->numeric_scale = $numeric_scale;
         $this->nullable = WF::parse_bool($nullable);
         $this->default = $default;
-        $this->serial = $serial == true;
     }
 
-    public function setSerial($serial = true)
+    public function setSerial(bool $serial = true)
     {
         $serial = $serial == true;
         if ($serial && $this->type !== Column::INT && $this->type !== Column::BIGINT)
@@ -123,6 +119,13 @@ class Column implements \Serializable, \JSONSerializable
     public function getType()
     {
         return $this->type;
+    }
+
+    public function set(string $field, $value)
+    {
+        if (property_exists($this, $field))
+            $this->field = $value;
+        return $this;
     }
 
     public function getMaxLength()
@@ -198,6 +201,7 @@ class Column implements \Serializable, \JSONSerializable
         $tp = $this->getType();
         switch ($tp)
         {
+            case Column::DECIMAL:
             case Column::FLOAT:
                 if (!is_numeric($value))
                     throw new DBException("Invalid float value for {$this->name}: " . WF::str($value));
@@ -216,7 +220,7 @@ class Column implements \Serializable, \JSONSerializable
             case Column::TIME:
                 if (!$value instanceof DateTime)
                     throw new DBException(
-                        "Invalid " . strtolower(Column::typeToStr($this->getType())) 
+                        "Invalid " . strtolower($this->getType()) 
                         . " value for {$this->name}: " . WF::str($value)
                     );
                 break;
@@ -299,7 +303,7 @@ class Column implements \Serializable, \JSONSerializable
     {
         $arr = array(
             "column_name" => $this->name,
-            "data_type" => $this->typeToStr($this->type),
+            "data_type" => $this->type,
             "is_nullable" => $this->nullable ? 1 : 0,
             "column_default" => $this->default,
             "serial" => $this->serial
@@ -316,21 +320,15 @@ class Column implements \Serializable, \JSONSerializable
         return $arr;
     }
 
-    public static function fromArray(array $data)
-    {
-        $args = self::parseArray($data);
-        extract($args);
-        $col = new Column($name, $type, $max_length, $numeric_precision, $numeric_scale, $is_nullable, $column_default, $serial);
-        if (isset($enum_values) && $type === Column::ENUM)
-            $col->setEnumValues($enum_values);
-        return $col;
-    }
-
     public static function parseArray(array $data)
     {
+        $type = strtoupper($data['data_type']);
+        if (!defined(static::class . '::' . $type))
+            throw new DBException("Invalid column type: $type");
+            
         return array(
             'name' => $data['column_name'],
-            'type' => self::strToType($data['data_type']),
+            'type' => $type,
             'max_length' => $data['character_maximum_length'] ?? null,
             'is_nullable' => isset($data['is_nullable']) ? $data['is_nullable'] == true : false,
             'column_default' => $data['column_default'] ?? null,
@@ -355,10 +353,14 @@ class Column implements \Serializable, \JSONSerializable
     {
         $data = unserialize($data);
         $args = self::parseArray($data);
-        extract($args);
-        $this->__construct($name, $type, $max_length, $numeric_precision, $numeric_scale, $is_nullable, $column_default, $serial);
-        if (isset($enum_values) && $type === Column::ENUM)
-            $this->setEnumValues($col['enum_values']);
+        $this->__construct($args['name']);
+        
+        foreach ($args as $property => $value)
+        {
+            if (!empty($value))
+                $this->set($property, $value);
+        }
+            
         return $col;
     }
 
@@ -373,33 +375,22 @@ class Column implements \Serializable, \JSONSerializable
         throw new DBException("Invalid type: $type");
     }
 
-    public static function typeToStr($type)
+    public static function factory(array $data)
     {
-        switch ($type)
+        $type = ucfirst(strtolower($data['data_type']));
+        $args = self::parseArray($data);
+
+        $classname = __NAMESPACE__ . "\\T" . $args['type'];
+        if (!class_exists($classname))
+            throw new DBException("Unsupported column type: " . $args['type']);
+
+        $col = new $classname($args['name']);
+        foreach ($args as $property => $val)
         {
-            case Column::CHAR: return "CHAR";
-            case Column::VARCHAR: return "VARCHAR";
-            case Column::TEXT: return "TEXT";
-            case Column::JSON: return "JSON";
-            case Column::ENUM: return "ENUM";
-
-            case Column::BOOLEAN: return "BOOLEAN";
-            case Column::TINYINT: return "TINYINT";
-            case Column::SMALLINT: return "SMALLINT";
-            case Column::MEDIUMINT: return "MEDIUMINT";
-            case Column::INT: return "INT";
-            case Column::BIGINT: return "BIGINT";
-            case Column::FLOAT: return "FLOAT";
-            case Column::DECIMAL: return "DECIMAL";
-         
-            case Column::DATE: return "DATE";
-            case Column::DATETIME: return "DATETIME";
-            case Column::DATETIMETZ: return "DATETIMETZ";
-            case Column::TIME: return "TIME";
-
-            case Column::BINARY: return "BINARY";
-            default: throw new DBException("Invalid column type: $type");
+            if (!empty($value))
+                $this->set($property, $value);
         }
-    }
 
+        return $col;
+    }
 }

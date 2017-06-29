@@ -25,11 +25,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class SerialColumn extends IntColumn
+class TMediumint extends Column
 {
-    public function __construct($name, $nullable = false, $default = null)
+    public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::INT, null, 11, null, $nullable, $default);
-        $this->setSerial();
+        parent::__construct($name, Column::MEDIUMINT, $default, $nullable);
+        $this->setNumericPrecision(8);
     }
 }

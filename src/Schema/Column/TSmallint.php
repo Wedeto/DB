@@ -25,10 +25,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class DateColumn extends Column
+class TSmallint extends Column
 {
-    public function __construct($name, $nullable = false, $default = null)
+    public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::DATE, null, null, null, $nullable, $default);
+        parent::__construct($name, Column::SMALLINT, $default, $nullable);
+        $this->setNumericPrecision(5);
     }
 }
