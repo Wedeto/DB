@@ -4,8 +4,8 @@ namespace Wedeto\DB;
 
 class MockDB extends DB
 {
-    public function __construct()
+    public function __construct($type = "PGSQL")
     {
-        $this->driver = new \Wedeto\DB\Driver\PGSQL($this);
+        $this->driver = $type === "PGSQL" ? new \Wedeto\DB\Driver\PGSQL($this) : new \Wedeto\DB\Driver\MySQL($this);
     }
 }

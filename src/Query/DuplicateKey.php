@@ -82,19 +82,19 @@ class DuplicateKey extends Clause
         {
             $query = array("ON CONFLICT");
 
-            $conflicts = $duplicate->getConflictingFields();
+            $conflicts = $this->getConflictingFields();
             $parts = array();
             foreach ($conflicts as $c)
-                $parts[] = $this->toSQL($params, $c, false);
+                $parts[] = $drv->toSQL($params, $c, false);
 
             $query[] = "(" . implode(', ', $parts) . ")";
             $query[] = "DO UPDATE";
             $query[] = "SET";
 
-            $updates = $duplicate->getUpdates();
+            $updates = $this->getUpdates();
             $parts = array();
             foreach ($updates as $up)
-                $parts[] = $this->toSQL($params, $up);
+                $parts[] = $drv->toSQL($params, $up);
 
             $query[] = implode(", " , $parts);
 
@@ -107,10 +107,10 @@ class DuplicateKey extends Clause
             // MySQL doesn't care if you know which fields conflict
             $query[] = "UPDATE";
 
-            $updates = $duplicate->getUpdates();
+            $updates = $this->getUpdates();
             $parts = array();
             foreach ($updates as $up)
-                $parts[] = $this->toSQL($parameters, $up);
+                $parts[] = $drv->toSQL($params, $up);
 
             $query[] = implode(", " , $parts);
 

@@ -27,6 +27,9 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\DuplicateKey
  */
@@ -53,4 +56,43 @@ class DupicateKeyTest extends TestCase
         $this->assertEquals([$field1, $field2], $a->getConflictingFields());
     }
 
+    public function testPostgresImplementation()
+    {
+        $db = new MockDB("PGSQL");
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $dupkey = new DuplicateKey("id", [new UpdateField("foo", "bar"), new UpdateField("test", "test2")]);
+
+        $sql = $dupkey->toSQL($params, false);
+        $this->assertEquals('ON CONFLICT ("id") DO UPDATE SET "foo" = :c0, "test" = :c1', $sql);
+        $this->assertEquals('bar', $params->get('c0'));
+        $this->assertEquals('test2', $params->get('c1'));
+    }
+
+    public function testMySQLImplementation()
+    {
+        $db = new MockDB("MySQL");
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $dupkey = new DuplicateKey("id", [new UpdateField("foo", "bar"), new UpdateField("test", "test2")]);
+
+        $sql = $dupkey->toSQL($params, false);
+        $this->assertEquals('ON DUPLICATE KEY UPDATE `foo` = :c0, `test` = :c1', $sql);
+        $this->assertEquals('bar', $params->get('c0'));
+        $this->assertEquals('test2', $params->get('c1'));
+    }
+
+    public function testOtherImplementation()
+    {
+        $mocker = $this->prophesize(\Wedeto\DB\Driver\Driver::class);
+        $drv = $mocker->reveal();
+        $params = new Parameters($drv);
+        $dupkey = new DuplicateKey("id", [new UpdateField("foo", "bar"), new UpdateField("test", "test2")]);
+
+        $this->expectException(\Wedeto\DB\Exception\ImplementationException::class);
+        $this->expectExceptionMessage("On duplicate key not implemented for");
+        $sql = $dupkey->toSQL($params, false);
+    }
 }
