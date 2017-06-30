@@ -72,7 +72,7 @@ class Operator extends Expression
      */
     public function toSQL(Parameters $params, bool $inner_clause)
     {
-        $driver = $params->getDriver();
+        $drv = $params->getDriver();
         $lhs = $drv->toSQL($params, $this->getLHS(), true);
         $rhs = $drv->toSQL($params, $this->getRHS(), true);
 

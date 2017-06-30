@@ -111,7 +111,7 @@ class ConstantValue extends Expression
         {
             try
             {
-                $v = $params->get($key);
+                $params->get($key);
             }
             catch (\OutOfRangeException $e)
             {

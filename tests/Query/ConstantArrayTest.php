@@ -27,6 +27,9 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 class ConstantArrayTest extends TestCase
 {
     public function testConstruct()
@@ -82,5 +85,38 @@ class ConstantArrayTest extends TestCase
 
         $mock->set('fookey', '1-2-3-4', \PDO::PARAM_STR)->shouldBeCalled();
         $a->setValue([1, 2, 3, 4]);
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $val = new ConstantArray([1, 3, 5, 7]);
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals(':c0', $sql);
+        $this->assertEquals('{1,3,5,7}', $params->get('c0'));
+
+        $val = new ConstantArray([1, "foo", 5, 7]);
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals(':c1', $sql);
+        $this->assertEquals('{1,"foo",5,7}', $params->get('c1'));
+
+        $val = new ConstantArray([1, 'fo""o', 5, 7]);
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals(':c2', $sql);
+        $this->assertEquals('{1,"fo\\"\\"o",5,7}', $params->get('c2'));
+
+        // Repetition should give the same results
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals(':c2', $sql);
+        $this->assertEquals('{1,"fo\\"\\"o",5,7}', $params->get('c2'));
+
+        // New parameters should reset
+        $params = new Parameters($drv);
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals(':c0', $sql);
+        $this->assertEquals('{1,"fo\\"\\"o",5,7}', $params->get('c0'));
     }
 }

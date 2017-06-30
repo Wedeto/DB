@@ -27,6 +27,9 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\CustomSQL
  */
@@ -39,5 +42,20 @@ class CustomSQLTest extends TestCase
 
         $a = new CustomSQL('foo');
         $this->assertEquals('foo', $a->getSQL());
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $val = new CustomSQL('my custom query');
+
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals('my custom query', $sql);
+
+        $sql = $val->toSQL($params, true);
+        $this->assertEquals('(my custom query)', $sql);
     }
 }

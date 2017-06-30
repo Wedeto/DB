@@ -28,6 +28,9 @@ namespace Wedeto\DB\Query;
 use PHPUnit\Framework\TestCase;
 use Wedeto\DB\Exception\QueryException;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\Direction
  */
@@ -59,5 +62,26 @@ class DirectionTest extends TestCase
         $this->expectException(QueryException::class);
         $this->expectExceptionMessage('Invalid direction');
         $a = new Direction("FOOBAR", 'foo');
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $val = new Direction('ASC', 'foo');
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals('"foo" ASC', $sql);
+
+        $val = new Direction('DESC', 'foo');
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals('"foo" DESC', $sql);
+
+        $expr = new ArithmeticOperator("-", new FieldName("foo"), new FieldName("bar"));
+        $val = new Direction('DESC', $expr);
+        $sql = $val->toSQL($params, false);
+        $expected = $drv->identQuote('foo') . ' - ' . $drv->identQuote('bar') . ' DESC';
+        $this->assertEquals($expected, $sql);
     }
 }

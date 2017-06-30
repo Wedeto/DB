@@ -66,9 +66,9 @@ class ConstantArray extends ConstantValue
         {
             try
             {
-                $key = $params->get($key);
+                $params->get($key);
             }
-            catch (OutOfRangeException $e)
+            catch (\OutOfRangeException $e)
             {
                 // Not a valid key, replace
                 $key = null;
@@ -79,7 +79,7 @@ class ConstantArray extends ConstantValue
             $key = $params->assign(null);
 
         // Rebind, to be sure
-        $this->bind($params, $key, array($this, 'formatArray'));
+        $this->bind($params, $key, array($params->getDriver(), 'formatArray'));
         return ':' . $key;
     }
 
