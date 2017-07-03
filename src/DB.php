@@ -248,6 +248,9 @@ class DB
         elseif ($func === "prepare")
             self::$logger->info("Preparing query: {0}", [$args[0]]);
             
+        if (!method_exists([$this->pdo, $func]))
+            throw new \RuntimeException("Function $func does not exist");
+
         return call_user_func_array(array($this->pdo, $func), $args);
     }
 
