@@ -68,7 +68,6 @@ class PGSQL extends Driver
         Column::MEDIUMINT => 'int',
         Column::BIGINT => 'bigint',
         Column::FLOAT => 'double precision',
-        Column::DECIMAL => 'decimal',
         Column::DECIMAL => 'numeric',
 
         Column::DATETIME => 'timestamp without time zone',
@@ -77,6 +76,29 @@ class PGSQL extends Driver
         Column::TIME => 'time',
 
         Column::BINARY => 'bytea'
+    );
+
+    protected $reverse_mapping = array(
+        'character' => Column::CHAR,
+        'character varying' => Column::VARCHAR,
+        'text' => Column::TEXT,
+        'json' => Column::JSON,
+        'enum' => Column::ENUM,
+
+        'boolean' => Column::BOOLEAN,
+        'tinyint' => Column::TINYINT,
+        'smallint' => Column::SMALLINT,
+        'bigint' => Column::BIGINT,
+        'integer' => Column::INT,
+        'double precision' => Column::FLOAT,
+        'numeric' => Column::DECIMAL,
+
+        'timestamp without time zone' => Column::DATETIME,
+        'timestamp with time zone' => Column::DATETIMETZ,
+        'date' => Column::DATE,
+        'time' => Column::TIME,
+
+        'bytea' => Column::BINARY
     );
 
     /**************************
@@ -545,7 +567,7 @@ class PGSQL extends Driver
         foreach ($columns as $col)
         {
             $type = strtolower($col['data_type']);
-            $numtype = array_search($type, $this->mapping);
+            $numtype = $this->reverse_mapping[$type];
 
             $enum_values = null;
             if ($col['data_type'] === "USER-DEFINED")

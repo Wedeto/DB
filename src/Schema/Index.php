@@ -78,7 +78,7 @@ class Index implements \Serializable, \JSONSerializable
                 $column = $column->getName();
 
             if (is_string($column))
-                $this->columns[$column] = $column;
+                $this->columns[] = $column;
             else
                 throw new DBException("Invalid column for index");
         }

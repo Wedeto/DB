@@ -28,8 +28,9 @@ namespace Wedeto\DB\Driver;
 use Wedeto\Util\LoggerAwareStaticTrait;
 
 use Wedeto\DB\DB;
-use Wedeto\DB\TableNotExists;
-use Wedeto\DB\DBException;
+use Wedeto\DB\Exception\TableNotExists;
+use Wedeto\DB\Exception\ConfigurationException;
+use Wedeto\DB\Exception\ImplementationException;
 
 use Wedeto\DB\Schema\Table;
 use Wedeto\DB\Schema\Index;
@@ -68,24 +69,56 @@ class MySQL extends Driver
         Column::DECIMAL => 'DECIMAL',
 
         Column::DATETIME => 'DATETIME',
+        Column::DATETIME => 'DATETIME',
         Column::DATE => 'DATE',
         Column::TIME => 'TIME',
 
         Column::BINARY => 'MEDIUMBLOB'
     );
 
+    protected $reverse_mapping = array(
+        'CHAR' => Column::CHAR,
+        'VARCHAR' => Column::VARCHAR,
+        'TINYTEXT' => Column::TEXT,
+        'TEXT' => Column::TEXT,
+        'MEDIUMTEXT' => Column::TEXT,
+        'LONGTEXT' => Column::TEXT,
+        'JSON' => Column::TEXT,
+        'ENUM' => Column::ENUM,
+
+        'TINYINT' => Column::TINYINT,
+        'SMALLINT' => Column::SMALLINT,
+        'MEDIUMINT' => Column::MEDIUMINT,
+        'INT' => Column::INT,
+        'BIGINT' => Column::BIGINT,
+        'FLOAT' => Column::FLOAT,
+        'DECIMAL' => Column::DECIMAL,
+
+        'DATETIME' => Column::DATETIME,
+        'TIMESTAMP' => Column::DATETIME,
+        'DATE' => Column::DATE,
+        'TIME' => Column::TIME,
+
+        'TINYBLOB' => Column::BINARY,
+        'BLOB' => Column::BINARY,
+        'MEDIUMBLOB' => Column::BINARY,
+        'LONGBLOB' => Column::BINARY,
+        'VARBINARY' => Column::BINARY
+    );
+
     public function generateDSN(array $config)
     {
         if (!isset($config['database']))
-            throw new DBException("Required field missing: database");
+            throw new ConfigurationException("Required field missing: database");
 
         if (isset($config['socket']))
             return "mysql:socket=" . $config['socket'] . ";dbname=" . $config['database'] . ";charset=utf8"; 
 
         if (!isset($config['hostname']))
-            throw new DBException("Required field missing: socket or hostname");
+            throw new ConfigurationException("Required field missing: socket or hostname");
 
         $port = isset($config['port']) ? ";port=" . $config['port'] : "";
+        $this->schema = $config['database'];
 
         return "mysql:host=" . $config['hostname'] . ";dbname=" . $config['database'] . $port . ";charset=utf8";
     }
@@ -362,7 +395,7 @@ class MySQL extends Driver
     {
         $numtype = $col->getType();
         if (!isset($this->mapping[$numtype]))
-            throw new DBException("Unsupported column type: $numtype");
+            throw new ImplementationException("Unsupported column type: $numtype");
 
         $type = $this->mapping[$numtype];
         $coldef = $this->identQuote($col->getName()) . " " . $type;
@@ -414,9 +447,9 @@ class MySQL extends Driver
         foreach ($columns as $col)
         {
             $type = strtoupper($col['data_type']);
-            $numtype = array_search($type, $this->mapping);
+            $numtype = $this->reverse_mapping[$type];
             if ($numtype === false)
-                throw new DBException("Unsupported field type: " . $type);
+                throw new ImplementationException("Unsupported field type: " . $type);
 
             $col['data_type'] = $numtype;
             $col['name'] = $col['column_name'];
@@ -470,14 +503,12 @@ class MySQL extends Driver
             $summarized[$n]['referred_table'] = $this->stripPrefix($constraint['REF_TABLE']);
             $summarized[$n]['referred_column'][] = $constraint['REF_COLUMN'];
         }
-        
+
         // Get update/delete policy from foreign keys
         $fks = $this->getForeignKeys($table_name);
         foreach ($fks as $fk)
         {
             $n = $this->stripPrefix($fk['CONSTRAINT_NAME']);
-            var_Dump($this->table_prefix);
-            var_Dump($n);
             if (!empty($this->prefix) && substr($n, 0, strlen($this->prefix)) == $this->prefix)
                 $n = substr($n, strlen($this->prefix));
             if (isset($summarized[$n]))
@@ -504,7 +535,7 @@ class MySQL extends Driver
                 $table->addIndex(new Index($constraint));
             }
             else
-                throw new DBException("Unsupported constraint type: {$constraint['type']}");
+                throw new ImplementationException("Unsupported constraint type: {$constraint['type']}");
         }
 
         // Get all indexes

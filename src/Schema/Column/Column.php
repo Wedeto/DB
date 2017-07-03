@@ -164,7 +164,7 @@ abstract class Column implements \Serializable, \JSONSerializable
 
     public function isNullable()
     {
-        return $this->nullable;
+        return $this->is_nullable;
     }
 
     public function setNullable($nullable)
@@ -227,7 +227,7 @@ abstract class Column implements \Serializable, \JSONSerializable
         $arr = array(
             "column_name" => $this->name,
             "data_type" => $this->type,
-            "is_nullable" => $this->nullable ? 1 : 0,
+            "is_nullable" => $this->is_nullable ? 1 : 0,
             "column_default" => $this->default,
             "serial" => $this->serial
         );

@@ -48,6 +48,7 @@ abstract class Driver
     protected $schema;
 
     protected $mapping = array();
+    protected $reverse_mapping = array();
     protected $iquotechar = null;
 
     public function __construct($db)
