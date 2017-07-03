@@ -116,7 +116,7 @@ class MySQL extends Driver
     public function delete(Query\Delete $query)
     {
         $params = new Parameters($this);
-        $sql = $this->deleteToSQL($params, $d);
+        $sql = $this->toSQL($params, $d);
 
         $st = $this->db->prepare($q);
         foreach ($parameters as $key => $value)
@@ -129,7 +129,7 @@ class MySQL extends Driver
     public function insert(Query\Insert $query, $id_field = null)
     {
         $parameters = new Parameters($this);
-        $sql = $this->insertToSQL($parameters, $query);
+        $sql = $this->toSQL($parameters, $query);
 
         $st = $this->db->prepare($sql);
         foreach ($parameters as $key => $value)
@@ -143,7 +143,7 @@ class MySQL extends Driver
     public function select(Query\Select $query)
     {
         $parameters = new Parameters($this);
-        $sql = $query->selectToSQL($parameters);
+        $sql = $query->toSQL($parameters);
 
         $st = $this->db->prepare($sql);
         foreach ($parameters as $key => $value)
@@ -155,7 +155,7 @@ class MySQL extends Driver
     public function update(Query\Update $query)
     {
         $parameters = new Parameters($this);
-        $sql = $this->updateToSQL($parameters, $query);
+        $sql = $this->toSQL($parameters, $query);
     
         $st = $this->db->prepare($sql);
         foreach ($parameters as $key => $value)

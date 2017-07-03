@@ -181,7 +181,7 @@ class PGSQL extends Driver
     public function delete(Query\Delete $query)
     {
         $params = new Parameters($this);
-        $sql = $this->deleteToSQL($params, $query);
+        $sql = $this->toSQL($params, $query);
 
         $st = $this->db->prepare($sql);
         foreach ($params as $key => $value)
@@ -194,7 +194,7 @@ class PGSQL extends Driver
     public function insert(Query\Insert $query, $pkey = null)
     {
         $params = new Parameters($this);
-        $sql = $this->insertToSQL($params, $query);
+        $sql = $this->toSQL($params, $query);
 
         $retval = !empty($pkey);
         if ($retval)
@@ -240,7 +240,7 @@ class PGSQL extends Driver
     public function select(Query\Select $query)
     {
         $params = new Parameters($this);
-        $sql = $this->selectToSQL($params, $query);
+        $sql = $this->toSQL($params, $query);
 
         $st = $this->db->prepare($sql);
         foreach ($params as $key => $value)
@@ -253,7 +253,7 @@ class PGSQL extends Driver
     public function update(Query\Update $query)
     {
         $params = new Parameters($this);
-        $sql = $this->updateToSQL($params, $query);
+        $sql = $this->toSQL($params, $query);
     
         $st = $this->db->prepare($sql);
         foreach ($params as $key => $value)
