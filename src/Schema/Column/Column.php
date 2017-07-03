@@ -30,7 +30,8 @@ use DateTime;
 use Wedeto\Util\Functions as WF;
 use Wedeto\Util\Hook;
 use Wedeto\DB\Schema\Table;
-use Wedeto\DB\DBException;
+use Wedeto\DB\Exception\InvalidTypeException;
+use Wedeto\DB\Exception\InvalidValueException;
 
 abstract class Column implements \Serializable, \JSONSerializable
 {
@@ -40,7 +41,7 @@ abstract class Column implements \Serializable, \JSONSerializable
     const JSON       = "JSON";
     const ENUM       = "ENUM";
 
-    const BOOLEAN    = "BOOL";
+    const BOOLEAN    = "BOOLEAN";
     const TINYINT    = "TINYINT";
     const SMALLINT   = "SMALLINT";
     const MEDIUMINT  = "MEDIUMINT";
@@ -60,9 +61,9 @@ abstract class Column implements \Serializable, \JSONSerializable
 
     protected $name;
     protected $type;
-    protected $nullable;
+    protected $is_nullable;
 
-    protected $max_char_length;
+    protected $max_length;
 
     protected $numeric_scale;
     protected $numeric_precision;
@@ -76,7 +77,7 @@ abstract class Column implements \Serializable, \JSONSerializable
     {
         $this->name = $name;
         $this->type = $type;
-        $this->nullable = WF::parse_bool($nullable);
+        $this->is_nullable = WF::parse_bool($nullable);
         $this->default = $default;
     }
 
@@ -84,7 +85,7 @@ abstract class Column implements \Serializable, \JSONSerializable
     {
         $serial = $serial == true;
         if ($serial && $this->type !== Column::INT && $this->type !== Column::BIGINT)
-            throw new DBException("A serial column must be of type integer");
+            throw new InvalidTypeException("A serial column must be of type integer");
 
         $this->serial = $serial == true;
     }
@@ -105,7 +106,7 @@ abstract class Column implements \Serializable, \JSONSerializable
         {
             foreach ($table->getColumns() as $c)
                 if ($c->name !== $this->name && $c->serial)
-                    throw new DBException("There can be only one serial column in a table");
+                    throw new InvalidValueException("There can be only one serial column in a table");
         }
 
         $this->table = $table;
@@ -168,7 +169,7 @@ abstract class Column implements \Serializable, \JSONSerializable
 
     public function setNullable($nullable)
     {
-        $this->nullable = $nullable == true;
+        $this->is_nullable = $nullable == true;
     }
 
     public function getDefault()
@@ -196,7 +197,7 @@ abstract class Column implements \Serializable, \JSONSerializable
     public function validate($value)
     {
         if ($value === null && !$this->is_nullable)
-            throw new DBException("Column must not be null: {$this->name}");
+            throw new InvalidValueException("Column must not be null: {$this->name}");
 
         return true;
     }
@@ -210,8 +211,8 @@ abstract class Column implements \Serializable, \JSONSerializable
     {
         if ($value === null)
         {
-            if (!$this->isNullabe())
-                throw new DBException("Column must not be null: {$this->name}");
+            if (!$this->isNullable())
+                throw new InvalidValueException("Column must not be null: {$this->name}");
             return null;
         }
 
@@ -251,7 +252,7 @@ abstract class Column implements \Serializable, \JSONSerializable
     {
         $type = strtoupper($data['data_type']);
         if (!defined(static::class . '::' . $type))
-            throw new DBException("Invalid column type: $type");
+            throw new InvalidValueException("Invalid column type: $type");
             
         return array(
             'name' => $data['column_name'],
@@ -314,7 +315,7 @@ abstract class Column implements \Serializable, \JSONSerializable
         $args = self::parseArray($data);
 
         // Execute hook to allow for additional column types or modifications
-        $classname = __NAMESPACE__ . "\\T" . $args['type'];
+        $classname = __NAMESPACE__ . "\\T" . ucfirst(strtolower($args['type']));
         $params = Hook::execute(
             'Wedeto.DB.Schema.Column.Column.FindClass', 
             ['column_defition' => $args, 'input_data' => $data, 'classname' => $classname, 'instance' => null]
@@ -327,7 +328,7 @@ abstract class Column implements \Serializable, \JSONSerializable
         // Get the selected classname
         $classname = $params['classname'];
         if (!class_exists($classname))
-            throw new DBException("Unsupported column type: " . $args['type']);
+            throw new InvalidTypeException("Unsupported column type: " . $args['type'] . " (class $classname not found)");
 
         $col = new $classname($args['name']);
         foreach ($args as $property => $val)

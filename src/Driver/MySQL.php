@@ -417,16 +417,12 @@ class MySQL extends Driver
             $numtype = array_search($type, $this->mapping);
             if ($numtype === false)
                 throw new DBException("Unsupported field type: " . $type);
+
+            $col['data_type'] = $numtype;
+            $col['name'] = $col['column_name'];
+            $col['max_length'] = $col['character_maximum_length'];
             
-            $column = new Column(
-                $col['column_name'],
-                $numtype,
-                $col['character_maximum_length'],
-                $col['numeric_precision'],
-                $col['numeric_scale'],
-                $col['is_nullable'],
-                $col['column_default']
-            );
+            $column = Column::factory($col);
 
             if ($numtype === Column::ENUM)
             {

@@ -35,7 +35,7 @@ class TVarchar extends Column
 
     public function validate($value)
     {
-        parent::validate();
+        parent::validate($value);
         if ($value === null)
             return true;
 

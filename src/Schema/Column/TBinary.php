@@ -36,7 +36,7 @@ class TBinary extends Column
 
     public function validate($value)
     {
-        parent::validate();
+        parent::validate($value);
 
         if ($value !== null && is_string($value) && !is_resource($value))
             throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));

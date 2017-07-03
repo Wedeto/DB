@@ -38,7 +38,7 @@ class TEnum extends Column
 
     public function validate($value)
     {
-        parent::validate();
+        parent::validate($value);
 
         if ($value !== null && !in_array($value, $this->enum_valueS))
             throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));

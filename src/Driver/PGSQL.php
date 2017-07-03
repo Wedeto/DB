@@ -29,8 +29,11 @@ use Wedeto\Util\LoggerAwareStaticTrait;
 use Wedeto\Util\Functions as WF;
 
 use Wedeto\DB\DB;
-use Wedeto\DB\TableNotExists;
-use Wedeto\DB\DBException;
+use Wedeto\DB\Exception\ConfigurationException;
+use Wedeto\DB\Exception\QueryException;
+use Wedeto\DB\Exception\InvalidTypeException;
+use Wedeto\DB\Exception\InvalidValueException;
+use Wedeto\DB\Excpetion\TableNotExists;
 
 use Wedeto\DB\Schema\Table;
 use Wedeto\DB\Schema\Index;
@@ -62,7 +65,7 @@ class PGSQL extends Driver
         Column::SMALLINT => 'smallint',
         Column::TINYINT => 'smallint',
         Column::INT => 'integer',
-        Column::MEDIUMINT => 'integer',
+        Column::MEDIUMINT => 'int',
         Column::BIGINT => 'bigint',
         Column::FLOAT => 'double precision',
         Column::DECIMAL => 'decimal',
@@ -134,7 +137,7 @@ class PGSQL extends Driver
             $dsn['dbname'] = (string)$config['database'];
 
         if (!isset($dsn['dbname']))
-            throw new DBException("No database name provided");
+            throw new ConfigurationException("No database name provided");
 
         $this->dbname = $dsn['dbname'];
         
@@ -212,7 +215,7 @@ class PGSQL extends Driver
         $st->execute();
 
         if ($st === false)
-            throw new DBException("Query failed: " . $sql);
+            throw new QueryException("Query failed: " . $sql);
 
         $id = null;
         if ($retval)
@@ -492,7 +495,7 @@ class PGSQL extends Driver
     {
         $numtype = $col->getType();
         if (!isset($this->mapping[$numtype]))
-            throw new DBException("Unsupported column type: $numtype");
+            throw new InvalidTypeException("Unsupported column type: $numtype");
 
         $type = $this->mapping[$numtype];
         $coldef = $this->identQuote($col->getName()) . " " . $type;
@@ -555,7 +558,7 @@ class PGSQL extends Driver
                 $q->execute(array('enumname' => $udt));
 
                 if ($q->rowCount() === 0)
-                    throw new DBException("Unsupported field type: " . $type);
+                    throw new InvalidTypeException("Unsupported field type: " . $type);
 
                 $enum_values = array();
                 foreach ($q as $r)
@@ -564,17 +567,13 @@ class PGSQL extends Driver
             }
 
             if ($numtype === false)
-                throw new DBException("Unsupported field type: " . $type);
+                throw new InvalidTypeException("Unsupported field type: " . $type);
 
-            $column = new Column(
-                $col['column_name'],
-                $numtype,
-                $col['character_maximum_length'],
-                $col['numeric_precision'],
-                $col['numeric_scale'],
-                $col['is_nullable'],
-                $col['column_default']
-            );
+            $col['name'] = $col['column_name'];
+            $col['data_type'] = $numtype;
+            $col['max_length'] = $col['character_maximum_length'];
+
+            $column = Column::factory($col);
 
             if ($enum_values !== null)
                 $column->setEnumValues($enum_values);
@@ -637,7 +636,7 @@ class PGSQL extends Driver
             $def = $row['condef'];
 
             if (!preg_match('/^FOREIGN KEY \(([\w\d\s,_]+)\) REFERENCES ([\w\d]+)\(([\w\d\s,_]+)\)[\s]*(ON UPDATE (CASCADE|RESTRICT|SET NULL))?[\s]*(ON DELETE (CASCADE|RESTRICT|SET NULL))?$/', $def, $matches))
-                throw new DBException("Invalid condef: " . $def);
+                throw new InvalidValueException("Invalid condef: " . $def);
             $columns = explode(", ", $matches[1]);
             $reftable = $matches[2];
             $refcolumns = explode(", ", $matches[3]);
@@ -684,7 +683,7 @@ class PGSQL extends Driver
             if ($primary)
             {
                 if (!preg_match('/^PRIMARY KEY \(([\w\d\s,_]+)\)$/', $constraintdef, $matches))
-                    throw new DBException("Invalid primary key: $constraintdef");
+                    throw new InvalidTypeException("Invalid primary key: $constraintdef");
 
                 $columns = explode(", ", $matches[1]);
                 $constraints[] = array(
@@ -695,7 +694,7 @@ class PGSQL extends Driver
             elseif ($unique)
             {
                 if (!preg_match('/^CREATE UNIQUE INDEX \w+ ON \w+ USING (\w+) \(([\w\d\s,_]+)\)$/', $indexdef, $matches))
-                    throw new DBException("Invalid unique key: $indexdef");
+                    throw new InvalidTypeException("Invalid unique key: $indexdef");
 
 				$algo = $matches[1];
                 $columns = explode(", ", $matches[2]);
@@ -710,7 +709,7 @@ class PGSQL extends Driver
                 $qname = preg_quote($name, '/');
                 $tname = preg_quote($table_name, '/');
                 if (!preg_match('/^CREATE INDEX ' . $qname . ' ON ' . $tname . ' (USING ([\w]+))?\s*\((.+)\)(\s*WHERE (.*))?$/', $indexdef, $matches))
-                    throw new DBException("Invalid index: $indexdef");
+                    throw new InvalidTypeException("Invalid index: $indexdef");
 
                 $algo = $matches[2];
                 $columns = self::explodeFunc($matches[3]);

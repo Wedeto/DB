@@ -27,7 +27,7 @@ namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
 
-class TBool extends Column
+class TBoolean extends Column
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
@@ -37,7 +37,7 @@ class TBool extends Column
 
     public function validate($value)
     {
-        parent::validate();
+        parent::validate($value);
 
         if ($value !== null && !is_bool($value))
             throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));

@@ -37,7 +37,7 @@ class TDate extends Column
 
     public function validate($value)
     {
-        parent::validate();
+        parent::validate($value);
 
         if ($value !== null && !($value instanceof DateTime))
             throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));

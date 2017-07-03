@@ -34,7 +34,7 @@ class TTime extends Column
 
     public function validate($value)
     {
-        parent::validate();
+        parent::validate($time);
 
         if ($value === null)
             return true;

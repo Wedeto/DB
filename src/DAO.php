@@ -495,7 +495,7 @@ abstract class DAO
         foreach ($args as $arg)
             $select->add($arg);
 
-        $drv = $database->driver();
+        $drv = $database->getDriver();
         return $drv->select($select);
     }
 
@@ -542,7 +542,7 @@ abstract class DAO
             $update->add(new Query\UpdateField($field, $value));
         }
 
-        $drv = $database->driver();
+        $drv = $database->getDriver();
         return $drv->update($update);
     }
 
@@ -581,7 +581,7 @@ abstract class DAO
             $pkey = [];
         $insert = new Query\Insert(static::tablename(), $db_record, $pkey);
 
-        $drv = $database->driver();
+        $drv = $database->getDriver();
         $drv->insert($insert, $pkey);
             
         // Store the potentially generated serial in the inserted record
@@ -617,7 +617,7 @@ abstract class DAO
         if ($database === null)
             $database = static::db();
         $delete = new Query\Delete(static::tablename(), $where);
-        $drv = $database->driver();
+        $drv = $database->getDriver();
         return $drv->delete($delete);
     }
 
