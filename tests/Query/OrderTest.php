@@ -29,6 +29,9 @@ use PHPUnit\Framework\TestCase;
 
 use Wedeto\DB\Exception\QueryException;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\OrderClause
  */
@@ -94,5 +97,24 @@ class OrderTest extends TestCase
 
         $this->assertEquals('bar', $clauses[1]->getOperand()->getField());
         $this->assertEquals('ASC', $clauses[1]->getDirection());
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $order = new OrderClause(['foo' => 'ASC', 'bar' => 'DESC']);
+        $sql = $order->toSQL($params, false);
+        $this->assertEquals('ORDER BY "foo" ASC, "bar" DESC', $sql);
+        
+        $order = new OrderClause();
+        $sql = $order->toSQL($params, false);
+        $this->assertEquals('', $sql);
+
+        $order = new OrderClause(['foo', 'bar']);
+        $sql = $order->toSQL($params, false);
+        $this->assertEquals('ORDER BY "foo" ASC, "bar" ASC', $sql);
     }
 }

@@ -27,7 +27,8 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
-use Wedeto\DB\Driver\PGSQL;
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
 
 /**
  * @covers Wedeto\DB\Query\GetClause
@@ -45,19 +46,16 @@ class GetClauseTest extends TestCase
 
     public function testToSQL()
     {
-        $drv = new PGSQL(new MockDB);
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
 
         $get = new GetClause("foo", "bar");
-        $params = new Parameters;
-        $params->setDriver($drv);
-
         $sql = $get->toSQL($params, false);
         $this->assertEquals('"foo" AS "bar"', $sql);
-    }
-}
 
-class MockDB extends \Wedeto\DB\DB
-{
-    public function __construct()
-    {}
+        $get = new GetClause("baz");
+        $sql = $get->toSQL($params, false);
+        $this->assertEquals('"baz"', $sql);
+    }
 }

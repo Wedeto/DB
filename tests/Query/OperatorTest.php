@@ -29,8 +29,13 @@ use PHPUnit\Framework\TestCase;
 
 use Wedeto\DB\Exception\QueryException;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\Operator
+ * @covers Wedeto\DB\Query\ArithmeticOperator
+ * @covers Wedeto\DB\Query\UnaryOperator
  */
 class OperatorTest extends TestCase
 {
@@ -54,7 +59,25 @@ class OperatorTest extends TestCase
         $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Invalid operator");
         $a = new MockTestOperatorOperator('baz', 'field', 'value');
-        
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $val = new ArithmeticOperator('+', 'field', 'value');
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals('"field" + :c0', $sql);
+
+        $val = new ArithmeticOperator('+', 'field', 'value');
+        $sql = $val->toSQL($params, true);
+        $this->assertEquals('("field" + :c1)', $sql);
+
+        $val = new UnaryOperator('NOT', new FieldName('field'));
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals('NOT "field"', $sql);
     }
 }
 

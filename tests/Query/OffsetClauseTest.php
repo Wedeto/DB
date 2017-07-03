@@ -27,6 +27,9 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\OffsetClause
  */
@@ -53,5 +56,16 @@ class OffsetClauseTest extends TestCase
         $limit = $a->getOffset();
         $this->assertInstanceOf(ConstantValue::class, $limit);
         $this->assertEquals(5, $limit->getValue());
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $val = new OffsetClause(50);
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals("OFFSET :c0", $sql);
     }
 }

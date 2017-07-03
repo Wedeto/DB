@@ -63,10 +63,10 @@ class OrderClause extends Clause
     {
         foreach ($clauses as $k => $v)
         {
-            if (is_numeric($k))
-                $this->addClause(new Direction("ASC", $v));
-            else
+            if (is_string($v))
                 $this->addClause(new Direction($v, $k));
+            else
+                throw new QueryException("Invalid order: " . WF::Str($arg));
         }
     }
 

@@ -27,6 +27,9 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\UpdateField
  */
@@ -43,5 +46,24 @@ class UpdateFieldTest extends TestCase
         $val = $a->getValue();
         $this->assertInstanceOf(ConstantValue::class, $val);
         $this->assertEquals('bar', $val->getValue());
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $val = new UpdateField("foo", "bar");
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals('"foo" = :c0', $sql);
+
+        $db = new MockDB('MySQL');
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $val = new UpdateField("foo", "bar");
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals('`foo` = :c0', $sql);
     }
 }

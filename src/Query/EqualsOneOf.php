@@ -58,7 +58,7 @@ class EqualsOneOf extends Expression
     public function toSQL(Parameters $params, bool $inner_clause)
     {
         $drv = $params->getDriver();
-        $comparator = $drv->matchMultipleValues($matcher->getField(), $matcher->getList());
+        $comparator = $drv->matchMultipleValues($this->getField(), $this->getList());
         return $drv->toSQL($params, $comparator, $inner_clause);
     }
 }

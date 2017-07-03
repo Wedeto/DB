@@ -30,6 +30,9 @@ use PHPUnit\Framework\TestCase;
 use Wedeto\DB\Query\Builder as Q;
 use Wedeto\DB\Exception\QueryException;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\Select
  */
@@ -214,5 +217,116 @@ class SelectTest extends TestCase
         $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Unknown clause");
         $q->add(new HavingClause(Q::equals('foo', 'bar')));
+    }
+
+    public function testToSQLWithBasicQuery()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $q = Q::select(
+            Q::get(Q::field("foo", "t"), "a"),
+            Q::from("bar", "t"),
+            Q::where(['baz' => true]),
+            Q::order(['foobar' => 'DESC', 'foobaz' => 'ASC']),
+            Q::limit(50),
+            Q::offset(5)
+        );
+
+        $sql = $q->toSQL($params, false);
+        $expected = 'SELECT "t"."foo" AS "a" FROM "bar" AS "t" WHERE "baz" = :c0 ORDER BY "foobar" DESC, "foobaz" ASC LIMIT :c1 OFFSET :c2';
+        $this->assertEquals($expected, $sql);
+
+        $this->assertEquals(true, $params->get('c0'));
+        $this->assertEquals(50, $params->get('c1'));
+        $this->assertEquals(5, $params->get('c2'));
+    }
+
+    public function testToSQLWithBasicQueryWithNoFields()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $q = Q::select(
+            Q::from("bar", "t"),
+            Q::where(['baz' => true]),
+            Q::order(['foobar' => 'DESC', 'foobaz' => 'ASC']),
+            Q::limit(50),
+            Q::offset(5)
+        );
+
+        $sql = $q->toSQL($params, false);
+        $expected = 'SELECT * FROM "bar" AS "t" WHERE "baz" = :c0 ORDER BY "foobar" DESC, "foobaz" ASC LIMIT :c1 OFFSET :c2';
+        $this->assertEquals($expected, $sql);
+
+        $this->assertEquals(true, $params->get('c0'));
+        $this->assertEquals(50, $params->get('c1'));
+        $this->assertEquals(5, $params->get('c2'));
+    }
+
+    public function testToSQLWithJoinQuery()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $q = Q::select(
+            Q::get(Q::field("foo", "t"), "a"),
+            Q::get(Q::field("barbaz", "t2"), "b"),
+            Q::from("bar", "t"),
+            Q::join(
+                Q::with("barbar", "t2"),
+                Q::on(Q::equals(Q::field("foo", "t2"), Q::Field("foo", "t")))
+            ),
+            Q::where(['baz' => true]),
+            Q::order(['foobar' => 'DESC', 'foobaz' => 'ASC']),
+            Q::limit(50),
+            Q::offset(5)
+        );
+
+        $sql = $q->toSQL($params, false);
+        $expected = 'SELECT "t"."foo" AS "a", "t2"."barbaz" AS "b" FROM "bar" AS "t" LEFT JOIN "barbar" AS "t2" ON "t2"."foo" = "t"."foo" WHERE "t"."baz" = :c0 ORDER BY "t"."foobar" DESC, "t"."foobaz" ASC LIMIT :c1 OFFSET :c2';
+        $this->assertEquals($expected, $sql);
+
+        $this->assertEquals(true, $params->get('c0'));
+        $this->assertEquals(50, $params->get('c1'));
+        $this->assertEquals(5, $params->get('c2'));
+    }
+
+    public function testToSQLWithUnionQuery()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $q = new Select;
+
+        $q
+            ->add(new FieldName('id'))
+            ->from(new SourceTableClause('test_table', "t1"))
+            ->where(Q::lessThan('id', 100));
+
+
+        $q2 = new Select;
+        $q2
+            ->add(new FieldName('id', 't2'))
+            ->from(new SourceTableClause('test_table', "t2"))
+            ->where(Q::greaterThan(Q::field('id', 't2'), 1000));
+
+        $uq = new UnionClause("", $q2);
+
+        $q->setUnion($uq);
+
+        $uq2 = new UnionClause("ALL", $q2);
+        $q->add($uq2);
+
+        $sql = $q->toSQL($params, false);
+
+        $expected = 'SELECT "id" FROM "test_table" AS "t1" WHERE "id" < :c0 UNION ALL (SELECT "t2"."id" AS "t2_id" FROM "test_table" AS "t2" WHERE "t2"."id" > :c1)';
+        $this->assertEquals($expected, $sql);
+
+        $cq = Select::countQuery($q);
     }
 }

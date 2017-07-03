@@ -28,6 +28,9 @@ namespace Wedeto\DB\Query;
 use PHPUnit\Framework\TestCase;
 use Wedeto\DB\Driver\Driver;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\TableClause
  */
@@ -63,5 +66,22 @@ class TableClauseTest extends TestCase
 
         $a->setDisablePrefixing(false);
         $this->assertFalse($a->getDisablePrefixing());
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $params->registerTable('foo', null);
+        $t1 = new TableClause("foo");
+        $sql = $t1->toSQL($params, false);
+        $this->assertEquals('"foo"', $sql);
+
+        $params->registerTable('foo2', 't2');
+        $t1 = new TableClause("t2");
+        $sql = $t1->toSQL($params, false);
+        $this->assertEquals('"t2"', $sql);
     }
 }

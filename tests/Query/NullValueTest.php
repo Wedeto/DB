@@ -31,44 +31,18 @@ require_once "ProvideMockDb.php";
 use Wedeto\DB\MockDB;
 
 /**
- * @covers Wedeto\DB\Query\SQLFunction
+ * @covers Wedeto\DB\Query\NullValue
  */
-class SQLFunctionTest extends TestCase
+class NullValueTest extends TestCase
 {
-    public function testSQLFunction()
-    {
-        $a = new SQLFunction("MIN");
-        $this->assertEquals('MIN', $a->getFunction());
-        $args = $a->getArguments();
-        $this->assertEquals([], $args);
-        
-        $a->addArgument(new Wildcard());
-        $args = $a->getArguments();
-        $this->assertEquals(1, count($args));
-        $this->assertInstanceOf(Wildcard::class, $args[0]);
-    }
-
-    public function testSQLFunctionWithArguments()
-    {
-        $a = new SQLFunction("MIN", "foo", "bar");
-        
-        $args = $a->getArguments();
-        $this->assertEquals(2, count($args));
-        
-        $this->assertEquals("foo", $args[0]->getField());
-        $this->assertEquals("bar", $args[1]->getField());
-    }
-
     public function testToSQL()
     {
         $db = new MockDB();
         $drv = $db->getDriver();
         $params = new Parameters($drv);
 
-        $val = new SQLFunction("COUNT", new Wildcard);
-
+        $val = new NullValue;
         $sql = $val->toSQL($params, false);
-
-        $this->assertEquals('COUNT(*)', $sql);
+        $this->assertEquals("NULL", $sql);
     }
 }

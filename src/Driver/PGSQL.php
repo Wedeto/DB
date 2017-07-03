@@ -168,11 +168,11 @@ class PGSQL extends Driver
         $vals = array();
         foreach ($values as $val)
         {
-            if (is_string($val))
-                $vals[] = '"' . str_replace('"', '\\"', str_replace('\\', '\\\\', $val)) . '"';
-            elseif (is_int($val))
+            if (is_int($val))
                 $vals[] = $val;
-            elseif (!is_scalar($val))
+            elseif (is_scalar($val))
+                $vals[] = '"' . str_replace('"', '\\"', str_replace('\\', '\\\\', $val)) . '"';
+            else
                 throw new InvalidArgumentException("All list elements must be scalars");
         }
         return '{' . implode(',', $vals) . '}';

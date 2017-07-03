@@ -89,9 +89,10 @@ class TableClause extends Clause
         $prefix_disabled = $this->getDisablePrefixing();
 
         $drv = $params->getDriver();
-        list($tname, $talias) = $params->resolveTable($name, $alias);
-        if ($talias !== $tname)
+        list($tname, $talias) = $params->resolveTable($name);
+        if (!empty($talias) && $talias !== $tname)
             return $drv->identQuote($talias);
+
         return $prefix_disabled ? $drv->identQuote($tname) : $drv->getName($tname);
     }
 

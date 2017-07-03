@@ -207,7 +207,7 @@ class Builder
         return new OffsetClause($offset);
     }
 
-    public static function join($table, $condition)
+    public static function join($table, Expression $condition)
     {
         return new JoinClause("LEFT", $table, $condition);
     }

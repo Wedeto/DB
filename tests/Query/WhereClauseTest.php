@@ -28,6 +28,9 @@ namespace Wedeto\DB\Query;
 use PHPUnit\Framework\TestCase;
 use Wedeto\DB\Exception\QueryException;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\WhereClause
  */
@@ -85,5 +88,24 @@ class WhereClauseTest extends TestCase
         $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Invalid operand");
         $a = new WhereClause(new \StdClass);
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+        
+        $wh = new WhereClause(['foo' => 1, 'bar' => 'baz']);
+        $sql = $wh->toSQL($params, false);
+
+        $expected = 'WHERE ("foo" = :c0) AND ("bar" = :c1)';
+        $this->assertEquals($expected, $sql);
+
+        $wh = new WhereClause(['foo' => 2]);
+        $sql = $wh->toSQL($params, false);
+
+        $expected = 'WHERE "foo" = :c2';
+        $this->assertEquals($expected, $sql);
     }
 }

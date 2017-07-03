@@ -73,7 +73,8 @@ class Operator extends Expression
     public function toSQL(Parameters $params, bool $inner_clause)
     {
         $drv = $params->getDriver();
-        $lhs = $drv->toSQL($params, $this->getLHS(), true);
+
+        $lhs = $this->getLHS() === null ? null : $drv->toSQL($params, $this->getLHS(), true);
         $rhs = $drv->toSQL($params, $this->getRHS(), true);
 
         $op = $this->getOperator();

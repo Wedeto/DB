@@ -29,6 +29,9 @@ use PHPUnit\Framework\TestCase;
 
 use Wedeto\DB\Exception\QueryException;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\Delete
  */
@@ -81,5 +84,20 @@ class DeleteTest extends TestCase
         $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Invalid table");
         $d = new Delete($table, $where);
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $q = new Delete("footable", Builder::where(['foo' => 'bar']));
+
+        $sql = $q->toSQL($params, false);
+        $expected = 'DELETE FROM "footable" WHERE "foo" = :c0';
+
+        $this->assertEquals($expected, $sql);
+
     }
 }

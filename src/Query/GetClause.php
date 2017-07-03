@@ -49,27 +49,11 @@ class GetClause extends Clause
     }
 
     /**
-     * Write a field alias as SQL query syntax
-     * @param Parameters $params The query parameters: tables and placeholder values
-     * @param bool $inner_clause Unused
-     * @return string The generated SQL
-     */
-    public function toSQL(Parameters $params, bool $inner_clause)
-    {
-        $expr = $this->getExpression();
-        $alias = $this->getAlias();
-
-        $drv = $params->getDriver();
-        $expr = $drv->toSQL($params, $expr);
-        return empty($alias) ? $expr : $expr . ' AS ' . $drv->identQuote($alias);
-    }
-
-    /**
      * Write a select return clause as SQL query syntax
      * @param Parameters $params The query parameters: tables and placeholder values
      * @return string The generated SQL
      */
-    public function getToSQL(Parameters $params, bool $inner_clause)
+    public function toSQL(Parameters $params, bool $inner_clause)
     {
         $alias = $this->alias;
 
@@ -79,8 +63,8 @@ class GetClause extends Clause
         if (empty($this->alias))
             $this->alias = $params->generateAlias($this->expression);
 
-        if ($this->alias)
-            return $sql . ' AS ' . $drv->identQuote($alias);
+        if (!empty($this->alias))
+            return $sql . ' AS ' . $drv->identQuote($this->alias);
 
         return $sql;
     }

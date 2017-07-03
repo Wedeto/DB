@@ -27,6 +27,9 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\FieldName
  */
@@ -61,5 +64,31 @@ class FieldNameTest extends TestCase
         $this->assertInstanceOf(TableClause::class, $tab);
         $this->identicalTo($tab, $tab2);
         $this->assertEquals("foo", $tab2->getTable());
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $table = new SourceTableClause("footable");
+        // Register the table before attempting to access it
+        $table->toSQL($params, false);
+
+        $val = new FieldName('foocolumn');
+        $val3 = new FieldName('barcolumn', $table);
+        $val2 = new FieldName('foocolumn', 'footable');
+
+        $this->assertEquals('"foocolumn"', $val->toSQL($params, false));
+        $this->assertEquals('"footable"."foocolumn"', $val2->toSQL($params, false));
+        $this->assertEquals('"footable"."barcolumn"', $val3->toSQL($params, false));
+
+        $table2 = new SourceTableClause("footable2", "f2");
+        // Register the table before attempting to access it
+        $table2->toSQL($params, false);
+
+        $val4 = new FieldName('foobarcolumn', $table2);
+        $this->assertEquals('"f2"."foobarcolumn"', $val4->toSQL($params, false));
     }
 }

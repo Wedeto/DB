@@ -27,6 +27,9 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\EqualsOneOf
  */
@@ -54,5 +57,21 @@ class EqualsOneOfTest extends TestCase
         $expected = new ConstantArray(1, 2, 3, 4);
         $a = new EqualsOneOf($field, $expected);
         $this->identicalTo($expected, $a->getList());
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+        
+        $field = new FieldName('id');
+        $val = new EqualsOneOf($field, 1, 2, 3, 4);
+        
+        $sql = $val->toSQL($params, false);
+        $expected = '"id" = ANY(:c0)';
+        $this->assertEquals($expected, $sql);
+
+        $this->assertEquals('{1,2,3,4}', $params->get('c0'));
     }
 }

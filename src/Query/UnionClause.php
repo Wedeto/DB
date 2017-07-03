@@ -80,7 +80,7 @@ class UnionClause extends Expression
         $q = $this->getQuery();
         $t = $this->getType();
 
-        return $t . ' (' . $params->getDriver()->toSQL($params, $q) . ')';
+        return 'UNION ' . $t . ' (' . $params->getDriver()->toSQL($params, $q) . ')';
     }
 
 }

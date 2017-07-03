@@ -92,7 +92,9 @@ class JoinClause extends Clause
     public function toSQL(Parameters $params, bool $inner_clause)
     {
         $drv = $params->getDriver();
-        return $this->getType() . " JOIN " . $drv->toSQL($params, $this->getTable()) . " ON " . $drv->toSQL($params, $this->getCondition());
+        $table = $drv->toSQL($params, $this->getTable());
+        $condition = $drv->toSQL($params, $this->getCondition());
+        return $this->getType() . " JOIN " . $table . " ON " . $condition;
     }
 
 }

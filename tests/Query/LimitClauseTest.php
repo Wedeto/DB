@@ -27,6 +27,9 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\LimitClause
  */
@@ -53,5 +56,16 @@ class LimitClauseTest extends TestCase
         $limit = $a->getLimit();
         $this->assertInstanceOf(ConstantValue::class, $limit);
         $this->assertEquals(5, $limit->getValue());
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $val = new LimitClause(50);
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals("LIMIT :c0", $sql);
     }
 }
