@@ -567,7 +567,7 @@ class PGSQL extends Driver
         foreach ($columns as $col)
         {
             $type = strtolower($col['data_type']);
-            $numtype = $this->reverse_mapping[$type];
+            $numtype = $this->reverse_mapping[$type] ?? null;
 
             $enum_values = null;
             if ($col['data_type'] === "USER-DEFINED")
