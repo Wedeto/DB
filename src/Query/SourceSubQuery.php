@@ -35,11 +35,16 @@ class SourceSubQuery extends SourceTableClause
 
     public function __construct(Clause $subquery, string $alias)
     {
-        if (empty($alias))
-            throw new QueryException("Subqueries must have an alias");
-
         $this->setSubQuery($subquery);
         $this->setAlias($alias);
+    }
+
+    public function setAlias(string $alias)
+    {
+        if (empty($alias))
+            throw new QueryException("A subquery must have an alias");
+        $this->alias = $alias;
+        return $this;
     }
 
     public function setSubQuery(Clause $subquery)
@@ -63,9 +68,6 @@ class SourceSubQuery extends SourceTableClause
     {
         $subquery = $this->getSubQuery();
         $alias = $this->getAlias();
-
-        if (!empty($alias))
-            throw new QueryException("A subquery must have an alias");
 
         $drv = $params->getDriver();
         $sql = $drv->toSQL($params, $subquery);

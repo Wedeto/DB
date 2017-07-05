@@ -45,6 +45,46 @@ class ClauseTest extends TestCase
         $this->assertInstanceOf(ConstantValue::class, $actual);
     }
 
+    public function testToExpressionWithDate()
+    {
+        $a = new TestClause();
+
+        $actual = $a->toExpression(new \DateTime, false);
+        $this->assertInstanceOf(ConstantValue::class, $actual);
+
+        $actual = $a->toExpression(new \DateTime, true);
+        $this->assertInstanceOf(ConstantValue::class, $actual);
+    }
+
+    public function testToExpressionWithNonStringScalar()
+    {
+        $a = new TestClause();
+
+        $actual = $a->toExpression(3, false);
+        $this->assertInstanceOf(ConstantValue::class, $actual);
+
+        $actual = $a->toExpression(3, true);
+        $this->assertInstanceOf(ConstantValue::class, $actual);
+
+        $actual = $a->toExpression(3.14, false);
+        $this->assertInstanceOf(ConstantValue::class, $actual);
+
+        $actual = $a->toExpression(3.14, true);
+        $this->assertInstanceOf(ConstantValue::class, $actual);
+
+        $actual = $a->toExpression(true, false);
+        $this->assertInstanceOf(ConstantValue::class, $actual);
+
+        $actual = $a->toExpression(true, true);
+        $this->assertInstanceOf(ConstantValue::class, $actual);
+
+        $actual = $a->toExpression(false, false);
+        $this->assertInstanceOf(ConstantValue::class, $actual);
+
+        $actual = $a->toExpression(false, true);
+        $this->assertInstanceOf(ConstantValue::class, $actual);
+    }
+
     public function testWildcardExpression()
     {
         $a = new TestClause();

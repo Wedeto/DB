@@ -30,6 +30,9 @@ use PHPUnit\Framework\TestCase;
 use Wedeto\DB\Exception\QueryException;
 use Wedeto\DB\Exception\InvalidTypeException;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\HavingClause
  */
@@ -64,5 +67,18 @@ class HavingClauseTest extends TestCase
         $this->expectException(InvalidTypeException::class);
         $this->expectExceptionMessage("Invalid HAVING condition");
         $h->setCondition(3.5);
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+
+        $params = new Parameters($drv);
+        $val = new HavingClause(new ComparisonOperator(">", new SQLFunction("SUM", "bar"), 10));
+        
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals('HAVING SUM("bar") > :c0', $sql);
+        $this->assertEquals(10, $params->get('c0'));
     }
 }

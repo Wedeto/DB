@@ -25,11 +25,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Query;
 
+use Wedeto\DB\Exception\QueryException;
+
 use InvalidArgumentException;
 
 class SubQuery extends Expression
 {
     protected $select;
+    protected $scope_id;
 
     public function __construct(Select $query)
     {
@@ -55,8 +58,11 @@ class SubQuery extends Expression
      */
     public function toSQL(Parameters $params, bool $inner_clause)
     {
+        $scope = $params->getSubScope($this->scope_id);
+        $this->scope_id = $scope->getScopeID();
+
         $q = $this->getQuery();
-        return '(' . $params->getDriver()->toSQL($params, $q, false) . ')';
+        return '(' . $params->getDriver()->toSQL($scope, $q, false) . ')';
     }
 }
 

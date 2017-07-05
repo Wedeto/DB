@@ -23,28 +23,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace Wedeto\DB\Query;
+namespace Wedeto\DB\Exception;
 
-use Wedeto\Util\Functions as WF;
-use Wedeto\DB\Exception\InvalidTypeException;
-
-abstract class Clause
-{
-    public function toExpression($var, bool $constant)
-    {
-        if ($var === "*")
-            return new Wildcard();
-        elseif ($var === null)
-            return new NullValue();
-        elseif (is_string($var))
-            return $constant ? new ConstantValue($var) : new FieldName($var);
-        elseif (is_scalar($var) || $var instanceof \DateTimeInterface)
-            return new ConstantValue($var);
-        elseif ($var instanceof Expression)
-            return $var;
-        else
-            throw new InvalidTypeException("Invalid value for expression: " . WF::str($var));
-    }
-
-    abstract public function toSQL(Parameters $params, bool $inner_clause);
-}
+class OutOfRangeException extends \OutOfRangeException implements DBException
+{}

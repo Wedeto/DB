@@ -27,7 +27,13 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+use Wedeto\DB\Exception\OutOfRangeException;
 use Wedeto\DB\Exception\QueryException;
+use Wedeto\DB\Exception\ConfigurationException;
+use Wedeto\DB\Exception\ImplementationException;
+
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
 
 /**
  * @covers Wedeto\DB\Query\Parameters
@@ -51,7 +57,7 @@ class ParameterTest extends TestCase
     public function testGetInvalidKey()
     {
         $p = new Parameters();
-        $this->expectException(\OutOfRangeException::class);
+        $this->expectException(OutOfRangeException::class);
         $this->expectExceptionMessage("Invalid key: foo");
         $p->get('foo');
     }
@@ -59,7 +65,7 @@ class ParameterTest extends TestCase
     public function testGetParameterTypeInvalidKey()
     {
         $p = new Parameters();
-        $this->expectException(\OutOfRangeException::class);
+        $this->expectException(OutOfRangeException::class);
         $this->expectExceptionMessage("Invalid key: foo");
         $p->getParameterType('foo');
     }
@@ -108,7 +114,7 @@ class ParameterTest extends TestCase
 
         $a->registerTable('foo', 'f');
         $this->expectException(QueryException::class);
-        $this->expectExceptionMessage("Duplicate alias f for table foo");
+        $this->expectExceptionMessage("Duplicate alias \"f\" for table \"foo\"");
         $a->registerTable('foo', 'f');
     }
 
@@ -128,7 +134,7 @@ class ParameterTest extends TestCase
 
         $a->registerTable('foo', 'fb');
         $this->expectException(QueryException::class);
-        $this->expectExceptionMessage("Duplicate alias fb for table bar - also referring to foo");
+        $this->expectExceptionMessage("Duplicate alias \"fb\" for table \"bar\" - also referring to \"foo\"");
         $a->registerTable('bar', 'fb');
     }
 
@@ -205,5 +211,97 @@ class ParameterTest extends TestCase
         }
 
         $this->assertEmpty($keys);
+    }
+
+    public function testSubScopes()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $a = new Parameters($drv);
+
+        $this->assertSame($drv, $a->getDriver());
+
+        $a->set('foo', 'bar');
+
+        $scope1 = $a->getSubScope(null);
+        $this->assertEquals(1, $scope1->getScopeID());
+
+        $scope2 = $a->getSubScope(null);
+        $this->assertEquals(2, $scope2->getScopeID());
+
+        $scope_test = $a->getSubScope(1);
+        $this->assertEquals(1, $scope_test->getScopeID());
+        $this->assertSame($scope1, $scope_test);
+
+        $scope1->set('foobar', 'yes');
+        $this->assertEquals($scope1->get('foobar'), $scope2->get('foobar'));
+
+        $a->registerTable('test_table', 'test_alias');
+        $this->assertEquals(['test_table', null], $a->resolveTable('test_table'));
+        $this->assertEquals(['test_table', 'test_alias'], $a->resolveTable('test_alias'));
+
+        $this->assertEquals(['test_table', null], $scope1->resolveTable('test_table'));
+        $this->assertEquals(['test_table', null], $scope2->resolveTable('test_table'));
+
+        $this->assertEquals('test_table', $a->resolveAlias('test_alias'));
+        $this->assertEquals('test_table', $scope1->resolveAlias('test_alias'));
+        $this->assertEquals('test_table', $scope2->resolveAlias('test_alias'));
+
+        $this->assertNull($a->resolveAlias('test_alias2'));
+        $this->assertNull($scope1->resolveAlias('test_alias2'));
+        $this->assertNull($scope2->resolveAlias('test_alias2'));
+
+        $this->assertEquals(['test_table', 'test_alias'], $scope1->resolveTable('test_alias'));
+        $this->assertEquals(['test_table', 'test_alias'], $scope2->resolveTable('test_alias'));
+
+        $scope1->registerTable('test_table', '');
+        $this->assertEquals(['test_table', null], $scope1->resolveTable('test_table'));
+        $this->assertEquals(['test_table', null], $scope2->resolveTable('test_table'));
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessage("was already bound to \"test_table\" in parent scope");
+        $scope2->registerTable('test_table', 'test_alias');
+    }
+
+    public function testGetDriverWithNoDriverAvailable()
+    {
+        $a = new Parameters;
+        $this->expectException(ConfigurationException::class);
+        $this->expectExceptionMessage("No database driver provided to format query");
+        $a->getDriver();
+    }
+
+    public function testGetInvalidSubScope()
+    {
+        $a = new Parameters;
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessage("Invalid scope number: 42");
+        $a->getsubScope(42);
+    }
+
+    public function testGenerateAlias()
+    {
+        $a = new Parameters;
+
+        $f = new FieldName("col", "tab");
+
+        $alias = $a->generateAlias($f);
+        $this->assertEquals("tab_col", $alias);
+
+        $alias = $a->generateAlias($f);
+        $this->assertEquals("tab_col2", $alias);
+
+        $f = new Fieldname("testcol");
+        $alias = $a->generateAlias($f);
+
+        $f = new SQLFunction("COUNT", "*");
+        $alias = $a->generateAlias($f);
+        $this->assertEquals("count", $alias);
+
+        $f = new ComparisonOperator("=", "foo", "bar");
+        $this->expectException(ImplementationException::class);
+        $this->expectExceptionMessage("No alias generation implemented for: " . ComparisonOperator::class);
+        $a->generateAlias($f);
     }
 }

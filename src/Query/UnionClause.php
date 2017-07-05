@@ -38,6 +38,7 @@ class UnionClause extends Expression
 
     protected $select;
     protected $type;
+    protected $sub_scope_number = null;
 
     public function __construct(string $type, Select $query)
     {
@@ -79,8 +80,10 @@ class UnionClause extends Expression
     {
         $q = $this->getQuery();
         $t = $this->getType();
-
-        return 'UNION ' . $t . ' (' . $params->getDriver()->toSQL($params, $q) . ')';
+        
+        $scope = $params->getSubScope($this->sub_scope_number);
+        $this->sub_scope_number = $scope->getScopeID();
+        return 'UNION ' . $t . ' (' . $params->getDriver()->toSQL($scope, $q) . ')';
     }
 
 }

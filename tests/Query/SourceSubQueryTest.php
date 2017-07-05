@@ -30,6 +30,9 @@ use PHPUnit\Framework\TestCase;
 use Wedeto\DB\Query\Builder as Q;
 use Wedeto\DB\Exception\QueryException;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\SourceSubQuery
  */
@@ -80,7 +83,7 @@ class SourceSubQueryTest extends TestCase
         );
 
         $this->expectException(QueryException::class);
-        $this->expectExceptionMessage("Subqueries must have an alias");
+        $this->expectExceptionMessage("A subquery must have an alias");
         new SourceSubQuery($q, '');
     }
 
@@ -91,5 +94,26 @@ class SourceSubQueryTest extends TestCase
         $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Provide a subquery as argument to SourceSubQuery");
         new SourceSubQuery($q, 'q');
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $s = Q::select(
+            Q::from('foo'),
+            Q::where(
+                Q::equals('a', true)
+            )
+        );
+        $subq = new SourceSubQuery($s, "my_result");
+        $sql = $subq->toSQL($params, false);
+
+        $this->assertEquals(
+            '(SELECT * FROM "foo" WHERE "a" = :c0) AS "my_result"',
+            $sql
+        );
     }
 }

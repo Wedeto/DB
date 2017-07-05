@@ -30,6 +30,9 @@ use PHPUnit\Framework\TestCase;
 use Wedeto\DB\Query\Builder as Q;
 use Wedeto\DB\Exception\QueryException;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\UnionClause
  */
@@ -69,5 +72,29 @@ class UnionClauseTest extends TestCase
         $this->expectException(QueryException::class);
         $this->expectExceptionMessage('Invalid UNION type');
         $union = new UnionClause('FOO', $s);
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $s = Q::select(
+            Q::from('foo'),
+            Q::where(
+                Q::equals('a', true)
+            )
+        );
+
+        $union = new UnionClause('ALL', $s);
+
+        $sql = $union->toSQL($params, false);
+        $this->assertEquals(
+            "UNION ALL (SELECT * FROM \"foo\" WHERE \"a\" = :c0)",
+            $sql
+        );
+
+        $this->assertTrue($params->get('c0'));
     }
 }

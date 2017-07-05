@@ -305,15 +305,15 @@ class SelectTest extends TestCase
 
         $q
             ->add(new FieldName('id'))
-            ->from(new SourceTableClause('test_table', "t1"))
+            ->from(new SourceTableClause('test_table'))
             ->where(Q::lessThan('id', 100));
 
 
         $q2 = new Select;
         $q2
-            ->add(new FieldName('id', 't2'))
-            ->from(new SourceTableClause('test_table', "t2"))
-            ->where(Q::greaterThan(Q::field('id', 't2'), 1000));
+            ->add(new FieldName('id'))
+            ->from(new SourceTableClause('test_table'))
+            ->where(Q::greaterThan(Q::field('id'), 1000));
 
         $uq = new UnionClause("", $q2);
 
@@ -324,7 +324,7 @@ class SelectTest extends TestCase
 
         $sql = $q->toSQL($params, false);
 
-        $expected = 'SELECT "id" FROM "test_table" AS "t1" WHERE "id" < :c0 UNION ALL (SELECT "t2"."id" AS "t2_id" FROM "test_table" AS "t2" WHERE "t2"."id" > :c1)';
+        $expected = 'SELECT "id" FROM "test_table" WHERE "id" < :c0 UNION ALL (SELECT "id" FROM "test_table" WHERE "id" > :c1)';
         $this->assertEquals($expected, $sql);
 
         $cq = Select::countQuery($q);

@@ -27,6 +27,9 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @coverse Wedeto\DB\Query\SourceTableClause
  */
@@ -45,6 +48,21 @@ class SourceTableClauseTest extends TestCase
         $a = new SourceTableClause(new TableClause('foo'), 'f');
         $this->assertEquals('foo', $a->getTable());
         $this->assertEquals('f', $a->getAlias());
+    }
 
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+
+        $params = new Parameters($drv);
+        $t = new SourceTableClause("foo", "alias");
+        $sql = $t->toSQL($params, false);
+        $this->assertEquals('"foo" AS "alias"', $sql);
+
+        $params = new Parameters($drv);
+        $t = new SourceTableClause("foo");
+        $sql = $t->toSQL($params, false);
+        $this->assertEquals('"foo"', $sql);
     }
 }

@@ -27,6 +27,11 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+use Wedeto\DB\Query\Builder as Q;
+use Wedeto\DB\Exception\QueryException;
+
 /**
  * @covers Wedeto\DB\Query\Update
  */
@@ -79,5 +84,100 @@ class UpdateTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage("Invalid table");
         $a->setTable(new \StdClass);
+    }
+
+    public function testWhereFromStringAndArray()
+    {
+        $a = new Update();
+        $a->where(['a' => 3, 'foo' => 'bar']);
+
+        $where = $a->getWhere();
+        $this->assertInstanceOf(WhereClause::class, $where);
+        $expr = $where->getOperand();
+        $this->assertInstanceOf(BooleanOperator::class, $expr);
+        $this->assertEquals('AND', $expr->getOperator());
+
+        $lhs = $expr->getLHS();
+        $rhs = $expr->getRHS();
+        $this->assertInstanceOf(ComparisonOperator::class, $lhs);
+        $this->assertInstanceOf(ComparisonOperator::class, $rhs);
+
+        $this->assertInstanceOf(FieldName::class, $lhs->getLHS());
+        $this->assertInstanceOf(ConstantValue::class, $lhs->getRHS());
+
+        $this->assertInstanceOf(FieldName::class, $rhs->getLHS());
+        $this->assertInstanceOf(ConstantValue::class, $rhs->getRHS());
+
+        $a = new Update();
+        $a->where('"foo" > 3');
+
+        $where = $a->getWhere();
+        $this->assertInstanceOf(WhereClause::class, $where);
+        $expr = $where->getOperand();
+        $this->assertInstanceOf(CustomSQL::class, $expr);
+        $this->assertEquals('"foo" > 3', $expr->getSQL());
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+
+        $params = new Parameters($drv);
+        $update = new Update(
+            new UpdateField("foo", "bar"),
+            new TableClause("test_table"),
+            new WhereClause(['foo' => 'oldbar'])
+        );
+
+        $sql = $update->toSQL($params, false);
+
+        $this->assertEquals(
+            'UPDATE "test_table" SET "foo" = :c0 WHERE "foo" = :c1',
+            $sql
+        );
+
+        $this->assertEquals('bar', $params->get('c0'));
+        $this->assertEquals('oldbar', $params->get('c1'));
+
+        $params = new Parameters($drv);
+        $update = new Update(
+            new UpdateField("foo", "bar"),
+            Q::into("test_table", "tt"),
+            new JoinClause(
+                "LEFT",
+                Q::with('test_table2', 't2'),
+                Q::on(Q::equals(
+                    Q::field('id', 'tt'),
+                    Q::field('id', 't2')
+                ))
+            ),
+            new WhereClause(
+                Q::equals(
+                    Q::field('delete', 't2'),
+                    true
+                )
+            )
+        );
+
+        $sql = $update->toSQL($params, false);
+
+        $this->assertEquals(
+            'UPDATE "test_table" AS "tt" LEFT JOIN "test_table2" AS "t2" ON "tt"."id" = "t2"."id" SET "tt"."foo" = :c0 WHERE "t2"."delete" = :c1',
+            $sql
+        );
+
+        $this->assertEquals('bar', $params->get('c0'));
+        $this->assertTrue($params->get('c1'));
+
+        $params = new Parameters($drv);
+        $update = new Update(
+            Q::into("test_table", "tt"),
+            new WhereClause(['foo' => 'oldbar'])
+        );
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessage("Nothing to update");
+        $update->toSQL($params, false);
     }
 }

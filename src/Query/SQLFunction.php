@@ -25,6 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Query;
 
+use Wedeto\Util\Functions as WF;
+
 class SQLFunction extends Expression
 {
     protected $func;
@@ -33,6 +35,7 @@ class SQLFunction extends Expression
     public function __construct(string $func, ...$args)
     {
         $this->func = $func;
+        $args = WF::flatten_array($args);
         foreach ($args as $arg)
             $this->addArgument($arg);
     }

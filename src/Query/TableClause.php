@@ -35,6 +35,13 @@ class TableClause extends Clause
 
     public function __construct(string $table)
     {
+        // Throw an exception if more arguments are provided. This is to avoid
+        // accidentally using the TableClause in stead of the SourceTableClause
+        if (func_num_args() != 1)
+            throw new \RuntimeException(
+                "TableClause constructor takes exactly one argument. " .
+                "Use SourceTableClause to provide an alias"
+            );
         $this->setTable($table);
     }
 

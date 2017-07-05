@@ -28,8 +28,8 @@ namespace Wedeto\DB\Query;
 use Wedeto\DB\Driver\Driver;
 use Wedeto\DB\Exception\QueryException;
 use Wedeto\DB\Exception\ImplementationException;
-
-use OutOfRangeException;
+use Wedeto\DB\Exception\ConfigurationException;
+use Wedeto\DB\Exception\OutOfRangeException;
 use ArrayIterator;
 use PDO;
 
@@ -40,18 +40,23 @@ class Parameters implements \Iterator
     protected $param_types = array();
     protected $tables = array();
     protected $aliases = array();
+    protected $field_aliases = [];
+
     protected $column_counter = 0;
     protected $table_counter = 0;
+    protected $scope_counter = 0;
+    protected $scope_id = 0;
 
-    protected $field_aliases = [];
+    protected $parent_scope = null;
+    protected $scopes = [];
 
     /** For the iterator interface */
     protected $iterator = null;
 
-
     public function __construct(Driver $driver = null)
     {
-        $this->driver = $driver;
+        if ($driver !== null)
+            $this->setDriver($driver);
     }
 
     public function assign($value, $type = PDO::PARAM_STR)
@@ -85,6 +90,11 @@ class Parameters implements \Iterator
         return $this;
     }
 
+    public function getScopeID()
+    {
+        return $this->scope_id;
+    }
+
     public function getNextKey()
     {
         return "c" . $this->column_counter++;
@@ -112,12 +122,19 @@ class Parameters implements \Iterator
         if (!empty($alias) && empty($name))
             return;
 
+        if (!empty($alias) && !empty($this->parent_scope))
+        {
+            $table = $this->parent_scope->resolveAlias($alias); 
+            if (!empty($table))
+                throw new QueryException("Duplicate alias \"$alias\" - was already bound to \"$table\" in parent scope");
+        }
+
         if (isset($this->tables[$name]))
         {
             if (empty($alias))
-                throw new QueryException("Duplicate table without an alias: $name");
+                throw new QueryException("Duplicate table without an alias: \"$name\"");
             if (isset($this->tables[$name][$alias]))
-                throw new QueryException("Duplicate alias $alias for table $name");
+                throw new QueryException("Duplicate alias \"$alias\" for table \"$name\"");
             if (isset($this->tables[$name][$name]))
                 throw new QueryException("All instances of a table reference must be aliased if used more than once");
 
@@ -127,7 +144,7 @@ class Parameters implements \Iterator
         elseif (!empty($alias) && is_string($alias))
         {
             if (isset($this->aliases[$alias]))
-                throw new QueryException("Duplicate alias $alias for table $name - also referring to {$this->aliases[$alias]}");
+                throw new QueryException("Duplicate alias \"$alias\" for table \"$name\" - also referring to \"{$this->aliases[$alias]}\"");
             $this->aliases[$alias] = $name;
             $this->tables[$name][$alias] = true;
         }
@@ -135,6 +152,17 @@ class Parameters implements \Iterator
         {
             $this->tables[$name][$name] = true;
         }
+    }
+
+    public function resolveAlias(string $alias)
+    {
+        if (isset($this->aliases[$alias]))
+            return $this->aliases[$alias];
+
+        if (empty($this->parent_scope))
+            return null;
+
+        return $this->parent_scope->resolveAlias($alias);
     }
 
     public function resolveTable(string $name)
@@ -150,6 +178,9 @@ class Parameters implements \Iterator
                     return array($name, null);
                 throw new QueryException("Multiple references to $name, use the appropriate alias");
             }
+
+            if (!empty($this->parent_scope))
+                return $this->parent_scope->resolveTable($name);
 
             throw new QueryException("Unknown source table $name");
         }
@@ -214,7 +245,7 @@ class Parameters implements \Iterator
     public function getDriver()
     {
         if ($this->driver === null)
-            throw new QueryException("No database driver provided to format query");
+            throw new ConfigurationException("No database driver provided to format query");
         return $this->driver;
     }
 
@@ -241,13 +272,44 @@ class Parameters implements \Iterator
         else
             throw new ImplementationException("No alias generation implemented for: " . get_class($clause));
 
-        $cnt = 0;
+        $cnt = 1;
         $base_alias = $alias;
         while (isset($this->field_aliases[$alias]))
             $alias = $base_alias . (++$cnt);
 
         $this->field_aliases[$alias] = true;
         return $alias;
+    }
+
+    public function getSubScope(int $num = null)
+    {
+        // Resolve an existing scope
+        if ($num !== null)
+        {
+            if (!isset($this->scopes[$num]))
+                throw new QueryException("Invalid scope number: $num");
+            return $this->scopes[$num];
+        }
+
+        $scope = new Parameters($this->driver);
+
+        // Alias most fields
+        $scope->params = &$this->params;
+        $scope->param_types = &$this->param_types;
+        $scope->column_counter = &$this->column_counter;
+        $scope->table_counter = &$this->table_counter;
+        $scope->scope_counter = &$this->scope_counter;
+        $scope->scopes = &$this->scopes;
+
+        // Assign a scope number
+        $id = ++$this->scope_counter;
+        $scope->parent_scope = $this;
+        $scope->scope_id = $id;
+
+        // Store the scope reference
+        $this->scopes[$id] = $scope;
+
+        return $scope;
     }
 }
 

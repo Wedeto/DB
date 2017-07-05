@@ -30,6 +30,9 @@ use PHPUnit\Framework\TestCase;
 use Wedeto\DB\Exception\QueryException;
 use Wedeto\DB\Exception\InvalidTypeException;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\GroupByClause
  */
@@ -64,5 +67,36 @@ class GroupByClauseTest extends TestCase
         $this->expectException(InvalidTypeException::class);
         $this->expectExceptionMessage("Invalid parameter");
         $gb = new GroupByClause(new \StdClass);
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+
+        $params = new Parameters($drv);
+        $val = new GroupByClause(
+            new FieldName("foo")
+        );
+
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals('GROUP BY "foo"', $sql);
+
+        $params = new Parameters($drv);
+        $val = new GroupByClause(
+            new FieldName("foo"),
+            new HavingClause(new ComparisonOperator(">", new SQLFunction("SUM", "bar"), 10))
+        );
+
+        $sql = $val->toSQL($params, false);
+        $this->assertEquals('GROUP BY "foo" HAVING SUM("bar") > :c0', $sql);
+        $this->assertEquals(10, $params->get('c0'));
+
+        $val = new GroupByClause(
+            new HavingClause(new ComparisonOperator(">", new SQLFunction("SUM", "bar"), 10))
+        );
+        $this->expectException(\Wedeto\DB\Exception\QueryException::class);
+        $this->expectExceptionMessage("No groups in GROUP BY clause");
+        $val->toSQL($params, false);
     }
 }

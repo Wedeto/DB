@@ -95,14 +95,16 @@ class GroupByClause extends Clause
 
         if (count($groups) === 0)
             throw new QueryException("No groups in GROUP BY clause");
+            
+        $drv = $params->getDriver();
 
         $parts = array();
         foreach ($groups as $group)
         {
-            $parts[] = $this->toSQL($group);
+            $parts[] = $drv->toSQL($params, $group);
         }
         
-        $having = !empty($having) ? $params->getDriver()->toSQL($params, $having) : "";
+        $having = !empty($having) ? ' ' . $drv->toSQL($params, $having) : "";
 
         return "GROUP BY " . implode(", ", $parts) . $having;
     }

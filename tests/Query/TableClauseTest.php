@@ -84,4 +84,11 @@ class TableClauseTest extends TestCase
         $sql = $t1->toSQL($params, false);
         $this->assertEquals('"t2"', $sql);
     }
+
+    public function testInvalidArguments()
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage("TableClause constructor takes exactly one argument.");
+        $val = new TableClause("tablename", "alias");
+    }
 }

@@ -63,6 +63,11 @@ class Builder
         return $u;
     }
 
+    public function set($field, $value)
+    {
+        return new UpdateField($field, $value);
+    }
+
     public static function delete($table, $where)
     {
         return new Delete($table, $where);
@@ -172,9 +177,19 @@ class Builder
         return new SQLFunction($func, $args);
     }
 
-    public static function table($table, $alias = "")
+    public static function table($table)
     {
-        return new TableClause($table, $alias);
+        // Throw an exception if more arguments are provided. This is to avoid
+        // accidentally using the TableClause in stead of the SourceTableClause
+        if (func_num_args() != 1)
+        {
+            throw new \RuntimeException(
+                "Builder::table takes exactly one argument. " .
+                "Use Builder::from or Builder::into to provide an alias"
+            );
+        }
+
+        return new TableClause($table);
     }
 
     public static function into($table, $alias = "")
@@ -217,11 +232,6 @@ class Builder
         return $expression; 
     }
 
-    public static function t($table_alias)
-    {
-        return new TableClause($table_alias);
-    }
-
     public static function any($field, ...$params)
     {
         return new EqualsOneOf($field, $params);
@@ -247,6 +257,9 @@ class Builder
         if (is_null($rhs) || is_scalar($rhs))
             $rhs = self::variable($rhs);
 
+        $lhs = Clause::toExpression($lhs, false);
+        $rhs = Clause::toExpression($rhs, true);
+
         return 
             self::or(
                 self::operator("=", $lhs, $rhs),
@@ -261,7 +274,7 @@ class Builder
     {
         if (!($field instanceof $field))
             $field = new FieldName($field);
-        return new UpdateField($field, new ArithmeticOperator('+', $field, 1));
+        return new UpdateField($field, new ArithmeticOperator('+', $field, $amount));
     }
 
     public static function decrement($field, $amount = 1)
@@ -271,17 +284,32 @@ class Builder
 
     public static function arithmetic($operator, $lhs, $rhs)
     {
-        return new ArhimeticOperator('+', $lhs, $rhs);
+        return new ArithmeticOperator($operator, $lhs, $rhs);
     }
 
-    public static function calc($operator, $lhs, $rhs)
+    public static function add($lhs, $rhs)
     {
-        return self::arithmetic($operator, $lhs, $rhs);
+        return self::arithmetic('+', $lhs, $rhs);
+    }
+
+    public static function subtract($lhs, $rhs)
+    {
+        return self::arithmetic('-', $lhs, $rhs);
+    }
+
+    public static function multiply($lhs, $rhs)
+    {
+        return self::arithmetic('*', $lhs, $rhs);
+    }
+
+    public static function divide($lhs, $rhs)
+    {
+        return self::arithmetic('/', $lhs, $rhs);
     }
 
     public static function groupBy(...$parameters)
     {
-        return new GroupBy($parameters);
+        return new GroupByClause($parameters);
     }
 
     public static function having($condition)

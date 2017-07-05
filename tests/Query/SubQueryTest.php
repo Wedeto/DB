@@ -29,6 +29,9 @@ use PHPUnit\Framework\TestCase;
 
 use Wedeto\DB\Query\Builder as Q;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 /**
  * @covers Wedeto\DB\Query\SubQuery
  */
@@ -43,7 +46,28 @@ class SubQueryTest extends TestCase
             )
         );
 
-        $union = new SubQuery($s);
-        $this->assertEquals($s, $union->getQuery());
+        $subq = new SubQuery($s);
+        $this->assertEquals($s, $subq->getQuery());
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+        $params = new Parameters($drv);
+
+        $s = Q::select(
+            Q::from('foo'),
+            Q::where(
+                Q::equals('a', true)
+            )
+        );
+
+        $subq = new SubQuery($s);
+        $sql = $subq->toSQL($params, false);
+        $this->assertEquals(
+            '(SELECT * FROM "foo" WHERE "a" = :c0)',
+            $sql
+        );
     }
 }

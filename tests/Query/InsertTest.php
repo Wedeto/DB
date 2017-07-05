@@ -27,6 +27,11 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
+use Wedeto\DB\Query\Builder as Q;
+
 /**
  * @covers Wedeto\DB\Query\Insert
  */
@@ -131,5 +136,39 @@ class InsertTest extends TestCase
         $i = new Insert($table, $record, ["id"]);
 
         $this->assertEquals(['id'], $i->getPrimaryKey());
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+
+        $params = new Parameters($drv);
+        $ins = new Insert(
+            Q::into("test_table"),
+            ['foo' => 'bar']
+        );
+
+        $sql = $ins->toSQL($params, false);
+
+        $this->assertEquals(
+            'INSERT INTO "test_table" ("foo") VALUES (:c0)',
+            $sql
+        );
+
+        $params = new Parameters($drv);
+        $ins = new Insert(
+            Q::into("test_table"),
+            ['foo' => 'bar', 'uniqueval' => 3]
+        );
+
+        $ins->updateOnDuplicateKey('uniqueval');
+
+        $sql = $ins->toSQL($params, false);
+
+        $this->assertEquals(
+            'INSERT INTO "test_table" ("foo", "uniqueval") VALUES (:c0, :c1) ON CONFLICT ("uniqueval") DO UPDATE SET "foo" = :c0',
+            $sql
+        );
     }
 }

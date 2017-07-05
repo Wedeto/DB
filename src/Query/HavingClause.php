@@ -61,7 +61,7 @@ class HavingClause extends Clause
 
     public function toSQL(Parameters $params, bool $inner_clause)
     {
-        return "HAVING " . $params->getDriver()->toSQL($params, $cond);
+        return "HAVING " . $params->getDriver()->toSQL($params, $this->condition);
     }
 
 }

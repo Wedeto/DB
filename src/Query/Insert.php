@@ -57,8 +57,7 @@ class Insert extends Query
         foreach ($record as $key => $value)
         {
             $this->fields[] = new FieldName($key);
-            if (!($value instanceof ConstantValue))
-                $value = new ConstantValue($value);
+            $value = $this->toExpression($value, true);
             $this->values[] = $value;
         }
 

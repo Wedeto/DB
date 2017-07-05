@@ -27,7 +27,11 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
+require_once "ProvideMockDb.php";
+use Wedeto\DB\MockDB;
+
 use Wedeto\DB\Exception\QueryException;
+use Wedeto\DB\Query\Builder as Q;
 
 /**
  * @covers Wedeto\DB\Query\JoinClause
@@ -105,5 +109,42 @@ class JoinClauseTest extends TestCase
         $this->expectException(QueryException::class);
         $this->expectExceptionMessage("Invalid join type");
         $a = new JoinClause("FOOJOIN", $table2, $expr);
+    }
+
+    public function testToSQL()
+    {
+        $db = new MockDB();
+        $drv = $db->getDriver();
+
+        $params = new Parameters($drv);
+        $join = new JoinClause(
+            "LEFT",
+            Q::with("table2"),
+            Q::on(Q::equals(Q::field("id", "table2"), "table1id"))
+        );
+
+        $sql = $join->toSQL($params, false);
+        $this->assertEquals(
+            'LEFT JOIN "table2" ON "table2"."id" = :c0',
+            $sql
+        );
+
+        $params = new Parameters($drv);
+        $join = new JoinClause(
+            "LEFT",
+            Q::with("table2"),
+            Q::on(
+                Q::and(
+                    Q::equals(Q::field("id", "table2"), "table1id"),
+                    Q::equals(Q::field("tag", "table2"), "foobar")
+                )
+            )
+        );
+
+        $sql = $join->toSQL($params, false);
+        $this->assertEquals(
+            'LEFT JOIN "table2" ON ("table2"."id" = :c0) AND ("table2"."tag" = :c1)',
+            $sql
+        );
     }
 }
