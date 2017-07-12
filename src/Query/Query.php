@@ -25,5 +25,22 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Query;
 
+use Wedeto\DB\DB;
+
 abstract class Query extends Clause
-{}
+{
+    protected $prepared_in = null;
+    protected $prepared_statement = null;
+
+    public function execute(DB $db)
+    {
+        if ($this->prepared_statement === null || $this->prepared_in !== $db)
+        {
+            $this->prepared_statement = $db->prepareQuery($this);
+            $this->prepared_in = $db;
+        }
+        
+        $this->prepared_statement->execute();
+        return $this->prepared_statement;
+    }
+}

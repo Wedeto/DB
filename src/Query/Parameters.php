@@ -249,6 +249,16 @@ class Parameters implements \Iterator
         return $this->driver;
     }
 
+    public function bindParameters(\PDOStatement $statement)
+    {
+        foreach (array_keys($this->params) as $key)
+        {
+            $type = $this->param_types[$key];
+            $statement->bindParam($key, $this->params[$key], $type);
+        }
+        return $this;
+    }
+
     public function generateAlias(Clause $clause)
     {
         if ($clause instanceof FieldName)

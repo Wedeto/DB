@@ -31,6 +31,8 @@ use Wedeto\Util\Dictionary;
 use Wedeto\Util\Type;
 use Wedeto\Util\LoggerAwareStaticTrait;
 use Wedeto\DB\Schema\Schema;
+use Wedeto\DB\Query\Query;
+use Wedeto\DB\Query\Parameters;
 
 use Wedeot\DB\Exception\ConfigurationException;
 use Wedeot\DB\Exception\DriverException;
@@ -258,5 +260,15 @@ class DB
     {
         $drv = get_class($this->getDriver());
         return array('dsn' => $this->dsn, 'driver' => $drv);
+    }
+
+    public function prepareQuery(Query $query)
+    {
+        $parameters = new Parameters($this->driver);
+        $sql = $this->driver->toSQL($parameters, $query);
+
+        $statement = $this->prepare($sql);
+        $parameters->bindParameters($statement);
+        return $statement;
     }
 }

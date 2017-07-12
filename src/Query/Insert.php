@@ -29,6 +29,7 @@ use DomainException;
 
 use Wedeto\Util\Functions as WF;
 use Wedeto\DB\DAO;
+use Wedeto\DB\Exception\OutOfRangeException;
 
 class Insert extends Query
 {
@@ -56,9 +57,9 @@ class Insert extends Query
 
         foreach ($record as $key => $value)
         {
-            $this->fields[] = new FieldName($key);
-            $value = $this->toExpression($value, true);
-            $this->values[] = $value;
+            $this->fields[$key] = new FieldName($key);
+            $value = $value === null ? new ConstantValue($value) : $this->toExpression($value, true);
+            $this->values[$key] = $value;
         }
 
         if (!empty($primary_key))
@@ -93,6 +94,29 @@ class Insert extends Query
     public function getFields()
     {
         return $this->fields;
+    }
+
+    public function replaceValue(string $field, $value)
+    {
+        if (!isset($this->values[$field]))
+            throw new OutOfRangeException("Invalid field: " . $field);
+
+        $this->values[$field]->setValue($value);
+        return $this;
+    }
+
+    public function replaceValues(array $values)
+    {
+        foreach ($values as $key => $val)
+            $this->replaceValue($key, $val);
+        return $this;
+    }
+
+    public function getValue(string $field)
+    {
+        if (!isset($this->values[$field]))
+            throw new OutOfRangeException("Invalid field: " . $field);
+        return $this->values[$field];
     }
 
     public function getValues()
