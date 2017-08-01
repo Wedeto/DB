@@ -176,7 +176,7 @@ class MySQL extends Driver
     public function select(Query\Select $query)
     {
         $parameters = new Parameters($this);
-        $sql = $query->toSQL($parameters);
+        $sql = $query->toSQL($parameters, false);
 
         $st = $this->db->prepare($sql);
         foreach ($parameters as $key => $value)
