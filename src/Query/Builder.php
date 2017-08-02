@@ -105,7 +105,11 @@ class Builder
 
     public static function equals($lhs, $rhs)
     {
-        return new ComparisonOperator('=', $lhs, $rhs);
+        $op = '=';
+        if ($rhs === null || $rhs instanceof NullValue)
+            $op = 'IS';
+
+        return new ComparisonOperator($op, $lhs, $rhs);
     }
 
     public static function like($lhs, $rhs)
