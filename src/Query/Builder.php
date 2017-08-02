@@ -63,7 +63,7 @@ class Builder
         return $u;
     }
 
-    public function set($field, $value)
+    public static function set($field, $value)
     {
         return new UpdateField($field, $value);
     }

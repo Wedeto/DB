@@ -265,6 +265,10 @@ class DB
     public function prepareQuery(Query $query)
     {
         $parameters = new Parameters($this->driver);
+
+        if ($this->pdo === null)
+            $this->connect();
+
         $sql = $this->driver->toSQL($parameters, $query);
 
         $statement = $this->prepare($sql);
