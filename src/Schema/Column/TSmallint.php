@@ -29,7 +29,8 @@ class TSmallint extends TInt
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::SMALLINT, $default, $nullable);
+        parent::__construct($name, $default, $nullable);
+        $this->type = Column::SMALLINT;
         $this->setNumericPrecision(5);
     }
 }

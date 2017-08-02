@@ -84,8 +84,16 @@ abstract class Column implements \Serializable, \JSONSerializable
     public function setSerial(bool $serial = true)
     {
         $serial = $serial == true;
-        if ($serial && $this->type !== Column::INT && $this->type !== Column::BIGINT)
+        if (
+            $serial && 
+            $this->type !== Column::INT && 
+            $this->type !== Column::BIGINT && 
+            $this->type !== Column::MEDIUMINT && 
+            $this->type !== Column::SMALINT
+        )
+        {
             throw new InvalidTypeException("A serial column must be of type integer");
+        }
 
         $this->serial = $serial == true;
     }
