@@ -34,9 +34,14 @@ class OffsetClause extends Clause
     public function __construct($value)
     {
         if (is_int($value))
-            $this->number = new ConstantValue($value);
+        {
+            $this->number = new ConstantValue($value, \PDO::PARAM_INT);
+        }
         elseif ($value instanceof ConstantValue)
+        {
             $this->number = $value;
+            $this->number->setParameterType(\PDO::PARAM_INT);
+        }
         else
             throw new \InvalidArgumentException("Invalid value for offset: " . WF::str($value));
     }
