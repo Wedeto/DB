@@ -68,7 +68,10 @@ class ConstantValue extends Expression
 
     public function setValue($value)
     {
-        if ($value instanceof \DateTime)
+        if ($value instanceof \IntlCalendar)
+            $value = $value->toDateTime();
+
+        if ($value instanceof \DateTimeInterface)
             $value = $value->format(\DateTime::ATOM);
 
         if (is_resource($value))
