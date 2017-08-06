@@ -92,6 +92,7 @@ class MySQL extends Driver
         'INT' => Column::INT,
         'BIGINT' => Column::BIGINT,
         'FLOAT' => Column::FLOAT,
+        'DOUBLE' => Column::FLOAT,
         'DECIMAL' => Column::DECIMAL,
 
         'DATETIME' => Column::DATETIME,
