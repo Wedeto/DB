@@ -26,7 +26,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Driver;
 
 use Wedeto\DB\DB;
-use Wedeto\DB\DBException;
+
+use Wedeto\DB\Exception\InvalidTypeException;
 
 use Wedeto\DB\Schema\Table;
 use Wedeto\DB\Schema\Index;
@@ -54,7 +55,7 @@ abstract class Driver
     public function __construct($db)
     {
         if (!($db instanceof PDO || $db instanceof DB))
-            throw new DBException("The driver needs a DB or PDO object to work with");
+            throw new InvalidTypeException("The driver needs a DB or PDO object to work with");
 
         $this->db = $db;
     }
@@ -101,7 +102,7 @@ abstract class Driver
         if (is_object($entity))
             $entity = $entity->getName();
         if (!is_string($entity))
-            throw new DBException("Provide a string or a object with a getName method");
+            throw new InvalidTypeException("Provide a string or a object with a getName method");
         $entity = $this->table_prefix . $entity;
         return $quote ? $this->identQuote($entity) : $entity;
     }
@@ -261,7 +262,6 @@ abstract class Driver
     {
         $params->setDriver($this);
         return $clause->toSQL($params, $inner_clause);
-        throw new \InvalidArgumentException("Unknown clause: " . get_class($clause));
     }
 
     abstract public function formatArray(array $values);
