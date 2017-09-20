@@ -29,29 +29,42 @@ use Wedeto\DB\Exception\MigrationException;
 use Wedeto\DB\Exception\InvalidTypeException;
 use Wedeto\Model\DBVersion;
 
-class Migration
+class Module
 {
-    protected $max_version = 0;
+    protected $max_version = null;
     protected $db_version = null;
     protected $module = null;
+    protected $migration_path = null;
 
-    public function __construct($module)
+    protected $migrations = [];
+
+    public function __construct(string $module, $path, Repository $repository)
     {
+        $this->module = $module;
+        $this->migration_path = $path;
+
         try
         {
             $columns = DBVersion::getColumns();
         }
         catch (TableNotExists $e)
         {
-            if ($module === "core")
-                DBVersion::createTable();
+            $db_migrator = $module === "Wedeto.DB" ? $this : $repository->getMigration('Wedeto.DB');
+
+            if ($db_migrator->isUpToDate())
+                throw $e;
+
+            $db_migrator->upgradeToLatest();
         }
 
         $this->db_version = new DBVersion($module);
     }
 
-    public function getNewestVersion()
+    public function getLatestVersion()
     {
+        if ($this->max_version === null)
+            $this->scanMigrations();
+
         return $this->max_version;
     }
 
@@ -60,15 +73,48 @@ class Migration
         return $this->db_version->get('version');
     }
 
+    public function isUpToDate()
+    {
+        return $this->getCurrentVersion() < $this->getLatestVersion();
+    }
+
+    protected function scanMigrations()
+    {
+        $glob = rtrim($this->migration_path, '/') . '/*-to-*.[sp][qh][lp]');
+        $it = new GlobIterator($glob, \FilesystemIterator::NEW_CURRENT_AND_KEY);
+
+        $regex = '/^([0-9]+)-to-([0-9]+)\.(sql|php)$/';
+
+        $this->migrations = [];
+
+        $this->max_version = 0;
+        foreach ($it as $filename => $pathinfo)
+        {
+            if (!$pathinfo->isFile())
+                continue;
+
+            if (preg_match($regex, $filename, $matches) === 1)
+            {
+                $from_version = (int)$matches[1];
+                $to_version = (int)$matches[2];
+                if ($to_version > $this->max_version)
+                    $this->max_version = $to_version;
+
+                $path = $pathinfo->getPathname() . '/'.  $filename;
+
+                $this->migrations[$to_version][$from_version] = $path;
+            }
+        }
+    }
+
     public function upgradeToLatest()
     {
-        return $this->upgradeTo($this->getNewestVersion());
+        return $this->upgradeTo($this->getLatestVersion());
     }
 
     public function uninstall()
     {
-        if ($module === "core")
-            DBVersion::dropTable();
+        $this->downgradeTo(0);
     }
 
     public function upgradeTo($version)
@@ -76,14 +122,16 @@ class Migration
         if (!is_int($version))
             throw new InvalidTypeException("Version is not an integer");
 
-        if ($version <= 0 || $version > $this->max_version)
+        $max_version = $this->getLatestVersion();
+
+        if ($version <= 0 || $version > $max_version)
             throw new MigrationException("Module cannot be upgraded beyond the maximum version");
 
-        if (method_exists($this, "upgradeToV" . $version))
-            throw new MigrationException("Upgrade to version $version not implemented");
+        $current_version = $this->getCurrentVersion();
+        
+        $trajectory = $this->plan($current_version, $version);
 
         $db = DB::get();
-        $current_version = $this->db_version->version;
         for ($v = $current_version + 1; $v <= $version; ++$v)
         {
             if (!method_exists($this, "upgradeToV" . $v))
@@ -106,11 +154,36 @@ class Migration
         return true;
     }
 
+    protected function plan($from, $to)
+    {
+        $migrations = [];
+
+        while ($from !== $to)
+        {
+            $best_source = null;
+            $best_path = null;
+            $best_dist = null;
+            foreach ($this->migrations[$to] as $source => $path)
+            {
+                $dist = abs($source - $from);
+                if ($best_dist === null || $dist < $best_dist)
+                {
+                    $best_dist = $dist;
+                    $best_source = $source;
+                    $best_path = $path;
+                }
+            }
+            
+            $from = $best_source;
+            $migations[] = $path;
+        }
+    }
+
     public function downgradeTo($version)
     {
         if (!is_int($version))
             throw new InvalidTypeException("Version is not an integer");
-        if ($version < 0 || $version > $this->max_version)
+        if ($version < 0 || $version > $this->getLatestVersion())
             throw new MigrationException("Invalid module version number");
 
         if (!method_exists($this, "downgradeToV" . $version))
