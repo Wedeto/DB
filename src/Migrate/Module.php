@@ -85,6 +85,14 @@ class Module
     }
 
     /**
+     * @return string the name of this module
+     */
+    public function getModule()
+    {
+        return $this->module;
+    }
+
+    /**
      * @return int The highest database version number for this module
      */
     public function getLatestVersion()

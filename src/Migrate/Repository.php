@@ -26,15 +26,62 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Migrate;
 
 use Wedeto\DB\Exception\MigrationException;
-use Wedeto\DB\Exception\InvalidTypeException;
 use Wedeto\Model\DBVersion;
 
+/**
+ * Keeps track of the registered modues
+ */
 class Repository
 {
     protected $modules = [];
 
+    /**
+     * @param string The module to return
+     * @return Module The migration module
+     */
     public function getMigration($module)
     {
-        return $this->modules[$module] ?? null;
+        return $this->modules[self::normalizeModule($module)] ?? null;
+    }
+
+    /**
+     * Register a module that has already been instantiated
+     * @param $module The module to register
+     * @return Repository Provide fluent interface
+     */
+    public function addModule(Module $module)
+    {
+        $name = self::normalizeModule($module->getModule());
+        $this->modules[$name] = $module;
+        return $this;
+    }
+
+    /**
+     * Add a new migration using a module name and a path
+     * 
+     * The module object will be instantiated and registered.
+     *
+     * @return Module The module instance
+     */
+    public function addMigration(string $module, string $path)
+    {
+        $module = self::normalizeModule($module);
+        if (isset($this->modules[$module]))
+            throw new MigrationException("Duplicate module: " . $module);
+
+        $instance = new Module($module, $path);
+        $this->addModule($module, $instance);
+        return $instance;
+    }
+
+    /**
+     * Normalize the module name: lowercased and with backslashes replaced by dots.
+     * This allows the use of namespace names as modules.
+     * @param string $module The module name to normalize
+     * @return string The normalized module name
+     */
+    public static function normalizeModule(string $module)
+    {
+        return str_replace('\\', '.', strtolower($module));
     }
 }
