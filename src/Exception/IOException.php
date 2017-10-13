@@ -23,12 +23,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace Wedeto\DB\Migration;
+namespace Wedeto\DB\Exception;
 
-use Wedeto\Task;
-use Wedeto\DB\Migration;
-
-class Core extends Migration
-{
-    protected $max_version = 1;
-}
+class IOException extends \RuntimeException implements DBException
+{}

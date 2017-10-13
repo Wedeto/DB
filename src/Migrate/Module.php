@@ -203,6 +203,7 @@ class Module
         $trajectory = $this->plan($current_version, $target_version);
 
         $db = DB::get();
+
         foreach ($trajectory as $migration)
         {
             $migration['module'] = $this->module;
@@ -216,7 +217,7 @@ class Module
 
                 if ($ext === ".php")
                 {
-                    executePHP($filename);
+                    executePHP($db, $filename);
                 }
                 elseif ($ext === ".sql")
                 {

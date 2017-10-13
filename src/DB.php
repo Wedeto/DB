@@ -36,6 +36,7 @@ use Wedeto\DB\Query\Parameters;
 
 use Wedeot\DB\Exception\ConfigurationException;
 use Wedeot\DB\Exception\DriverException;
+use Wedeot\DB\Exception\IOException;
 
 /**
  * The DB class wraps a PDO allowing for lazy connecting.  The configuration is
@@ -274,5 +275,59 @@ class DB
         $statement = $this->prepare($sql);
         $parameters->bindParameters($statement);
         return $statement;
+    }
+
+    /**
+     * Execute a SQL file in the database.
+     *
+     * This will scan the file for statements, skipping comment-only lines.
+     * Occurences of %PREFIX% will be replaced with the configured table
+     * prefix.
+     *
+     * There are a two basic restrictions on the format:
+     *
+     * 1) each statement should be terminated with a semi-colon
+     * 2) each semi-colon should be at the end of a line, not followed
+     *    by a comment.
+     * 3) Any line where the first two non-white space characters are --
+     *    is treated as a comment. Regardless of quotes. Therefore,
+     *    the use of -- should be avoided except for comments.
+     *
+     * Not adhering to 1) will result in the last statement not being executed.
+     * Not adhering to 2) will result in the semi-colon not being detected,
+     * thus leading to the last statement no being executed.
+     * Not adhering to 3) will result in lines being skipped.
+     *
+     * Statements are concatenated and fed to the SQL driver, so any other
+     * language construct understood by the database is allowed.
+     */
+    public function executeSQL(string $filename)
+    {
+        $fh = @fopen($filename, "r");
+        if ($fh === false)
+            throw new IOException(
+        $prefix = $this->driver->getTablePrefix();
+        
+        $statement = '';
+        while (!feof($fh))
+        {
+            $line = fgets($fh);
+            $trimmed = trim($line);
+
+            // Skip comments
+            if (substr($trimmed, 0, 2) === '--')
+                continue;
+
+            if ($line)
+                $statement .= "\n" . $line;
+
+            if (substr($trimmed, -1) === ';')
+            {
+                $statement = str_replace('%PREFIX%', $prefix);
+                $this->exec($statement);
+                $statement = '';
+            }
+        }
+        fclose($fh);
     }
 }
