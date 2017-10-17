@@ -161,8 +161,8 @@ class BuilderTest extends TestCase
         $this->assertInstanceOf(SourceTableClause::class, $q->getTable());
         $this->assertEquals('test_table', $q->getTable()->getTable());
 
-        $this->assertEquals([Q::field('foo'), Q::field('lorem')], $q->getFields());
-        $this->assertEquals([Q::variable('bar'), Q::variable('ipsum')], $q->getValues());
+        $this->assertEquals(['foo' => Q::field('foo'), 'lorem' => Q::field('lorem')], $q->getFields());
+        $this->assertEquals(['foo' => Q::variable('bar'), 'lorem' => Q::variable('ipsum')], $q->getValues());
 
         $q = Q::insert(
             Q::into('test_table'),
@@ -174,8 +174,8 @@ class BuilderTest extends TestCase
         $this->assertInstanceOf(SourceTableClause::class, $q->getTable());
         $this->assertEquals('test_table', $q->getTable()->getTable());
 
-        $this->assertEquals([Q::field('foo'), Q::field('lorem')], $q->getFields());
-        $this->assertEquals([Q::variable('bar'), Q::variable('ipsum')], $q->getValues());
+        $this->assertEquals(['foo' => Q::field('foo'), 'lorem' => Q::field('lorem')], $q->getFields());
+        $this->assertEquals(['foo' => Q::variable('bar'), 'lorem' => Q::variable('ipsum')], $q->getValues());
         $this->assertEquals(['test_id'], $q->getPrimaryKey());
     }
 

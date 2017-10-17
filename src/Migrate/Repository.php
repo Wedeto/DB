@@ -77,11 +77,12 @@ class Repository
     /**
      * Normalize the module name: lowercased and with backslashes replaced by dots.
      * This allows the use of namespace names as modules.
+     *
      * @param string $module The module name to normalize
      * @return string The normalized module name
      */
     public static function normalizeModule(string $module)
     {
-        return str_replace('\\', '.', strtolower($module));
+        return strtolower(preg_replace('/([\.\\/\\\\])/', '.', $module));
     }
 }

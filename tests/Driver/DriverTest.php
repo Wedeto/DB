@@ -23,15 +23,43 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-namespace Wedeto\DB;
+namespace Wedeto\DB\Driver;
 
-use Wedeto\DB\Migration;
+use PHPUnit\Framework\TestCase;
 
-class Migrator
+use Wedeto\DB\Exception\InvalidTypeException;
+
+/**
+ * @covers Wedeto\DB\Driver\Driver
+ */
+class DriverTest extends TestCase
 {
-    public function run()
+    public function setUp()
     {
-        $migration = new Migration\Core("core");
-        $migration->upgradeToLatest();
+        $this->db_prophet = $this->prophesize(\PDO::class);
+        $this->db = $this->db_prophet->reveal();
+        $this->driver = $this->getMockForAbstractClass(DriverMock::class, [$this->db]);
     }
+
+    public function testConstruct()
+    {
+        $this->assertInstanceOf(Driver::class, $this->driver);
+
+        $this->expectException(InvalidTypeException::class);
+        $this->expectExceptionMessage("The driver needs a DB or PDO object to work with");
+        $this->driver = $this->getMockForAbstractClass(Driver::class, [new \stdClass]);
+    }
+
+    public function testTablePrefix()
+    {
+        $this->assertEquals('*bar*', $this->driver->getName('bar'));
+        $this->assertSame($this->driver, $this->driver->setTablePrefix("foo_"));
+        $this->assertEquals('foo_', $this->driver->getTablePrefix());
+        $this->assertEquals('*foo_bar*', $this->driver->getName('bar'));
+    }
+}
+
+abstract class DriverMock extends Driver
+{
+    protected $iquotechar = '*';
 }

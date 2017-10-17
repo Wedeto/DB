@@ -305,7 +305,8 @@ class DB
     {
         $fh = @fopen($filename, "r");
         if ($fh === false)
-            throw new IOException(
+            throw new IOException("Unable to open file '$filename'");
+
         $prefix = $this->driver->getTablePrefix();
         
         $statement = '';

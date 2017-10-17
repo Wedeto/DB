@@ -46,15 +46,15 @@ class InsertTest extends TestCase
 
         $fields = $i->getFields();
         $this->assertEquals(2, count($fields));
-        $first = $fields[0];
-        $second = $fields[1];
+        $first = $fields['foo'];
+        $second = $fields['baz'];
         $this->assertEquals("foo", $first->getField());
         $this->assertEquals("baz", $second->getField());
 
         $values = $i->getValues();
         $this->assertEquals(2, count($values));
-        $first = $values[0];
-        $second = $values[1];
+        $first = $values['foo'];
+        $second = $values['baz'];
         $this->assertInstanceOf(ConstantValue::class, $first);
         $this->assertEquals('bar', $first->getValue());
         $this->assertInstanceOf(ConstantValue::class, $second);
@@ -115,17 +115,17 @@ class InsertTest extends TestCase
 
         $fields = $i->getFields();
         $this->assertEquals(2, count($fields));
-        $this->assertInstanceOf(FieldName::class, $fields[0]);
-        $this->assertEquals("foo", $fields[0]->getField());
-        $this->assertInstanceOf(FieldName::class, $fields[1]);
-        $this->assertEquals("baz", $fields[1]->getField());
+        $this->assertInstanceOf(FieldName::class, $fields['foo']);
+        $this->assertEquals("foo", $fields['foo']->getField());
+        $this->assertInstanceOf(FieldName::class, $fields['baz']);
+        $this->assertEquals("baz", $fields['baz']->getField());
 
         $values = $i->getValues();
         $this->assertEquals(2, count($values));
-        $this->assertInstanceOf(ConstantValue::class, $values[0]);
-        $this->assertEquals("bar", $values[0]->getValue());
-        $this->assertInstanceOf(ConstantValue::class, $values[1]);
-        $this->assertEquals(3, $values[1]->getValue());
+        $this->assertInstanceOf(ConstantValue::class, $values['foo']);
+        $this->assertEquals("bar", $values['foo']->getValue());
+        $this->assertInstanceOf(ConstantValue::class, $values['baz']);
+        $this->assertEquals(3, $values['baz']->getValue());
     }
 
     public function testInsertWithIDField()
