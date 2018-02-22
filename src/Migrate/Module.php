@@ -108,7 +108,7 @@ class Module
      */
     public function getCurrentVersion()
     {
-        return $this->db_version->get('version');
+        return $this->db_version->getField('version');
     }
 
     /**
@@ -117,7 +117,7 @@ class Module
      */
     public function isUpToDate()
     {
-        return $this->getCurrentVersion() < $this->getLatestVersion();
+        return $this->getCurrentVersion() === $this->getLatestVersion();
     }
 
     /**
@@ -140,7 +140,7 @@ class Module
     protected function scanMigrations()
     {
         $glob = rtrim($this->migration_path, '/') . '/*-to-*.[sp][qh][lp]';
-        $it = new GlobIterator($glob, \FilesystemIterator::NEW_CURRENT_AND_KEY);
+        $it = new \GlobIterator($glob, \FilesystemIterator::NEW_CURRENT_AND_KEY);
 
         $regex = '/^([0-9]+)-to-([0-9]+)\.(sql|php)$/';
 
@@ -159,7 +159,7 @@ class Module
                 if ($to_version > $this->max_version)
                     $this->max_version = $to_version;
 
-                $path = $pathinfo->getPathname() . '/'.  $filename;
+                $path = $pathinfo->getPathname();
 
                 $this->migrations[$from_version][$to_version] = $path;
             }
@@ -213,7 +213,7 @@ class Module
             $db->beginTransaction();
             try
             {
-                $this->logger->info("Migrating module {module} from {from} to {to} using file {file}", $migration);
+                static::$logger->info("Migrating module {module} from {from} to {to} using file {file}", $migration);
 
                 if ($ext === ".php")
                 {
@@ -227,17 +227,17 @@ class Module
                 // If no exceptions were thrown, we're going to assume that the
                 // upgrade succeeded, so update the version number in the
                 // database and commit the changes.
-                $this->db_version->set('version', $migration['to']);
+                $this->db_version->setField('version', $migration['to']);
                 $this->db_version->save();
-                $this->logger->info("Succesfully migrated module {module} from {from} to {to} using file {file}", $migration);
+                static::$logger->info("Succesfully migrated module {module} from {from} to {to} using file {file}", $migration);
                 $db->commit();
             }
             catch (Exception $e)
             {
                 // Upgrade failed, roll back to previous state
                 $db->rollback();
-                $this->logger->error("Migration of module {module} from {from} to {to} using file {file}", $migration);
-                $this->logger->error("Exception: {0}", [$e]);
+                static::$logger->error("Migration of module {module} from {from} to {to} using file {file}", $migration);
+                static::$logger->error("Exception: {0}", [$e]);
                 throw $e;
             }
         }
@@ -268,13 +268,13 @@ class Module
             return $migrations;
 
         $is_downgrade = $to < $from;
-        $reachable = $this->migrations[$from];
+        $reachable = $this->migrations[$from] ?? [];
 
         // For downgrades, we want the lowest reachable target that is above or equal to the final target
         // For upgrades, we want the highest reachable target that is below or equal to the final target
         // To always use the first encountered, the array needs to be reversed for upgrades, as it's sorted by key
         if (!$is_downgrade)
-            $reachable = array_reverse($reachable);
+            $reachable = array_reverse($reachable, true);
 
         // Traverse the reachable migrations
         foreach ($reachable as $direct_to => $path)

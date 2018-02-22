@@ -29,11 +29,15 @@ use Wedeto\DB\Exception\MigrationException;
 use Wedeto\Model\DBVersion;
 
 /**
- * Keeps track of the registered modues
+ * Manage a set of migration modules and the path to their migration files.
  */
-class Repository
+class Repository implements \Iterator
 {
+    /** The list of modules and their module instances */
     protected $modules = [];
+
+    /** And iterator providing traversable implementation */
+    protected $iterator = null;
 
     /**
      * @param string The module to return
@@ -84,5 +88,53 @@ class Repository
     public static function normalizeModule(string $module)
     {
         return strtolower(preg_replace('/([\.\\/\\\\])/', '.', $module));
+    }
+
+    /* Traversable implementation */
+    private function getIterator()
+    {
+        return new ArrayIterator($this->modules);
+    }
+
+    /**
+     * Rewind the iterator to the beginning
+     */
+    public function rewind()
+    {
+        $this->iterator = $this->getIterator();
+    }
+
+    /**
+     * Retrieve the module that the iterator currently points to
+     * @return A migation module
+     */
+    public function current()
+    {
+        return $this->iterator->current();
+    }
+
+    /**
+     * Move the iterator to the next position
+     */
+    public function next()
+    {
+        return $this->iterator->next();
+    }
+
+    /**
+     * @return boolean True if the iterator is valid, such that a call to
+     * current will return a valid object
+     */
+    public function valid()
+    {
+        return null != $this->iterator && $this->iterator->valid();
+    }
+
+    /**
+     * @return string the key of the iterator: the module name
+     */
+    public function key()
+    {
+        return $this->iterator->key();
     }
 }
