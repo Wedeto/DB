@@ -34,7 +34,7 @@ use Wedeto\DB\Schema\Schema;
 use Wedeto\DB\Query\Query;
 use Wedeto\DB\Query\Parameters;
 
-use Wedeot\DB\Exception\ConfigurationException;
+use Wedeto\DB\Exception\ConfigurationException;
 use Wedeot\DB\Exception\DriverException;
 use Wedeot\DB\Exception\IOException;
 
@@ -330,5 +330,29 @@ class DB
             }
         }
         fclose($fh);
+    }
+
+    /**
+     * Start a transaction
+     */
+    public function beginTransaction()
+    {
+        $this->getPDO()->beginTransaction();
+    }
+
+    /**
+     * Commit a transaction 
+     */
+    public function commit()
+    {
+        return $this->getPDO()->rollback();
+    }
+
+    /**
+     * Rollback a transaction 
+     */
+    public function rollback()
+    {
+        return $this->getPDO()->rollback();
     }
 }
