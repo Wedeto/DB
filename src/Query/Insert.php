@@ -28,7 +28,7 @@ namespace Wedeto\DB\Query;
 use DomainException;
 
 use Wedeto\Util\Functions as WF;
-use Wedeto\DB\DAO;
+use Wedeto\DB\Model;
 use Wedeto\DB\Exception\OutOfRangeException;
 
 class Insert extends Query
@@ -46,7 +46,7 @@ class Insert extends Query
         if (!($table instanceof SourceTableClause))
             $table = new SourceTableClause($table);
 
-        if ($record instanceof DAO)
+        if ($record instanceof Model)
             $record = $record->getRecord();
         else
             $record = WF::to_array($record);

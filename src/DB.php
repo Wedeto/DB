@@ -27,16 +27,20 @@ namespace Wedeto\DB;
 
 use PDO;
 
+use Wedeto\Util\DI\InjectionTrait;
 use Wedeto\Util\Dictionary;
 use Wedeto\Util\Type;
 use Wedeto\Util\LoggerAwareStaticTrait;
+use Wedeto\Util\Configuration;
 use Wedeto\DB\Schema\Schema;
 use Wedeto\DB\Query\Query;
 use Wedeto\DB\Query\Parameters;
 
 use Wedeto\DB\Exception\ConfigurationException;
-use Wedeot\DB\Exception\DriverException;
-use Wedeot\DB\Exception\IOException;
+use Wedeto\DB\Exception\DriverException;
+use Wedeto\DB\Exception\IOException;
+use Wedeto\DB\Exception\DAOException;
+
 
 /**
  * The DB class wraps a PDO allowing for lazy connecting.  The configuration is
@@ -48,20 +52,23 @@ use Wedeot\DB\Exception\IOException;
 class DB
 {
     use LoggerAwareStaticTrait;
+    use InjectionTrait;
 
-    protected static $default_db = null;
+    const WDI_REUSABLE = true;
+
     protected $pdo;
     protected $dsn;
     protected $driver;
     protected $config;
     protected $schema;
+    protected $dao = [];
 
     /**
      * Create a new DB object for a specific configuration set.
      *
      * @param Wedeto\Util\Dictionary $config The configuration for this connection
      */
-    private function __construct(Dictionary $config)
+    public function __construct(Configuration $config)
     {
         $this->getLogger();
         $this->config = $config;
@@ -123,7 +130,7 @@ class DB
         $schema = $this->config->get('sql', 'schema');
         $this->dsn = $this->config->get('sql', 'dsn');
         if (!$this->config->has('sql', 'type', Type::STRING))
-            throw new ConfgurationException("Please specify the database type in the configuration section [sql]");
+            throw new ConfigurationException("Please specify the database type in the configuration section [sql]");
 
         $type = $this->config->getString('sql', 'type');
 
@@ -144,54 +151,6 @@ class DB
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             
         $this->pdo = $pdo;
-    }
-
-    /**
-     * Get a DB object for the provided configuration. If the configuration is omitted,
-     * the default DB will be returned if available. The first database created is automatically
-     * set as default DB. You can change this using DB#setDefaultDB.
-     *
-     * @param Wedeto\Util\Dictionary $config The configuration used to connect to the database
-     * @return Wedeto\DB\DB The initalized DB object
-     */
-    public static function get(Dictionary $config = null)
-    {
-        if ($config === null)
-            return self::getDefault();
-
-        if (!$config->has('sql', 'pdo'))
-        {
-            $db = new DB($config);
-            $config->set('sql', 'pdo', $db);
-        }
-        else
-            $db = $config->get('sql', 'pdo');
-
-        if (empty(self::$default_db))
-            self::$default_db = $db;
-
-        return $db;
-    }
-
-    /**
-     * Update the default database 
-     *
-     * @param DB $database The database to set as default
-     */
-    public static function setDefault(DB $database)
-    {
-        self::$default_db = $database;
-    }
-
-    /** 
-     * @return DB The default database
-     */
-    public static function getDefault()
-    {
-        if (empty(self::$default_db))
-            throw new ConfigurationException("No database connection available");
-
-        return self::$default_db;
     }
 
     /**
@@ -234,6 +193,42 @@ class DB
         }
 
         return $this->schema;
+    }
+
+    /**
+     * Get a DAO for a model. When none is available, a new one will be instantiated.
+     *
+     * @param string $class The name of the Model class
+     * @return DAO An instantiated DAO for the class.
+     */
+    public function getDAO(string $class)
+    {
+        if (!isset($this->dao[$class]))
+        {
+            if (!is_subclass_of($class, Model::class))
+                throw new DAOException("$classname is not a valid Model");
+
+            $tablename = $class->tablename();
+            $dao = new DAO($classname, $tablename, $this);
+            $this->dao[$class] = $dao;
+        }
+
+        return $this->dao[$class];
+    }
+
+    /** 
+     * Set the DAO for a model manually.
+     * @param string $class The name of the Model class
+     * @param DAO $dao The DAO to set. Omit to reset - a new one will be instantiated on request
+     * @return DB Provides fluent interface
+     */
+    public function setDAO(string $class, DAO $dao = null)
+    {
+        if (!is_subclass_of($class, Model::class))
+            throw new DAOException("$classname is not a valid Model");
+
+        $this->dao[$class] = $dao;
+        return $This;
     }
 
     /**

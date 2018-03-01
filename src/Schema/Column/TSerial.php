@@ -29,7 +29,7 @@ class TSerial extends TInt
 {
     public function __construct(string $name)
     {
-        parent::__construct($name, Column::INT, null, false);
+        parent::__construct($name, null, false);
         $this->setSerial();
     }
 }

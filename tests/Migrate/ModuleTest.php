@@ -35,6 +35,8 @@ use Wedeto\DB\Schema\Table;
 use Wedeto\DB\Schema\Column;
 use Wedeto\DB\Model\DBVersion;
 
+use Wedeto\Util\DI\DI;
+
 use Prophecy\Argument;
 
 /**
@@ -48,8 +50,10 @@ class ModuleTest extends TestCase
     private $db_mocker;
     private $module_mocker;
     private $repository_mocker;
+    private $dao_mocker;
 
     private $db;
+    private $dao;
 
     public function setUp()
     {
@@ -73,50 +77,80 @@ class ModuleTest extends TestCase
         $this->drv_mocker->select(Argument::any())->willReturn($this->result_mocker->reveal());
 
         $this->db_mocker = $this->prophesize(DB::class);
-        $this->db_mocker->getSchema()->willReturn($this->schema_mocker->reveal());
-        $this->db_mocker->getDriver()->willReturn($this->drv_mocker->reveal());
+        //$this->db_mocker->getSchema()->willReturn($this->schema_mocker->reveal());
+        //$this->db_mocker->getDriver()->willReturn($this->drv_mocker->reveal());
 
         $this->module_mocker = $this->prophesize(Module::class);
 
         $this->repository_mocker = $this->prophesize(Repository::class);
         $this->repository_mocker->getMigration('Wedeto.DB')->willReturn($this->module_mocker->reveal());
 
-        $this->db = $this->db_mocker->reveal();
+        $this->dao_mocker = $this->prophesize(DAO::class);
 
-        DB::setDefault($this->db);
+        $this->dao = $this->dao_mocker->reveal();
+        $this->repo = $this->repository_mocker->reveal();
+        $this->db = $this->db_mocker->reveal();
+        DI::startNewContext('dbtest');
+        DI::getInjector()->setInstance(DB::class, $this->db);
     }
 
     public function tearDown()
     {
-        DAO::setDB(null);
+        DI::destroyContext('dbtest');
     }
-
 
     public function testGetModule()
     {
-        $mod = new Module('Foo.Bar', __DIR__ . '/files', $this->repository_mocker->reveal());
+        $mod = new Module('Foo.Bar', __DIR__ . '/files', $this->repo, $this->db);
         $this->assertEquals('Foo.Bar', $mod->getModule());
     }
 
     public function testGetLatestVersion()
     {
-        $mod = new Module('Foo.Bar', __DIR__ . '/files', $this->repository_mocker->reveal());
+        $version_mock = $this->prophesize(DBVersion::class);
+        $version_mock->getField('version')->willReturn(1);
+        $version = $version_mock->reveal();
+
+        $this->db_mocker->getDAO(DBVersion::class)->willReturn($this->dao);
+        $this->dao_mocker->get(Argument::any(), Argument::any())->willReturn($version);
+        $mod = new Module('Foo.Bar', __DIR__ . '/files', $this->repo, $this->db);
 
         $this->assertEquals(2, $mod->getLatestVersion());
         $this->assertEquals(1, $mod->getCurrentVersion());
         $this->assertFalse($mod->isUpToDate());
     }
 
+
     public function testUpgradeToLatest()
     {
-        $mod = new Module('Foo.Bar', __DIR__ . '/files', $this->repository_mocker->reveal());
+        $version_mock = $this->prophesize(DBVersion::class);
+        $version_mock->getField('version')->willReturn(1);
+        $version = $version_mock->reveal();
+        $this->db_mocker->getDAO(DBVersion::class)->willReturn($this->dao);
 
+        $this->dao_mocker->getColumns()->willReturn([
+            "id" => new Column\TSerial('id'),
+            "module" => new Column\TVarchar('module', 128),
+            "version" => new Column\TInt('version'),
+            "date_upgraded" => new Column\TDateTime('date_upgraded'),
+        ]);
+
+        $this->dao_mocker->getPrimaryKey()->willReturn([
+            "id" => new Column\TSerial('id')
+        ]);
+
+        $this->dao_mocker->save(Argument::any())->shouldBeCalled();
+        $this->dao_mocker->get(Argument::any(), Argument::any())->willReturn($version);
+
+        $mod = new Module('Foo.Bar', __DIR__ . '/files', $this->repo, $this->db);
         $filename = __DIR__ . '/files/1-to-2.php';
 
         unset($GLOBALS['_wedeto_db_test_args']);
         $this->db_mocker->beginTransaction()->shouldBeCalled();
-        $this->drv_mocker->insert(Argument::any(), Argument::any())->shouldBeCalled();
         $this->db_mocker->commit()->shouldBeCalled();
+
+        $this->assertEquals(2, $mod->getLatestVersion());
+        $this->assertEquals(1, $mod->getCurrentVersion());
         $mod->upgradeToLatest();
         
         $this->assertEquals($this->db, $GLOBALS['_wedeto_db_test_args'][0], "Database was not set");
@@ -125,6 +159,9 @@ class ModuleTest extends TestCase
         $this->db_mocker->beginTransaction()->shouldBeCalled();
         $this->drv_mocker->delete(Argument::any());
         $this->db_mocker->commit()->shouldBeCalled();
+
+        $sql_filename = __DIR__ . '/files/1-to-0.sql';
+        $this->db_mocker->executeSQL($sql_filename)->shouldBeCalled();
         $mod->uninstall();
         unset($GLOBALS['_wedeto_db_test_args']);
     }

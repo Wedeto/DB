@@ -105,7 +105,7 @@ class InsertTest extends TestCase
 
     public function testInsertUsingDAO()
     {
-        $mock = $this->prophesize(\Wedeto\DB\DAO::class);
+        $mock = $this->prophesize(\Wedeto\DB\Model::class);
         $mock->getRecord()->willReturn(['foo' => 'bar', 'baz' => 3]);
         $dao = $mock->reveal();
 

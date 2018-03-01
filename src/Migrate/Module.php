@@ -26,10 +26,17 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Migrate;
 
 use Wedeto\Util\LoggerAwareStaticTrait;
+use Wedeto\Util\DI\DI;
 use Wedeto\DB\DB;
 use Wedeto\DB\Exception\MigrationException;
 use Wedeto\DB\Exception\InvalidTypeException;
+use Wedeto\DB\Exception\NoMigrationTableException;
+use Wedeto\DB\Exception\TableNotExistsException;
 use Wedeto\DB\Model\DBVersion;
+use Wedeto\DB\Query\Builder as QB;
+
+class NullVersion extends DBVersion
+{}
 
 /**
  * A migration module that manages the migration for one specific module.
@@ -54,34 +61,48 @@ class Module
     /** The available migrations for this module */
     protected $migrations = [];
 
+    /** The database to migate */
+    protected $db = null;
+
+    /** The DAO to manipulate the database */
+    protected $dao = null;
+
     /**
      * Create the migration module
      *
      * @param string $module The name of the module
      * @param string $path The path where the migration files are located
      * @param Repository The repository where migration modules are referenced
+     * @param DB $db The database to migrate
      */
-    public function __construct(string $module, $path, Repository $repository)
+    public function __construct(string $module, $path, Repository $repository, DB $db)
     {
         $this->getLogger();
         $this->module = $module;
         $this->migration_path = $path;
+        $this->db = $db;
+    }
+
+    /**
+     * Load the current version from the database
+     */
+    private function loadVersion()
+    {
+        $this->dao = $this->db->getDAO(DBVersion::class);
 
         try
         {
-            $columns = DBVersion::getColumns();
+            $this->db_version = $this->dao->get(QB::where(["module" => $this->module]), QB::order(['version' => 'DESC']));
         }
-        catch (TableNotExists $e)
+        catch (TableNotExistsException $e)
         {
-            $db_migrator = $module === "Wedeto.DB" ? $this : $repository->getMigration('Wedeto.DB');
-
-            if ($db_migrator->isUpToDate())
-                throw $e;
-
-            $db_migrator->upgradeToLatest();
+            if ($module !== "Wedeto.DB")
+            {
+                throw new NoMigrationTableException(); 
+            }
+            $this->db_version = new NullVersion;
+            echo "SET TO NULLVERSION!\n";
         }
-
-        $this->db_version = new DBVersion($module);
     }
 
     /**
@@ -108,7 +129,10 @@ class Module
      */
     public function getCurrentVersion()
     {
-        return $this->db_version->getField('version');
+        if (null === $this->db_version)
+            $this->loadVersion();
+
+        return $this->db_version instanceof NullVersion ? 0 : (int)$this->db_version->version;
     }
 
     /**
@@ -202,7 +226,7 @@ class Module
         $current_version = $this->getCurrentVersion();
         $trajectory = $this->plan($current_version, $target_version);
 
-        $db = DB::get();
+        $db = $this->db;
 
         foreach ($trajectory as $migration)
         {
@@ -227,8 +251,12 @@ class Module
                 // If no exceptions were thrown, we're going to assume that the
                 // upgrade succeeded, so update the version number in the
                 // database and commit the changes.
-                $this->db_version->setField('version', $migration['to']);
-                $this->db_version->save();
+                $version = new DBVersion;
+                $version->module = $this->module;
+                $version->version = $migration['to'];
+                $version->date_upgraded = new \DateTime();
+
+                $this->dao->save($version);
                 static::$logger->info("Succesfully migrated module {module} from {from} to {to} using file {file}", $migration);
                 $db->commit();
             }
@@ -260,7 +288,7 @@ class Module
      *               an empty array is returned.
      * @throws MigrationException When no migration path can be found
      */
-    protected function plan($from, $to)
+    protected function plan(int $from, int $to)
     {
         $migrations = [];
         

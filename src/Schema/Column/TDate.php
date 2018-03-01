@@ -27,6 +27,7 @@ namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
 use Wedeto\DB\Exception\InvalidValueException;
+use DateTime;
 
 class TDate extends Column
 {

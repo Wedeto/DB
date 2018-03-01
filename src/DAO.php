@@ -28,8 +28,8 @@ namespace Wedeto\DB;
 use PDOException;
 use DateTime;
 
+use Wedeto\Util\DI\DI;
 use Wedeto\Util\Functions as WF;
-
 use Wedeto\Auth\ACL\Entity;
 use Wedeto\DB\Query;
 use Wedeto\DB\Query\Builder as QB;
@@ -68,15 +68,23 @@ class DAO
 
     /** The class holding the models for this object */
     protected $model_class;
-    
-    public function __construct($classname, $tablename, DB $db)
+
+    /**
+     * Create a new instance, linked to a Model and a DB
+     *
+     * @param string $classname The model class to use
+     * @param string $tablename The name of the table 
+     * @param DB $db The database to query. Omit to use the default instance
+     */
+    public function __construct($classname, $tablename, DB $db = null)
     {
         if (!class_exists($classname) || !is_subclass_of($classname, Model::class))
-            throw new \InvalidTypeException("$classname is not a valid Model");
+            throw new DAOException("$classname is not a valid Model");
 
+        $db = $db ?: DI::getInjector()->getInstance(DB::class);
         $this->db = $db;
         $this->schema = $db->getSchema();
-        $this->table = $schema->getTable($tablename);
+        $this->table = $this->schema->getTable($tablename);
         $this->tablename = $tablename;
         $this->model_class = $classname;
     }
@@ -90,8 +98,6 @@ class DAO
     }
 
     /**
-     * @param Wedeto\DB\DB $database The database to get the columns from. If
-     *                             null, the default is used.
      * @return array The set of columns associated with this table
      */
     public function getColumns()
@@ -100,8 +106,6 @@ class DAO
     }
 
     /**
-     * @param Wedeto\DB\DB $database The database to get the primary key from. If
-     *                             null, the default is used.
      * @return array Associative array with column names as keys and their
      *               column definitions as value.
      */
@@ -112,6 +116,7 @@ class DAO
 
     /**
      * Form a condition that matches the record using the values in the provided record.
+     *
      * @param array $pkey The column names in the primary key
      * @param array $record The record to match
      */
@@ -150,6 +155,7 @@ class DAO
 
     /**
      * Save the current record to the database.
+     *
      * @param Wedeto\DB\Model $model The model instance to save.
      *                               If the model does not have a source
      *                               database, it is inserted, otherwise
@@ -162,28 +168,9 @@ class DAO
         $pkey = $model->getID();
 
         if ($database === null || $database !== $this->db)
-        {
-            $insert = true;
-            $database = $this->db;
-        }
-
-        if (!$insert)
-        {
-            // Update the current record
-            $changes = $model->getChanges();
-            if (empty($changes))
-                return $this;
-
-            $this->update($model->getID(), $changes, $database);
-            $model->markClean();
-            $model->setSourceDB($database);
-        }
+            $this->insert($model);
         else
-        {
-            $model->id = $this->insert($model->getRecord(), $database);
-            $model->setSourceDB($database);
-            $model->markClean();
-        }
+            $this->update($model);
 
         return $this;
     }
@@ -194,14 +181,9 @@ class DAO
      *                  type should match the primary key: scalar for unary
      *                  primary keys, associative array for combined primary
      *                  keys.
-     * @param Wedeto\DB\DB $database The database load from. This is set as
-     *                             source database. When not specified, the
-     *                             default database is used.
      */
-    public function get($id)
+    public function getByID($id)
     {
-        $database = $this->db;
-
         $pkey = $this->getPrimaryKey();
         if ($pkey === null)
             throw new DAOException("A primary key is required to select a record by ID");
@@ -213,31 +195,29 @@ class DAO
                 $id[$col] = $id;
 
         $condition = $this->getSelector($pkey, $id);
-        $rec = $this->fetchSingle(QB::where($condition), $database);
+        $rec = $this->fetchSingle(QB::where($condition));
         if (empty($rec))
             throw new DAOEXception("Object not found with " . WF::str($id));
 
-        $model = new $this->classname;
-        $model->assignRecord($rec, $database);
+        $model = new $this->model_class;
+        $model->assignRecord($rec, $this->db);
         return $model;
     }
 
     /**
-     * Remove the current record from the database it was retrieved from.
+     * Retrieve a single record based on a provided query
+     * @param args The provided arguments for the select query.
+     * @return Model The fetch model
+     * @see Wedeto\DB\DAO::select
      */
-    public function remove(Model $object)
+    public function get(...$args)
     {
-        $database = $object->getSourceDB();
-
-        if ($database === null || $database != $this->db)
-            throw new DAOException("Cannot remove this record - it did not originate in this database");
-
-        $pkey = $this->getPrimaryKey();
-        $condition = $this->getSelector($pkey, $object->getID());
-
-        $this->delete(new WhereClause($condition), $database);
-        $model->destruct();
-        return $this;
+        $record = $this->fetchSingle($args);
+        if (!$record)
+            return null;
+        $obj = new $this->model_class;
+        $obj->assignRecord($record);
+        return $obj;
     }
 
     /**
@@ -262,7 +242,7 @@ class DAO
         $records = $this->fetchAll($args);
         foreach ($records as $record)
         {
-            $obj = new $this->classname;
+            $obj = new $this->model_class;
             $obj->assignRecord($record, $db);
 
             if ($pkey_as_index)
@@ -307,13 +287,13 @@ class DAO
      *              FieldName, JoinClause, WhereClause, OrderClause, LimitClause,
      *              OffsetClause. A Wedeto\DB\DB object can also be passed in to
      *              use as a Database.
+     * @return PreparedStatement The executed select query
      *
      * @see Wedeto\DB\Query\Select
      */
     public function select(...$args)
     {
         $args = WF::flatten_array($args);
-        $database = $this->db;
 
         $select = new Query\Select;
         $select->add(new Query\SourceTableClause($this->tablename));
@@ -323,21 +303,44 @@ class DAO
         foreach ($args as $arg)
             $select->add($arg);
 
-        $drv = $database->getDriver();
+        $drv = $this->db->getDriver();
         return $drv->select($select);
     }
 
     /**
      * Update records in the database.
      *
-     * @param mixed $id The values for the primary key to select the record to update
+     * @param mixed $id The values for the primary key to select the record to update. You can also supply
+     *                  an instance of the accompanying Model class.
      * @param array $record The record to update. Should contain key/value pairs where
      *                      keys are fieldnames, values are the values to update them to.
      *                      Should also contain the value for the primary key.
      *                      which will be used to find the record to be updated.
+     *                      When providing a Model as $id, this should be omitted.
+     * @return int The number of updated records
      */
-    public function update($id, array $record)
+    public function update($id, array $record = null)
     {
+        $model = is_a($id, $this->model_class) ? $id : null;
+        if (null !== $model)
+        {
+            if ($record !== null)
+                throw new DAOException("You should not pass an array of updates when supplying a Model");
+
+            if ($id->getSourceDB() !== $this->db)
+                throw new DAOException("Cannot update object - it did not originate in this database");
+
+            $record = $id->getChanges();
+            $id = $id->getID();
+        }
+
+        if ($record === null)
+            throw new DAOException("No update provided");
+
+        // Check if there's anything to update
+        if (count($records) === 0)
+            return 0;
+
         $table = $this->table;
         $columns = $table->getColumns();
 
@@ -370,18 +373,31 @@ class DAO
         }
 
         $drv = $this->db->getDriver();
-        return $drv->update($update);
+        $rows = $drv->update($update);
+
+        if (null !== $model)
+        {
+            $model->markClean();
+        }
+
+        return $rows;
     }
 
     /**
      * Insert a new record into the database.
      *
      * @param array $record The record to insert. Keys should be fieldnames,
-     *                      values the values to insert.
+     *                      values the values to insert. You can also
+     *                      provide a Model instance.
      * @return int A generated serial, if available
      */
-    public function insert(array &$record)
+    public function insert(&$model)
     {
+        $is_model = is_a($model, $this->model_class);
+        if (!is_array($model) && !$is_model)
+            throw new InvalidTypeException("An array or a instance of {$this->model_class} should be provided");
+
+        $record = $is_model ? $model->getRecord() : $model;
         $db_record = array();
         $table = $this->table;
         $columns = $table->getColumns();
@@ -421,7 +437,16 @@ class DAO
             if (!isset($pkey_values[$colname]))
                 throw new DAOException("No value generated for serial column {$colname}");
 
-            $record[$colname] = $pkey_values[$colname];
+            if ($is_model)
+                $model->setField($colname, $pkey_values[$colname]);
+            else
+                $model[$colname] = $pkey_values[$colname];
+        }
+
+        if ($is_model)
+        {
+            $model->markClean();
+            $model->setSourceDB($this->db);
         }
 
         return $pkey_values;
@@ -438,10 +463,28 @@ class DAO
      *                                  values to match them with.
      * @return int The number of rows deleted
      */
-    protected function delete($where)
+    public function delete($where)
     {
+        $is_model = is_a($where, $this->model_class);
+        if (!$is_model && !is_a($where, Query\WhereClause::class))
+            throw new InvalidTypeException("Must provide a WhereClause or an instance of {$this->model_class} to delete");
+
+        if ($is_model)
+        {
+            $database = $where->getSourceDB();
+            if ($database === null || $database !== $this->db)
+                throw new DAOException("Cannot remove this record - it did not originate in this database");
+
+            $where = $this->getSelector($this->getPrimaryKey(), $where);
+        }
+
         $delete = new Query\Delete($this->tablename, $where);
         $drv = $this->db->getDriver();
-        return $drv->delete($delete);
+
+        $rows = $drv->delete($delete);
+        if ($is_model)
+            $where->destruct();
+
+        return $rows;
     }
 }
