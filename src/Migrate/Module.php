@@ -96,12 +96,11 @@ class Module
         }
         catch (TableNotExistsException $e)
         {
-            if ($module !== "Wedeto.DB")
+            if ($this->module !== "Wedeto.DB")
             {
                 throw new NoMigrationTableException(); 
             }
             $this->db_version = new NullVersion;
-            echo "SET TO NULLVERSION!\n";
         }
     }
 

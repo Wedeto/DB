@@ -34,6 +34,10 @@ use Wedeto\DB\Schema\Schema;
 use Wedeto\DB\Schema\Table;
 use Wedeto\DB\Schema\Column;
 use Wedeto\DB\Model\DBVersion;
+use Wedeto\DB\Query;
+
+use Wedeto\DB\Exception\TableNotExistsException;
+use Wedeto\DB\Exception\NoMigrationTableException;
 
 use Wedeto\Util\DI\DI;
 
@@ -90,6 +94,7 @@ class ModuleTest extends TestCase
         $this->dao = $this->dao_mocker->reveal();
         $this->repo = $this->repository_mocker->reveal();
         $this->db = $this->db_mocker->reveal();
+        $this->drv = $this->drv_mocker->reveal();
         DI::startNewContext('dbtest');
         DI::getInjector()->setInstance(DB::class, $this->db);
     }
@@ -120,7 +125,56 @@ class ModuleTest extends TestCase
         $this->assertFalse($mod->isUpToDate());
     }
 
+    public function testSetupCoreSucceeds()
+    {
+        $root = dirname(dirname(__DIR__ ));
+        $sql = $root . DIRECTORY_SEPARATOR . 'sql';
 
+        $this->db_mocker->getDAO(DBVersion::class)->willReturn($this->dao);
+        $this->dao_mocker
+            ->get(Argument::type(Query\WhereClause::class), Argument::type(Query\OrderClause::class))
+            ->willThrow(new TableNotExistsException());
+        
+        $module = new Module('Wedeto.DB', $sql, $this->repo, $this->db);
+        $this->assertEquals(0, $module->getCurrentVersion());
+        $this->assertEquals(1, $module->getLatestVersion());
+
+        // Execute migation
+        // We require a lot of mockery here
+        $this->db_mocker->beginTransaction()->shouldBeCalled();
+        $this->db_mocker->commit()->shouldBeCalled();
+        $this->db_mocker->getDriver()->willReturn($this->drv);
+
+        $this->dao_mocker->getColumns()->willReturn([
+            "module" => new Column\TVarchar('module', 128),
+            "version" => new Column\TInt('version'),
+            "date_upgraded" => new Column\TDateTime('version')
+        ]);
+        $this->dao_mocker->getPrimaryKey()->willReturn(['id' => new Column\TSerial('id')]);
+        $this->dao_mocker->save(Argument::type(DBVersion::class))->shouldBeCalled();
+
+        $this->drv_mocker->createTable(Argument::type(Table::class))->shouldBeCalled();
+        $module->upgradeToLatest();
+    }
+
+    public function testSetupOtherTableWithoutCoreFails()
+    {
+        $root = dirname(dirname(__DIR__ ));
+        $sql = $root . DIRECTORY_SEPARATOR . 'sql';
+
+        $this->db_mocker->getDAO(DBVersion::class)->willReturn($this->dao);
+        $this->dao_mocker
+            ->get(Argument::type(Query\WhereClause::class), Argument::type(Query\OrderClause::class))
+            ->willThrow(new TableNotExistsException());
+        
+        $module = new Module('Foo.Bar', $sql, $this->repo, $this->db);
+        $this->expectException(NoMigrationTableException::class);
+        $module->getCurrentVersion();
+    }
+
+    /**
+     * @covers Wedeto\DB\Migrate\executePHP
+     */
     public function testUpgradeToLatest()
     {
         $version_mock = $this->prophesize(DBVersion::class);

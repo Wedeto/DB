@@ -25,5 +25,5 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Exception;
 
-class TableNotExists extends \RuntimeException implements DBException
+class TableNotExistsException extends \RuntimeException implements DBException
 {}
