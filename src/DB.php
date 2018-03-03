@@ -28,6 +28,8 @@ namespace Wedeto\DB;
 use PDO;
 
 use Wedeto\Util\DI\InjectionTrait;
+use Wedeto\Util\DI\DI;
+use Wedeto\Util\DI\Injector;
 use Wedeto\Util\Dictionary;
 use Wedeto\Util\Type;
 use Wedeto\Util\LoggerAwareStaticTrait;
@@ -78,6 +80,7 @@ class DB
 
     /**
      * Find a proper driver based on the 'type' parameter in the configuration.
+     *
      * @param string $type The type / driver name.
      * @return Wedeto\DB\Driver\Driver A initialized driver object
      * @throws Wedeto\DB\Exception\DriverException When no driver could be found
@@ -116,6 +119,7 @@ class DB
 
     /**
      * Connect to the database: actually initialize the PDO and connect it.
+     *
      * @throws PDOException If the connection fails
      */
     private function connect()
@@ -146,7 +150,13 @@ class DB
         }
             
         // Create the PDO and connect it to the database, setting default options
-        $pdo = new PDO($this->dsn, $username, $password);
+        //$pdo = new PDO($this->dsn, $username, $password);
+        $pdo = DI::getInjector()
+            ->newInstance(
+                PDO::class,
+                ['dsn' => $this->dsn, 'username' => $username, 'password' => $password]
+            )
+        ;
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             
@@ -176,7 +186,7 @@ class DB
     }
 
     /**
-     * Get the database schema
+     * @return Wedeto\DB\Schema\Schema the database schema
      */
     public function getSchema()
     {
@@ -252,12 +262,21 @@ class DB
         return call_user_func_array(array($this->pdo, $func), $args);
     }
 
+    /** 
+     * @return array A clean representation of this object
+     */
     public function __debuginfo()
     {
         $drv = get_class($this->getDriver());
         return array('dsn' => $this->dsn, 'driver' => $drv);
     }
 
+    /**
+     * Prepare a query and return the PDOStatement
+     *
+     * @param Wedeto\DB\Query\Query The query to prepare
+     * @return PDOStatement The prepared statement
+     */
     public function prepareQuery(Query $query)
     {
         $parameters = new Parameters($this->driver);
@@ -276,8 +295,13 @@ class DB
      * Execute a SQL file in the database.
      *
      * This will scan the file for statements, skipping comment-only lines.
+     *
      * Occurences of %PREFIX% will be replaced with the configured table
-     * prefix.
+     * prefix. YOU ARE STRONGLY ADVISED TO ENCLOSE ALL TABLE REFERENCES
+     * WITH IDENTIFIER QUOTES. For MySQL use backticks, for PostgreSQL
+     * use double quotes. Failing to do so may introduce problems when
+     * a prefix is used that requires quoting, for example when it
+     * includes hyphens.
      *
      * There are a two basic restrictions on the format:
      *
@@ -290,11 +314,15 @@ class DB
      *
      * Not adhering to 1) will result in the last statement not being executed.
      * Not adhering to 2) will result in the semi-colon not being detected,
-     * thus leading to the last statement no being executed.
+     *                    thus leading to the last statement not being executed.
      * Not adhering to 3) will result in lines being skipped.
      *
      * Statements are concatenated and fed to the SQL driver, so any other
      * language construct understood by the database is allowed.
+     *
+     * @param string $filename The SQL file to load and execute
+     * @return $this Provides fluent interface
+     * @throws PDOException When the SQL is faulty
      */
     public function executeSQL(string $filename)
     {
@@ -325,18 +353,23 @@ class DB
             }
         }
         fclose($fh);
+        return $this;
     }
 
     /**
      * Start a transaction
+     *
+     * @return bool True on success, false on failure
      */
     public function beginTransaction()
     {
-        $this->getPDO()->beginTransaction();
+        return $this->getPDO()->beginTransaction();
     }
 
     /**
      * Commit a transaction 
+     *
+     * @return bool True on success, false on failure
      */
     public function commit()
     {
@@ -345,6 +378,8 @@ class DB
 
     /**
      * Rollback a transaction 
+     *
+     * @return bool True on success, false on failure
      */
     public function rollback()
     {

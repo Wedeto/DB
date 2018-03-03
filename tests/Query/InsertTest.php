@@ -3,7 +3,7 @@
 This is part of Wedeto, the WEb DEvelopment TOolkit.
 It is published under the MIT Open Source License.
 
-Copyright 2017, Egbert van der Wal
+Copyright 2017-2018, Egbert van der Wal
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -27,10 +27,11 @@ namespace Wedeto\DB\Query;
 
 use PHPUnit\Framework\TestCase;
 
-require_once "ProvideMockDb.php";
-use Wedeto\DB\MockDB;
+use Wedeto\DB\Exception\OutOfRangeException;
+use Wedeto\DB\Exception\InvalidTypeException;
+use Wedeto\DB\DB;
 
-use Wedeto\DB\Query\Builder as Q;
+use Wedeto\DB\Query\Builder as QB;
 
 /**
  * @covers Wedeto\DB\Query\Insert
@@ -103,15 +104,15 @@ class InsertTest extends TestCase
         $this->assertEquals(3, $v->getValue());
     }
 
-    public function testInsertUsingDAO()
+    public function testInsertUsingModel()
     {
         $mock = $this->prophesize(\Wedeto\DB\Model::class);
         $mock->getRecord()->willReturn(['foo' => 'bar', 'baz' => 3]);
-        $dao = $mock->reveal();
+        $model = $mock->reveal();
 
         $table = "test_table";
 
-        $i = new Insert($table, $dao);
+        $i = new Insert($table, $model);
 
         $fields = $i->getFields();
         $this->assertEquals(2, count($fields));
@@ -128,6 +129,79 @@ class InsertTest extends TestCase
         $this->assertEquals(3, $values['baz']->getValue());
     }
 
+    public function testReplaceValues()
+    {
+        $vals = ['foo' => 'bar', 'baz' => 3];
+        $table = "test_table";
+
+        $i = new Insert($table, $vals);
+        
+        $curVals = $i->getValues();
+        $this->assertEquals(2, count($curVals));
+
+        $this->assertTrue(isset($curVals['foo']));
+        $this->assertInstanceOf(ConstantValue::class, $curVals['foo']);
+        $this->assertEquals('bar', $curVals['foo']->getValue());
+
+        $this->assertTrue(isset($curVals['baz']));
+        $this->assertInstanceOf(ConstantValue::class, $curVals['baz']);
+        $this->assertEquals(3, $curVals['baz']->getValue());
+
+
+        $newVals = ['foo' => 'foobar', 'baz' => 9];
+        $i->replaceValues($newVals);
+
+        $curVals = $i->getValues();
+        $this->assertEquals(2, count($curVals));
+
+        $this->assertTrue(isset($curVals['foo']));
+        $this->assertInstanceOf(ConstantValue::class, $curVals['foo']);
+        $this->assertSame($i->getValue('foo'), $curVals['foo']);
+        $this->assertEquals('foobar', $curVals['foo']->getValue());
+
+        $this->assertTrue(isset($curVals['baz']));
+        $this->assertInstanceOf(ConstantValue::class, $curVals['baz']);
+        $this->assertSame($i->getValue('baz'), $curVals['baz']);
+        $this->assertEquals(9, $curVals['baz']->getValue());
+    }
+
+    public function testReplaceValuesWithInvalidField()
+    {
+        $vals = ['foo' => 'bar', 'baz' => 3];
+        $table = "test_table";
+
+        $i = new Insert($table, $vals);
+        $this->expectException(OutOfRangeException::class);
+        $this->expectExceptionMessage("Invalid field: foobar");
+        $i->replaceValues(['foobar' => 99]);
+    }
+
+    public function testReplaceValueWithExpressionValue()
+    {
+        $vals = [
+            'foo' => new ConstantValue('bar'),
+            'baz' => QB::add(3, 5)
+        ];
+        $table = "test_table";
+
+        $i = new Insert($table, $vals);
+
+        $this->expectException(InvalidTypeException::class);
+        $this->expectExceptionMessage("Not a constant value: baz");
+        $i->replaceValue('baz', 8);
+    }
+
+    public function testGetValueWithInvalidField()
+    {
+        $vals = ['foo' => 'bar', 'baz' => 3];
+        $table = "test_table";
+
+        $i = new Insert($table, $vals);
+        $this->expectException(OutOfRangeException::class);
+        $this->expectExceptionMessage("Invalid field: foobar");
+        $i->getValue('foobar');
+    }
+
     public function testInsertWithIDField()
     {
         $table = "test_table";
@@ -140,12 +214,14 @@ class InsertTest extends TestCase
 
     public function testToSQL()
     {
-        $db = new MockDB();
+        $mocker = $this->prophesize(DB::class);
+        $db = $mocker->reveal();
+        $mocker->getDriver()->willReturn(new \Wedeto\DB\Driver\PGSQL($db));
         $drv = $db->getDriver();
 
         $params = new Parameters($drv);
         $ins = new Insert(
-            Q::into("test_table"),
+            QB::into("test_table"),
             ['foo' => 'bar']
         );
 
@@ -158,7 +234,7 @@ class InsertTest extends TestCase
 
         $params = new Parameters($drv);
         $ins = new Insert(
-            Q::into("test_table"),
+            QB::into("test_table"),
             ['foo' => 'bar', 'uniqueval' => 3]
         );
 

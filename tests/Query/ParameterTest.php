@@ -3,7 +3,7 @@
 This is part of Wedeto, the WEb DEvelopment TOolkit.
 It is published under the MIT Open Source License.
 
-Copyright 2017, Egbert van der Wal
+Copyright 2017-2018, Egbert van der Wal
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -303,5 +303,22 @@ class ParameterTest extends TestCase
         $this->expectException(ImplementationException::class);
         $this->expectExceptionMessage("No alias generation implemented for: " . ComparisonOperator::class);
         $a->generateAlias($f);
+    }
+
+    public function testBindParameters()
+    {
+        $a = new Parameters;
+        
+        $a
+            ->set('foo', 'bar')
+            ->set('baz', 3);
+
+
+        $mocker = $this->prophesize(\PDOStatement::class);
+        $st = $mocker->reveal();
+
+        $mocker->bindParam('foo', 'bar', \PDO::PARAM_STR)->shouldBeCalledTimes(1);
+        $mocker->bindParam('baz', 3, \PDO::PARAM_STR)->shouldBeCalledTimes(1);
+        $a->bindParameters($st);
     }
 }

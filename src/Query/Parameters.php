@@ -33,6 +33,9 @@ use Wedeto\DB\Exception\OutOfRangeException;
 use ArrayIterator;
 use PDO;
 
+/**
+ * Maintains a list of query parameters for a query
+ */
 class Parameters implements \Iterator
 {
     protected $driver = null;
@@ -53,13 +56,25 @@ class Parameters implements \Iterator
     /** For the iterator interface */
     protected $iterator = null;
 
+    /**
+     * Create the parameters and bind it to the driver
+     *
+     * @param Driver $driver The driver to bind to
+     */
     public function __construct(Driver $driver = null)
     {
         if ($driver !== null)
             $this->setDriver($driver);
     }
 
-    public function assign($value, $type = PDO::PARAM_STR)
+    /**
+     * Set a value for the next parameters in the query
+     *
+     * @param mixed $value The value to set
+     * @param int $type The parameter type, one of PDO::PARAM_*
+     * @return string The assigned key
+     */
+    public function assign($value, int $type = PDO::PARAM_STR)
     {
         $key = $this->getNextKey();
         $this->params[$key] = $value;
@@ -67,6 +82,10 @@ class Parameters implements \Iterator
         return $key;
     }
 
+    /**
+     * @param string $key The key to get the value of
+     * @return mixed The current value for the key
+     */
     public function get(string $key)
     {
         if (!array_key_exists($key, $this->params))
@@ -75,6 +94,11 @@ class Parameters implements \Iterator
         return $this->params[$key];
     }
 
+    /**
+     * Get the type of parameter the key is set to
+     * @param string $key The key to get the parameter type for
+     * @return int The parameter type, one of PDO::PARAM_*
+     */
     public function getParameterType(string $key)
     {
         if (!array_key_exists($key, $this->params))
@@ -83,33 +107,55 @@ class Parameters implements \Iterator
         return $this->param_types[$key];
     }
 
-    public function set(string $key, $value, $type = PDO::PARAM_STR)
+    /**
+     * Set the value for an existing parameters.
+     * @param string $key The key to set
+     * @param mixed $value The value to set it to
+     * @param int $type The parameter type, one of PDO::PARAM_*
+     */
+    public function set(string $key, $value, int $type = PDO::PARAM_STR)
     {
         $this->params[$key] = $value;
         $this->param_types[$key] = $type;
         return $this;
     }
 
+    /**
+     * @return int The scope ID - used to separate inner from outer variables
+     */
     public function getScopeID()
     {
         return $this->scope_id;
     }
 
+    /**
+     * @return string The next key to used as a query parameter
+     */
     public function getNextKey()
     {
         return "c" . $this->column_counter++;
     }
 
+    /**
+     * @return array A reference to the query parameters
+     */
     public function &getParameters()
     {
         return $this->params;
     }
 
+    /**
+     * @param string $table The table object to get
+     * @return TableClause The Table clause
+     */
     public function getTable(string $table)
     {
         return $this->tables[$table];
     }
 
+    /**
+     * Clear the entire parameters object
+     */
     public function reset()
     {
         $this->tables = array();
@@ -117,6 +163,12 @@ class Parameters implements \Iterator
         $this->params = array();
     }
 
+    /**
+     * Register a table used in the query
+     * @param string $name The name of the table
+     * @param string $alias The alias for the table
+     * @return $this Provides fluent interface
+     */
     public function registerTable($name, $alias)
     {
         if (!empty($alias) && empty($name))
@@ -152,8 +204,14 @@ class Parameters implements \Iterator
         {
             $this->tables[$name][$name] = true;
         }
+        return $this;
     }
 
+    /**
+     * Find a table by its alias
+     * @param string $alias The alias to find
+     * @return TableClause The table the alias refers to - can be from an outer scope
+     */
     public function resolveAlias(string $alias)
     {
         if (isset($this->aliases[$alias]))
@@ -165,6 +223,11 @@ class Parameters implements \Iterator
         return $this->parent_scope->resolveAlias($alias);
     }
 
+    /**
+     * Find a table by its name
+     * @param string $name The name of the table
+     * @return TableClause The table searched for - can be from an outer scope
+     */
     public function resolveTable(string $name)
     {
         if (!empty($name) && is_string($name))
@@ -188,6 +251,9 @@ class Parameters implements \Iterator
         throw new QueryException("No table identifier provided");
     }
 
+    /**
+     * @return TableClause The first used table in the query
+     */
     public function getDefaultTable()
     {
         if (count($this->tables) <= 1 && count($this->aliases) <= 1)
@@ -205,43 +271,68 @@ class Parameters implements \Iterator
             return new TableClause($alias);
     }
 
+    /**
+     * @return mixed The current query parameter value
+     */
     public function current()
     {
         return $this->iterator->current();
     }
 
+    /**
+     * @return string The current query parameter key
+     */
     public function key()
     {
         return $this->iterator->key();
     }
 
+    /**
+     * Move the internal pointer to the next query parameter
+     */
     public function next()
     {
         $this->iterator->next();
     }
 
+    /**
+     * Reset the internal pointer to the first query parameter
+     */
     public function rewind()
     {
         $this->iterator = new ArrayIterator($this->params);
         $this->iterator->rewind();
     }
 
+    /**
+     * @return bool True if the iterator is in a valid position, false if not
+     */
     public function valid()
     {
         return $this->iterator->valid();
     }
 
+    /**
+     * @return int the parameter type for the parameter the internal pointer points to.
+     */
     public function parameterType()
     {
         return $this->getParameterType($this->key());
     }
 
+    /**
+     * @param Driver $driver The driver to set for this parameters object
+     * @return $this Provides fluent interface
+     */
     public function setDriver(Driver $driver)
     {
         $this->driver = $driver;
         return $this;
     }
 
+    /**
+     * @return Driver The active driver
+     */
     public function getDriver()
     {
         if ($this->driver === null)
@@ -249,6 +340,11 @@ class Parameters implements \Iterator
         return $this->driver;
     }
 
+    /**
+     * Bind the paramters to a PDOStatement
+     * @param PDOStatement $statement The statement to bind to
+     * @return $this Provides fluent interface
+     */
     public function bindParameters(\PDOStatement $statement)
     {
         foreach (array_keys($this->params) as $key)
@@ -259,6 +355,11 @@ class Parameters implements \Iterator
         return $this;
     }
 
+    /**
+     * Generate an alias for a table
+     * @param Clause $clause The field or sub query to refer to
+     * @return string The alias for the table
+     */
     public function generateAlias(Clause $clause)
     {
         if ($clause instanceof FieldName)
@@ -291,6 +392,12 @@ class Parameters implements \Iterator
         return $alias;
     }
 
+    /**
+     * Create a sub scope for a nester query
+     *
+     * @param int $num The scope level
+     * @return Parameters A nested parameters object
+     */
     public function getSubScope(int $num = null)
     {
         // Resolve an existing scope

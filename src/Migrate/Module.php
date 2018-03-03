@@ -72,10 +72,9 @@ class Module
      *
      * @param string $module The name of the module
      * @param string $path The path where the migration files are located
-     * @param Repository The repository where migration modules are referenced
      * @param DB $db The database to migrate
      */
-    public function __construct(string $module, $path, Repository $repository, DB $db)
+    public function __construct(string $module, $path, DB $db)
     {
         $this->getLogger();
         $this->module = $module;
@@ -92,7 +91,12 @@ class Module
 
         try
         {
-            $this->db_version = $this->dao->get(QB::where(["module" => $this->module]), QB::order(['version' => 'DESC']));
+            $this->db_version = 
+                $this->dao->get(
+                    QB::where(["module" => $this->module]), 
+                    QB::order(['version' => 'DESC'])
+                ) 
+                ?: new NullVersion;
         }
         catch (TableNotExistsException $e)
         {
@@ -110,6 +114,22 @@ class Module
     public function getModule()
     {
         return $this->module;
+    }
+
+    /**
+     * @return DB The database this module is linked to
+     */
+    public function getDB()
+    {
+        return $this->db;
+    }
+
+    /**
+     * @return string The path to the migration files
+     */
+    public function getPath()
+    {
+        return $this->migration_path;
     }
 
     /**
@@ -259,12 +279,12 @@ class Module
                 static::$logger->info("Succesfully migrated module {module} from {from} to {to} using file {file}", $migration);
                 $db->commit();
             }
-            catch (Exception $e)
+            catch (\Exception $e)
             {
                 // Upgrade failed, roll back to previous state
-                $db->rollback();
                 static::$logger->error("Migration of module {module} from {from} to {to} using file {file}", $migration);
                 static::$logger->error("Exception: {0}", [$e]);
+                $db->rollback();
                 throw $e;
             }
         }
@@ -319,14 +339,14 @@ class Module
         }
 
         if (count($migrations) === 0)
-            throw new MigrationException("No migation path from version $from to $to for module {$this->module}");
+            throw new MigrationException("No migration path from version $from to $to for module {$this->module}");
 
         $last = end($migrations);
         if ($last['to'] !== $to)
         {
             $rest = $this->plan($last['to'], $to);
             foreach ($rest as $migration)
-                $migrations[] = $rest;
+                $migrations[] = $migration;
         }
 
         return $migrations;

@@ -26,6 +26,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Migrate;
 
 use PHPUnit\Framework\TestCase;
+use Wedeto\DB\DB;
+use Wedeto\DB\Exception\MigrationException;
 
 /**
  * @covers Wedeto\DB\Migrate\Repository
@@ -43,10 +45,12 @@ class RepositoryTest extends TestCase
 
     public function testAddModuleFromObject()
     {
-        $repo = new Repository;
+        $db = $this->prophesize(DB::class)->reveal();
+        $repo = new Repository($db);
 
         $prophecy = $this->prophesize(Module::class);
         $prophecy->getModule()->willReturn("My/Module");
+        $prophecy->getDB()->willReturn($db);
 
         $module = $prophecy->reveal();
         $repo->addModule($module);
@@ -54,6 +58,54 @@ class RepositoryTest extends TestCase
         $this->assertEquals($module, $repo->getMigration('My/Module'));
         $this->assertEquals($module, $repo->getMigration('My.Module'));
         $this->assertEquals($module, $repo->getMigration('My\\Module'));
+    }
+
+    public function testAddModuleFromNameAndIterate()
+    {
+        $db = $this->prophesize(DB::class)->reveal();
+        $repo = new Repository($db);
+
+        $mod = "Foo.bar";
+        $repo->addMigration($mod, __DIR__ . "/migrations1");
+
+        $mod = strtolower($mod);
+        $res = [];
+        foreach ($repo as $module => $obj)
+            $res[$module] = $obj;
+
+        $this->assertTrue(isset($res[$mod]), "Module should be registered");
+        $this->assertEquals($mod, $res[$mod]->getModule());
+    }
+
+    public function testAddDuplicateModuleShouldThrowException()
+    {
+        $db = $this->prophesize(DB::class)->reveal();
+        $repo = new Repository($db);
+
+        $mod = "Foo.bar";
+        $repo->addMigration($mod, __DIR__ . "/migrations1");
+
+        $mod = strtolower($mod);
+
+        $this->expectException(MigrationException::class);
+        $this->expectExceptionMessage("Duplicate module: $mod");
+        $repo->addMigration($mod, __DIR__ . "/migrations2");
+    }
+
+    public function testAddModuleWithDifferentDBShouldThrowException()
+    {
+        $db = $this->prophesize(DB::class)->reveal();
+        $db2 = $this->prophesize(DB::class)->reveal();
+
+        $mod = "Foo.bar";
+        $path = __DIR__ . "/migrations1";
+
+        $repo = new Repository($db);
+        $module = new Module($mod, $path, $db2);
+
+        $this->expectException(MigrationException::class);
+        $this->expectExceptionMessage("The DB instances should be the same");
+        $repo->addModule($module);
     }
     
 }

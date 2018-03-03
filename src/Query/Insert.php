@@ -30,6 +30,7 @@ use DomainException;
 use Wedeto\Util\Functions as WF;
 use Wedeto\DB\Model;
 use Wedeto\DB\Exception\OutOfRangeException;
+use Wedeto\DB\Exception\InvalidTypeException;
 
 class Insert extends Query
 {
@@ -100,6 +101,9 @@ class Insert extends Query
     {
         if (!isset($this->values[$field]))
             throw new OutOfRangeException("Invalid field: " . $field);
+
+        if (!($this->values[$field] instanceof ConstantValue))
+            throw new InvalidTypeException("Not a constant value: $field");
 
         $this->values[$field]->setValue($value);
         return $this;

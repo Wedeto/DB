@@ -26,18 +26,25 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Migrate;
 
 use Wedeto\DB\Exception\MigrationException;
-use Wedeto\Model\DBVersion;
+use Wedeto\DB\DB;
+use Iterator;
+use ArrayIterator;
 
 /**
  * Manage a set of migration modules and the path to their migration files.
  */
-class Repository implements \Iterator
+class Repository implements Iterator
 {
     /** The list of modules and their module instances */
     protected $modules = [];
 
     /** And iterator providing traversable implementation */
     protected $iterator = null;
+
+    public function __construct(DB $db)
+    {
+        $this->db = $db;
+    }
 
     /**
      * @param string The module to return
@@ -55,6 +62,9 @@ class Repository implements \Iterator
      */
     public function addModule(Module $module)
     {
+        if ($this->db !== $module->getDB())
+            throw new MigrationException("The DB instances should be the same");
+
         $name = self::normalizeModule($module->getModule());
         $this->modules[$name] = $module;
         return $this;
@@ -73,8 +83,8 @@ class Repository implements \Iterator
         if (isset($this->modules[$module]))
             throw new MigrationException("Duplicate module: " . $module);
 
-        $instance = new Module($module, $path);
-        $this->addModule($module, $instance);
+        $instance = new Module($module, $path, $this->db);
+        $this->modules[$module] = $instance;
         return $instance;
     }
 

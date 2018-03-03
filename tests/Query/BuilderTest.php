@@ -196,6 +196,15 @@ class BuilderTest extends TestCase
         $this->assertEquals('bar', $w->getOperand()->getRHS()->getValue());
     }
 
+    public function testEquals()
+    {
+        $eq = Q::equals('foo', 'bar');
+        $this->assertEquals('=', $eq->getOperator());
+
+        $eq = Q::equals('foo', null);
+        $this->assertEquals('IS', $eq->getOperator());
+    }
+
     public function testOr()
     {
         $o = Q::or(Q::equals('foo', '1'), Q::equals('foo', '2'));

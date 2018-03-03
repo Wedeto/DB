@@ -48,6 +48,18 @@ class ConstantValueTest extends TestCase
         $expected = $dt->format(\DateTime::ATOM);
         $a = new ConstantValue($dt);
         $this->assertEquals($expected, $a->getValue());
+
+        if (class_exists(\IntlCalendar::class))
+        {
+            $cal = \IntlCalendar::createInstance();
+            $cal->set(2018, 0, 1, 0, 0, 0);
+
+            $dt = new \DateTime("2018-01-01T00:00:00");
+            $expected = $dt->format(\DateTime::ATOM);
+
+            $a = new ConstantValue($cal);
+            $this->assertEquals($expected, $a->getValue());
+        }
     }
 
     public function testWithInvalidValue()
