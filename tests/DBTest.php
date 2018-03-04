@@ -27,11 +27,13 @@ namespace Wedeto\DB;
 
 use PHPUnit\Framework\TestCase;
 
-use Wedeto\DB\Driver\Driver;
+use Wedeto\DB\Driver;
 
 use Wedeto\DB\Exception\TableNotExistsException;
 use Wedeto\DB\Exception\MigrationException;
 use Wedeto\DB\Exception\NoMigrationTableException;
+use Wedeto\DB\Exception\DriverException;
+use Wedeto\DB\Exception\ConfigurationException;
 
 use Wedeto\Util\DI\DI;
 use Wedeto\Util\DI\BasicFactory;
@@ -62,9 +64,28 @@ class DBTest extends TestCase
 
     public function testConstruction()
     {
-        $mocker = $this->prophesize(\PDO::class);
-        $pdo = $mocker->reveal();
-        DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
+        DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) {
+            return new MockPDO($args['dsn'], $args['username'], $args['password']);
+        }));
+
+        $db = new DB($this->config);
+        $pdo = $db->getPDO();
+        $this->assertInstanceOf(MockPDO::class, $pdo);
+
+        $args = $pdo->args;
+        $this->assertEquals('mysql:host=localhost;dbname=foobardb;charset=utf8', $args[0]);
+        $this->assertEquals('foo', $args[1]);
+        $this->assertEquals('bar', $args[2]);
+
+        $di = $db->__debuginfo();
+        $this->assertTrue(isset($di['dsn']), "DSN should be set");
+        $this->assertTrue(isset($di['driver']), "Driver should be set");
+    }
+
+    public function testGetPDOWithLazyLoading()
+    {
+        $this->config->set('sql', 'lazy', true);
+        DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) {
             return new MockPDO($args['dsn'], $args['username'], $args['password']);
         }));
 
@@ -78,12 +99,10 @@ class DBTest extends TestCase
         $this->assertEquals('bar', $args[2]);
     }
 
-    public function testConstructionWithUpperCaseType()
+    public function testConstructionWithSubclassedPGSQL()
     {
-        $this->config->set('sql', 'type', 'pgSQL');
-        $mocker = $this->prophesize(\PDO::class);
-        $pdo = $mocker->reveal();
-        DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
+        $this->config->set('sql', 'type', MockDriver::class);
+        DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) {
             return new MockPDO($args['dsn'], $args['username'], $args['password']);
         }));
 
@@ -96,6 +115,46 @@ class DBTest extends TestCase
         $this->assertEquals('pgsql:host=localhost;dbname=foobardb', $args[0]);
         $this->assertEquals('foo', $args[1]);
         $this->assertEquals('bar', $args[2]);
+    }
+
+    public function testConstructionWithNonExistingDriver()
+    {
+        $this->config->set('sql', 'type', 'Wedeto\\DB\\Non\\Existing\\Driver');
+        $this->expectException(DriverException::class);
+        $this->expectExceptionMessage("No driver available for database type");
+        $db = new DB($this->config);
+    }
+
+    public function testConstructionWithNoDriver()
+    {
+        $this->config->set('sql', 'type', null);
+        $this->expectException(ConfigurationException::class);
+        $this->expectExceptionMessage("Please specify the database type in the configuration section [sql]");
+        $db = new DB($this->config);
+    }
+
+    public function testDBDelegatesToPDO()
+    {
+        $pdo_mocker = $this->prophesize(\PDO::class);
+        $pdo = $pdo_mocker->reveal();
+        DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
+            return $pdo;
+        }));
+
+        $this->config->set('sql', 'type', 'MySQL');
+        $db = new DB($this->config);
+
+        $this->assertSame($pdo, $db->getPDO());
+        $pdo = $db->getPDO();
+
+        $pdo_mocker->beginTransaction()->shouldBeCalledTimes(1);
+        $db->beginTransaction();
+
+        $pdo_mocker->commit()->shouldBeCalledTimes(1);
+        $db->commit();
+
+        $pdo_mocker->rollBack()->shouldBeCalledTimes(1);
+        $db->rollBack();
     }
 }
 
@@ -111,3 +170,6 @@ class MockPDO extends \PDO
     public function setAttribute($attrib, $value)
     { }
 }
+
+class MockDriver extends Driver\PGSQL
+{ }

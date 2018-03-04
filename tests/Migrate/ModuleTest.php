@@ -210,7 +210,7 @@ class ModuleTest extends TestCase
 
         // Predict the steps of the migration
         $this->db_mocker->beginTransaction()->shouldBeCalled();
-        $this->db_mocker->rollback()->shouldBeCalled();
+        $this->db_mocker->rollBack()->shouldBeCalled();
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage("Testexception");

@@ -38,6 +38,8 @@ use Wedeto\DB\Schema\Schema;
 use Wedeto\DB\Query\Query;
 use Wedeto\DB\Query\Parameters;
 
+use Wedeto\DB\Driver\Driver;
+
 use Wedeto\DB\Exception\ConfigurationException;
 use Wedeto\DB\Exception\DriverException;
 use Wedeto\DB\Exception\IOException;
@@ -87,34 +89,39 @@ class DB
      */
     protected function setupDriver(string $type)
     {
-        $driver = "Wedeto\\DB\\Driver\\" . $type;
-        if (class_exists($driver))
-            return new $driver($this);
-
-        // Attempt a case insensitive match
+        // A full namespaced class name may be provided
         $driver = null;
-        $type = strtolower($type);
-
-        // Load all drivers in the Driver directory
-        $path = realpath(__FILE__);
-        $drivers = glob($path . '/Driver/*.php');
-
-        // Check if any of the names match the type
-        foreach ($drivers as $filename)
+        $driver_class = null;
+        if (is_a($type, Driver::class, true))
         {
-            $filename = basename($filename, '.php');
-            if (strtolower($filename) === strtolower($type))
+            $driver_class = $type;
+            $driver = new $type($this);
+        }
+        else
+        {
+            // Or the name of one of the included drivers
+            $driver_class = "Wedeto\\DB\\Driver\\" . $type;
+            if (is_a($driver_class, Driver::class, true))
             {
-                $driver = "Wedeto\\DB\\Driver\\" . $filename;
-                break;
+                $driver = new $driver_class($this);
             }
         }
 
-        // Check if a driver was found
-        if (empty($driver) || !class_exists($driver))
+        if ($driver === null)
             throw new DriverException("No driver available for database type $type");
 
-        return new $driver($this);
+        $actual_class = get_class($driver);
+        if (strcmp($driver_class, $actual_class) != 0)
+        {
+            // Warn if the case doesn't match the actual classname
+            self::$logger->warning(
+                "WARNING: Configurated class {} does not match actual "
+                    . "classname: {}. This may cause issues with "
+                    . "autoloading.",
+                [$driver_class, $actual_class]
+            );
+        }
+        return $driver;
     }
 
     /**
@@ -124,9 +131,6 @@ class DB
      */
     private function connect()
     {
-        if ($this->pdo !== null)
-            return true;
-
         $username = $this->config->get('sql', 'username');
         $password = $this->config->get('sql', 'password');
         $host = $this->config->get('sql', 'hostname');
@@ -373,7 +377,7 @@ class DB
      */
     public function commit()
     {
-        return $this->getPDO()->rollback();
+        return $this->getPDO()->commit();
     }
 
     /**
@@ -381,7 +385,7 @@ class DB
      *
      * @return bool True on success, false on failure
      */
-    public function rollback()
+    public function rollBack()
     {
         return $this->getPDO()->rollback();
     }
