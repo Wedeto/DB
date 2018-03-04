@@ -34,6 +34,7 @@ use Wedeto\DB\Exception\MigrationException;
 use Wedeto\DB\Exception\NoMigrationTableException;
 
 use Wedeto\Util\DI\DI;
+use Wedeto\Util\DI\BasicFactory;
 use Wedeto\Util\Configuration;
 
 use Prophecy\Argument;
@@ -63,10 +64,11 @@ class DBTest extends TestCase
     {
         $mocker = $this->prophesize(\PDO::class);
         $pdo = $mocker->reveal();
+        DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
+            return new MockPDO($args['dsn'], $args['username'], $args['password']);
+        }));
 
-        DI::getInjector()->remap(\PDO::class, MockPDO::class);
         $db = new DB($this->config);
-
         $pdo = $db->getPDO();
         $this->assertInstanceOf(MockPDO::class, $pdo);
 
@@ -81,8 +83,10 @@ class DBTest extends TestCase
         $this->config->set('sql', 'type', 'pgSQL');
         $mocker = $this->prophesize(\PDO::class);
         $pdo = $mocker->reveal();
+        DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
+            return new MockPDO($args['dsn'], $args['username'], $args['password']);
+        }));
 
-        DI::getInjector()->remap(\PDO::class, MockPDO::class);
         $db = new DB($this->config);
 
         $pdo = $db->getPDO();
