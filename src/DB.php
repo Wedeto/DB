@@ -197,12 +197,16 @@ class DB
         if ($this->schema === null)
         {
             $drv = $this->getDriver();
+            $host = $drv->getHostname();
             $database = $drv->getDatabaseName();
             $schema = $drv->getSchemaName();
             $type = $this->config->get('sql', 'type');
-            $schema_name = sprintf("%s_%s_%s", $type, $database, $schema);
+            $schema_name = sprintf("%s_%s_%s_%s", $type, $host, $database, $schema);
 
-            $this->schema = new Schema($schema_name, true);
+            $this->schema =  DI::getInjector()->newInstance(
+                Schema::class, 
+                ['schema_name' => $schema_name, 'use_cache' => true]
+            );
             $this->schema->setDBDriver($this->driver);
         }
 
@@ -220,10 +224,13 @@ class DB
         if (!isset($this->dao[$class]))
         {
             if (!is_subclass_of($class, Model::class))
-                throw new DAOException("$classname is not a valid Model");
+                throw new DAOException("$class is not a valid Model");
 
-            $tablename = $class->tablename();
-            $dao = new DAO($classname, $tablename, $this);
+            $tablename = $class::getTablename();
+            $dao = DI::getInjector()->newInstance(
+                DAO::class,
+                ['classname' => $class, 'tablename' => $tablename, 'db' => $this]
+            );
             $this->dao[$class] = $dao;
         }
 
@@ -239,10 +246,10 @@ class DB
     public function setDAO(string $class, DAO $dao = null)
     {
         if (!is_subclass_of($class, Model::class))
-            throw new DAOException("$classname is not a valid Model");
+            throw new DAOException("$class is not a valid Model");
 
         $this->dao[$class] = $dao;
-        return $This;
+        return $this;
     }
 
     /**
@@ -351,7 +358,7 @@ class DB
 
             if (substr($trimmed, -1) === ';')
             {
-                $statement = str_replace('%PREFIX%', $prefix);
+                $statement = str_replace('%PREFIX%', $prefix, $trimmed);
                 $this->exec($statement);
                 $statement = '';
             }

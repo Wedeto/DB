@@ -134,10 +134,14 @@ class PGSQL extends Driver
 
         if (isset($config['hostaddr']))
         {
-            $add = filter_var($config['hostaddr'], FILTER_VALIDATE_IP);
-            if ($add === false)
+            $addr = filter_var($config['hostaddr'], FILTER_VALIDATE_IP);
+            if ($addr === false)
                 throw new \DomainException("Invalid IP-address specified for 'hostaddr': " . $config['hostaddr']);
+            $dsn['host'] = $addr;
         }
+
+        if (isset($dsn['host']))
+            $this->host = $dsn['host'];
 
         if (!empty($config['port']) && WF::is_int_val($config['port']))
             $dsn['port'] = (int)$config['port'];

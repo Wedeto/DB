@@ -25,6 +25,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
+use Wedeto\DB\Exception\InvalidValueException;
+use Wedeto\Util\Functions as WF;
+
 class TVarchar extends Column
 {
     public function __construct(string $name, int $max_length = 100, $default = null, bool $nullable = false)

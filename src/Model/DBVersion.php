@@ -34,5 +34,5 @@ use Wedeto\DB\Query\Builder AS QB;
 
 class DBVersion extends Model
 {
-    protected static $table = "db_version";
+    protected static $_table = "db_version";
 }

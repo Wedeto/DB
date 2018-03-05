@@ -28,16 +28,22 @@ namespace Wedeto\DB;
 use PHPUnit\Framework\TestCase;
 
 use Wedeto\DB\Driver;
+use Wedeto\DB\Schema;
+use Wedeto\DB\Query;
 
 use Wedeto\DB\Exception\TableNotExistsException;
 use Wedeto\DB\Exception\MigrationException;
 use Wedeto\DB\Exception\NoMigrationTableException;
 use Wedeto\DB\Exception\DriverException;
 use Wedeto\DB\Exception\ConfigurationException;
+use Wedeto\DB\Exception\DAOException;
+use Wedeto\DB\Exception\IOException;
+use Wedeto\DB\Model\DBVersion;
 
 use Wedeto\Util\DI\DI;
 use Wedeto\Util\DI\BasicFactory;
 use Wedeto\Util\Configuration;
+
 
 use Prophecy\Argument;
 
@@ -99,6 +105,19 @@ class DBTest extends TestCase
         $this->assertEquals('bar', $args[2]);
     }
 
+    public function testGetDriverWithLazyLoading()
+    {
+        $this->config->set('sql', 'lazy', true);
+        DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) {
+            return new MockPDO($args['dsn'], $args['username'], $args['password']);
+        }));
+
+        $db = new DB($this->config);
+
+        $driver = $db->getDriver();
+        $this->assertInstanceOf(Driver\Driver::class, $driver);
+    }
+
     public function testConstructionWithSubclassedPGSQL()
     {
         $this->config->set('sql', 'type', MockDriver::class);
@@ -135,6 +154,7 @@ class DBTest extends TestCase
 
     public function testDBDelegatesToPDO()
     {
+        $this->config->set('sql', 'lazy', true);
         $pdo_mocker = $this->prophesize(\PDO::class);
         $pdo = $pdo_mocker->reveal();
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
@@ -155,6 +175,162 @@ class DBTest extends TestCase
 
         $pdo_mocker->rollBack()->shouldBeCalledTimes(1);
         $db->rollBack();
+
+        $pdo_mocker->exec("Foo")->shouldBeCalled();
+        $db->exec("Foo");
+
+        $pdo_mocker->prepare("BAR")->shouldBeCalled();
+        $db->prepare("BAR");
+
+        $pdo_mocker->setAttribute(Argument::type('int'), Argument::type('int'))->shouldBeCalledTimes(4);
+        $db = new DB($this->config);
+        $pdo_mocker->quote("FOOBAR")->shouldBeCalled();
+        $db->quote("FOOBAR");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage("Function nonExisting does not exist");
+        $db->nonExisting("FUNC");
+    }
+
+    public function testGetSchemaReturnsSchema()
+    {
+        $pdo_mocker = $this->prophesize(\PDO::class);
+        $pdo = $pdo_mocker->reveal();
+        DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
+            return $pdo;
+        }));
+        $db = new DB($this->config);
+
+        $schema_mocker = $this->prophesize(Schema\Schema::class);
+        $schema_mock = $schema_mocker->reveal();
+
+        $received_args = [];
+        DI::getInjector()->registerFactory(
+            Schema\Schema::class, 
+            new BasicFactory(function (array $args) use ($schema_mock, &$received_args) {
+                foreach ($args as $k => $v)
+                    $received_args[$k] = $v;
+                return $schema_mock;
+            })
+        );
+
+        $schema = $db->getSchema();
+        $this->assertSame($schema_mock,$schema);
+        $expectedName = "mysql_localhost_foobardb_foobardb";
+        $this->assertEquals($expectedName, $received_args['schema_name']);
+    }
+
+    public function testGetDAOReturnsProperDAO()
+    {
+        $pdo_mocker = $this->prophesize(\PDO::class);
+        $pdo = $pdo_mocker->reveal();
+        DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
+            return $pdo;
+        }));
+
+        $db = new DB($this->config);
+        $dao = $db->getDAO(DBVersion::class);
+        $this->assertInstanceOf(DAO::class, $dao, "A DAO instance should be returned");
+        $this->assertEquals(DBVersion::getTablename(), $dao->getTablename(), "The table name should match");
+
+        $dao2 = $db->getDAO(MockModel::class);
+        $this->assertNotSame($dao, $dao2, "A different DAO should be returned for a different Model");
+        $this->assertInstanceOf(DAO::class, $dao2, "A DAO instance should be returned");
+        $this->assertEquals(MockModel::getTablename(), $dao2->getTablename(), "The table name should match");
+
+        $db->setDAO(MockModel::class, $dao);
+        $dao3 = $db->getDAO(MockModel::class);
+        $this->assertSame($dao, $dao3, "The overridden DAO should be returned");
+
+        $dao4 = $db->getDAO(MockModel::class);
+        $this->assertSame($dao3, $dao4, "The same overridden DAO should be returned again");
+    }
+
+    public function testGetDAOWithInvalidClass()
+    {
+        $pdo_mocker = $this->prophesize(\PDO::class);
+        $pdo = $pdo_mocker->reveal();
+        DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
+            return $pdo;
+        }));
+        $db = new DB($this->config);
+        
+        $this->expectException(DAOException::class);
+        $this->expectExceptionMessage("is not a valid Model");
+        $dao = $db->getDAO(\Stdclass::class);
+    }
+
+    public function testSetDAOWithInvalidClass()
+    {
+        $pdo_mocker = $this->prophesize(\PDO::class);
+        $pdo = $pdo_mocker->reveal();
+        DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
+            return $pdo;
+        }));
+        $db = new DB($this->config);
+        
+        $dao_mocker = $this->prophesize(DAO::class);
+        $dao = $dao_mocker->reveal();
+
+        $this->expectException(DAOException::class);
+        $this->expectExceptionMessage("is not a valid Model");
+        $dao = $db->setDAO(\Stdclass::class, $dao);
+    }
+
+    public function testPrepareQuery()
+    {
+        $this->config->set('sql', 'lazy', true);
+        $pdo_mocker = $this->prophesize(\PDO::class);
+        $pdo_mocker->setAttribute(3, 2)->shouldBeCalledTimes(1);
+        $pdo_mocker->setAttribute(19, 2)->shouldBeCalledTimes(1);
+        $pdo = $pdo_mocker->reveal();
+        DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
+            return $pdo;
+        }));
+        $db = new DB($this->config);
+
+        $drv_mocker = $this->prophesize(Driver\PGSQL::class);
+        $drv = $drv_mocker->reveal();
+
+        DI::getInjector()->registerFactory(Driver\PGSQL::class, new BasicFactory(function (array $args) use ($drv) {
+            echo "BUILDING PGSQL\n";
+            return $drv;
+        }));
+
+        $st_mocker = $this->prophesize(\PDOStatement::class);
+        $st = $st_mocker->reveal();
+
+        $pdo_mocker->prepare(Argument::any())->willReturn($st);
+
+        $query_mocker = $this->prophesize(Query\Query::class);
+        $statement = $db->prepareQuery($query_mocker->reveal());
+
+        $this->assertSame($st, $statement);
+    }
+
+    public function testExecuteSQL()
+    {
+        $this->config->set('sql', 'lazy', false);
+        $pdo_mocker = $this->prophesize(\PDO::class);
+        $pdo = $pdo_mocker->reveal();
+        DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
+            return $pdo;
+        }));
+        $db = new DB($this->config);
+
+        $db->getDriver()->setTablePrefix("WDIFB");
+        $pdo_mocker->exec("SELECT * FROM foo;")->shouldBeCalledTimes(1);
+        $pdo_mocker->exec("DROP TABLE foo;")->shouldBeCalledTimes(1);
+        $pdo_mocker->exec("CREATE TABLE WDIFBtab (id integer primary key auto_increment, varchar(32) foo);")->shouldBeCalledTimes(1);
+
+        $file = __DIR__ . DIRECTORY_SEPARATOR . '/testStatements.sql';
+        $db->executeSQL($file);
+
+        $file = __DIR__ . DIRECTORY_SEPARATOR . '/nonExistingTestStatements.sql';
+
+        $this->expectException(IOException::class);
+        $this->expectExceptionMessage("Unable to open file '$file'");
+        $db->executeSQL($file);
     }
 }
 
@@ -173,3 +349,8 @@ class MockPDO extends \PDO
 
 class MockDriver extends Driver\PGSQL
 { }
+
+class MockModel extends Model
+{ 
+    protected static $_table = "foobar";
+}

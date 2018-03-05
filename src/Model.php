@@ -29,6 +29,7 @@ use PDOException;
 
 use Wedeto\Util\DI\DI;
 
+use Wedeto\DB\Exception\InvalidTypeException;
 use Wedeto\DB\Exception\InvalidValueException;
 
 /**
@@ -63,7 +64,7 @@ abstract class Model
     /**
      * Return the name of this table
      */
-    public static function tablename()
+    public static function getTablename()
     {
         return static::$_table;
     }
@@ -353,12 +354,11 @@ abstract class Model
      */
     public function setChanged(string $field, bool $changed)
     {
-        if (!isset($this->record[$field]))
+        if (!isset($this->_record[$field]))
             throw new InvalidTypeException("Unknown field: $field");
 
         if ($changed)
         {
-
             $this->_changed[$field] = true;
         }
         else

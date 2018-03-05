@@ -45,6 +45,7 @@ abstract class Driver
     protected $db;
     protected $table_prefix = "";
 
+    protected $host;
     protected $dbname;
     protected $schema;
 
@@ -115,6 +116,11 @@ abstract class Driver
     public function getSchemaName()
     {
         return $this->schema;
+    }
+
+    public function getHostname()
+    {
+        return $this->host;
     }
 
     public function stripPrefix($name)

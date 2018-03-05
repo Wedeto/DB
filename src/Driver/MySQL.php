@@ -112,6 +112,10 @@ class MySQL extends Driver
         if (!isset($config['database']))
             throw new ConfigurationException("Required field missing: database");
 
+        $this->host = $config['socket'] ?? $config['hostname'] ?? "";
+        $this->dbname = $config['database'];
+        $this->schema = $config['database'];
+
         if (isset($config['socket']))
             return "mysql:socket=" . $config['socket'] . ";dbname=" . $config['database'] . ";charset=utf8"; 
 
@@ -119,7 +123,6 @@ class MySQL extends Driver
             throw new ConfigurationException("Required field missing: socket or hostname");
 
         $port = isset($config['port']) ? ";port=" . $config['port'] : "";
-        $this->schema = $config['database'];
 
         return "mysql:host=" . $config['hostname'] . ";dbname=" . $config['database'] . $port . ";charset=utf8";
     }
