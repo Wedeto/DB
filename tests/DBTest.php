@@ -40,6 +40,7 @@ use Wedeto\DB\Exception\DAOException;
 use Wedeto\DB\Exception\IOException;
 use Wedeto\DB\Model\DBVersion;
 
+use Wedeto\Util\Type;
 use Wedeto\Util\DI\DI;
 use Wedeto\Util\DI\BasicFactory;
 use Wedeto\Util\Configuration;
@@ -57,14 +58,16 @@ class DBTest extends TestCase
     public function setUp()
     {
         $config = new Configuration();
-        $config->set('sql', 'lazy', false);
-        $config->set('sql', 'username', 'foo');
-        $config->set('sql', 'password', 'bar');
-        $config->set('sql', 'hostname', 'localhost');
-        $config->set('sql', 'database', 'foobardb');
-        $config->set('sql', 'type', 'mysql');
+        $config->setType('sql', Type::ARRAY);
 
-        $this->config = $config;
+        $config->set('sql', 'default', 'lazy', false);
+        $config->set('sql', 'default', 'username', 'foo');
+        $config->set('sql', 'default', 'password', 'bar');
+        $config->set('sql', 'default', 'hostname', 'localhost');
+        $config->set('sql', 'default', 'database', 'foobardb');
+        $config->set('sql', 'default', 'type', 'mysql');
+
+        $this->config = new DBConfig($config);
     }
 
 
@@ -90,7 +93,7 @@ class DBTest extends TestCase
 
     public function testGetPDOWithLazyLoading()
     {
-        $this->config->set('sql', 'lazy', true);
+        $this->config->set('lazy', true);
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) {
             return new MockPDO($args['dsn'], $args['username'], $args['password']);
         }));
@@ -107,7 +110,7 @@ class DBTest extends TestCase
 
     public function testGetDriverWithLazyLoading()
     {
-        $this->config->set('sql', 'lazy', true);
+        $this->config->set('lazy', true);
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) {
             return new MockPDO($args['dsn'], $args['username'], $args['password']);
         }));
@@ -120,7 +123,7 @@ class DBTest extends TestCase
 
     public function testConstructionWithSubclassedPGSQL()
     {
-        $this->config->set('sql', 'type', MockDriver::class);
+        $this->config->set('type', MockDriver::class);
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) {
             return new MockPDO($args['dsn'], $args['username'], $args['password']);
         }));
@@ -138,7 +141,7 @@ class DBTest extends TestCase
 
     public function testConstructionWithNonExistingDriver()
     {
-        $this->config->set('sql', 'type', 'Wedeto\\DB\\Non\\Existing\\Driver');
+        $this->config->set('type', 'Wedeto\\DB\\Non\\Existing\\Driver');
         $this->expectException(DriverException::class);
         $this->expectExceptionMessage("No driver available for database type");
         $db = new DB($this->config);
@@ -146,7 +149,7 @@ class DBTest extends TestCase
 
     public function testConstructionWithNoDriver()
     {
-        $this->config->set('sql', 'type', null);
+        unset($this->config['type']);
         $this->expectException(ConfigurationException::class);
         $this->expectExceptionMessage("Please specify the database type in the configuration section [sql]");
         $db = new DB($this->config);
@@ -154,14 +157,14 @@ class DBTest extends TestCase
 
     public function testDBDelegatesToPDO()
     {
-        $this->config->set('sql', 'lazy', true);
+        $this->config->set('lazy', true);
         $pdo_mocker = $this->prophesize(\PDO::class);
         $pdo = $pdo_mocker->reveal();
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
             return $pdo;
         }));
 
-        $this->config->set('sql', 'type', 'MySQL');
+        $this->config->set('type', 'MySQL');
         $db = new DB($this->config);
 
         $this->assertSame($pdo, $db->getPDO());
@@ -279,7 +282,7 @@ class DBTest extends TestCase
 
     public function testPrepareQuery()
     {
-        $this->config->set('sql', 'lazy', true);
+        $this->config->set('lazy', true);
         $pdo_mocker = $this->prophesize(\PDO::class);
         $pdo_mocker->setAttribute(3, 2)->shouldBeCalledTimes(1);
         $pdo_mocker->setAttribute(19, 2)->shouldBeCalledTimes(1);
@@ -310,7 +313,7 @@ class DBTest extends TestCase
 
     public function testExecuteSQL()
     {
-        $this->config->set('sql', 'lazy', false);
+        $this->config->set('lazy', false);
         $pdo_mocker = $this->prophesize(\PDO::class);
         $pdo = $pdo_mocker->reveal();
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {

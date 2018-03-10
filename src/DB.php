@@ -70,13 +70,13 @@ class DB
     /**
      * Create a new DB object for a specific configuration set.
      *
-     * @param Wedeto\Util\Dictionary $config The configuration for this connection
+     * @param Wedeto\DB\DBConfig $config The configuration for this connection
      */
-    public function __construct(Configuration $config)
+    public function __construct(DBConfig $config)
     {
         $this->getLogger();
         $this->config = $config;
-        if ($this->config->dget('sql', 'lazy', true) == false)
+        if ($this->config->dget('lazy', true) == false)
             $this->connect();
     }
 
@@ -131,26 +131,26 @@ class DB
      */
     private function connect()
     {
-        $username = $this->config->get('sql', 'username');
-        $password = $this->config->get('sql', 'password');
-        $host = $this->config->get('sql', 'hostname');
-        $database = $this->config->get('sql', 'database');
-        $schema = $this->config->get('sql', 'schema');
-        $this->dsn = $this->config->get('sql', 'dsn');
-        if (!$this->config->has('sql', 'type', Type::STRING))
+        $username = $this->config->get('username');
+        $password = $this->config->get('password');
+        $host = $this->config->get('hostname');
+        $database = $this->config->get('database');
+        $schema = $this->config->get('schema');
+        $this->dsn = $this->config->get('dsn');
+        if (!$this->config->has('type', Type::STRING))
             throw new ConfigurationException("Please specify the database type in the configuration section [sql]");
 
-        $type = $this->config->getString('sql', 'type');
+        $type = $this->config->getString('type');
 
         // Set up the driver
         $this->driver = $this->setupDriver($type);
-        $this->driver->setTablePrefix($this->config->dget('sql', 'prefix', ''));
+        $this->driver->setTablePrefix($this->config->dget('prefix', ''));
             
         if (!$this->dsn)
         {
-            $this->dsn = $this->driver->generateDSN($this->config->getArray('sql'));
+            $this->dsn = $this->driver->generateDSN($this->config->toArray());
             self::$logger->info("Generated DSN: {0}", [$this->dsn]);
-            $this->config->set('sql', 'dsn', $this->dsn);
+            $this->config->set('dsn', $this->dsn);
         }
             
         // Create the PDO and connect it to the database, setting default options
@@ -200,7 +200,7 @@ class DB
             $host = $drv->getHostname();
             $database = $drv->getDatabaseName();
             $schema = $drv->getSchemaName();
-            $type = $this->config->get('sql', 'type');
+            $type = $this->config->get('type');
             $schema_name = sprintf("%s_%s_%s_%s", $type, $host, $database, $schema);
 
             $this->schema =  DI::getInjector()->newInstance(
