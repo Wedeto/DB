@@ -26,7 +26,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB;
 
 use PDOException;
+use Wedeto\DB\Schema\Column\Column;
 
+use Wedeto\Util\Functions as WF;
 use Wedeto\Util\DI\DI;
 
 use Wedeto\DB\Exception\InvalidTypeException;
@@ -308,19 +310,15 @@ abstract class Model
             throw new InvalidValueException("Field $field does not exist!");
 
         $pkey = $dao->getPrimaryKey();
-
         $coldef = $columns[$field];
-        $coldef->validate($value);
+        if (static::validate($coldef, $value))
+        {
+            $this->_record[$field] = $value;
+            $this->_changed[$field] = true;
 
-        $correct = $this->validate($field, $value);
-        if ($correct !== true)
-            throw new InvalidValueException("Field $field cannot be set to $value: {$correct}");
-
-        $this->_record[$field] = $value;
-        $this->_changed[$field] = true;
-
-        if (isset($pkey[$field]))
-            $this->_id[$field] = $value;
+            if (isset($pkey[$field]))
+                $this->_id[$field] = $value;
+        }
 
         return $this;
     }
@@ -382,12 +380,27 @@ abstract class Model
     /**
      * Validate a value for the field before setting it. This method is called
      * from the setField method before updating the value. You can override
-     * this to add validators.
+     * this to add validators. Be sure to call the super validator to validate
+     * the base field to match the column definition.
      *
-     * @return bool True if the value is valid, false if not.
+     * @param Column $coldef The column
+     * @param string $field The name of the field
+     * @return bool True if the value is valid
+     * @throws InvalidValueException When the value is not acceptable
      */
-    public function validate($field, $value)
+    public static function validate(Column $coldef, $value)
     {
-        return true;
+        $field = $coldef->getName();
+        try
+        {
+            $valid = $coldef->validate($value);
+        }
+        catch (InvalidValueException $e)
+        {
+            $rep = WF::str($value);
+            throw new InvalidValueException("Field $field cannot be set to $rep: {$e->getMessage()}");
+        }
+        
+        return $valid;
     }
 }
