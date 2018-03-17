@@ -31,7 +31,7 @@ use Wedeto\Util\DI\InjectionTrait;
 use Wedeto\Util\DI\DI;
 use Wedeto\Util\DI\Injector;
 use Wedeto\Util\Dictionary;
-use Wedeto\Util\Type;
+use Wedeto\Util\Validation\Type;
 use Wedeto\Util\LoggerAwareStaticTrait;
 use Wedeto\Util\Configuration;
 use Wedeto\DB\Schema\Schema;

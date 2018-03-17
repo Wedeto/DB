@@ -40,7 +40,7 @@ use Wedeto\DB\Exception\DAOException;
 use Wedeto\DB\Exception\IOException;
 use Wedeto\DB\Model\DBVersion;
 
-use Wedeto\Util\Type;
+use Wedeto\Util\Validation\Type;
 use Wedeto\Util\DI\DI;
 use Wedeto\Util\DI\BasicFactory;
 use Wedeto\Util\Configuration;

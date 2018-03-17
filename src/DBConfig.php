@@ -27,7 +27,7 @@ namespace Wedeto\DB;
 
 use Wedeto\Util\Configuration;
 use Wedeto\Util\DI\Injector;
-use Wedeto\Util\Type;
+use Wedeto\Util\Validation\Type;
 
 use Wedeto\DB\Exception\ConfigurationException;
 
