@@ -26,7 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
-use Wedeto\DB\Exception\InvalidValueException;
+use Wedeto\Util\Validation\ValidationException;
 
 class TFloat extends Column
 {
@@ -41,7 +41,15 @@ class TFloat extends Column
         parent::validate($value);
 
         if ($value !== null && !is_numeric($value))
-            throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));
+        {
+            throw new ValidationException([
+                'msg' => "{type} required",
+                'context' => [
+                    'type' => 'Float',
+                    'value' => $value
+                ]
+            ]);
+        }
 
         return true;
     }

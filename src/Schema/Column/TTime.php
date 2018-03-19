@@ -25,6 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
+use Wedeto\Util\Validation\ValidationException;
+
 class TTime extends Column
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
@@ -40,7 +42,15 @@ class TTime extends Column
             return true;
 
         if (!$value instanceof DateTime)
-            throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));
+        {
+            throw new ValidationException([
+                'msg' => '{type} required',
+                'context' => [
+                    'type' => 'Time',
+                    'value' => $value
+                ]
+            ]);
+        }
 
         return true;
     }

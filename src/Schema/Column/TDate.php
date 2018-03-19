@@ -26,7 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
-use Wedeto\DB\Exception\InvalidValueException;
+use Wedeto\Util\Validation\ValidationException;
 use DateTime;
 
 class TDate extends Column
@@ -41,7 +41,14 @@ class TDate extends Column
         parent::validate($value);
 
         if ($value !== null && !($value instanceof DateTime))
-            throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));
+        {
+            throw new ValidationException([
+                'msg' => "{type} required",
+                'context' => [
+                    'type' => 'Date'
+                ]
+            ]);
+        }
 
         return true;
     }

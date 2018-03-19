@@ -25,8 +25,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-use Wedeto\DB\Exception\InvalidValueException;
 use Wedeto\Util\Functions as WF;
+use Wedeto\Util\Validation\ValidationException;
 
 class TVarchar extends Column
 {
@@ -43,10 +43,27 @@ class TVarchar extends Column
             return true;
 
         if (!is_string($value) && !is_numeric($value))
-            throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));
+        {
+            throw new ValidationException([
+                'msg' => '{type} required',
+                'context' => [
+                    'type' => 'String',
+                    'value' => $value
+                ]
+            ]);
+        }
 
         if (strlen($value) > $this->max_length)
-            throw new InvalidValueException("Invalid string length for " . $this->type . ": " . WF::str($value));
+        {
+            throw new ValidationException([
+                'msg' => 'String shorter than {length} required',
+                'contxt' => [
+                    'type' => 'String',
+                    'value' => $value,
+                    'length' => $this->max_length
+                ]
+            ]);
+        }
 
         return true;
     }

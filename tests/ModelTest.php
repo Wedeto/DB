@@ -27,23 +27,10 @@ namespace Wedeto\DB;
 
 use PHPUnit\Framework\TestCase;
 
-// use Wedeto\DB\Driver;
 use Wedeto\DB\Schema\Column;
-// use Wedeto\DB\Query;
-
-use Wedeto\DB\Exception\InvalidValueException;
-//use Wedeto\DB\Exception\MigrationException;
-//use Wedeto\DB\Exception\NoMigrationTableException;
-//use Wedeto\DB\Exception\DriverException;
-//use Wedeto\DB\Exception\ConfigurationException;
-//use Wedeto\DB\Exception\DAOException;
-//use Wedeto\DB\Exception\IOException;
+use Wedeto\Util\Validation\ValidationException;
 use Wedeto\DB\Model\DBVersion;
-//
 use Wedeto\Util\DI\DI;
-//use Wedeto\Util\DI\BasicFactory;
-//use Wedeto\Util\Configuration;
-//
 
 use Prophecy\Argument;
 
@@ -157,9 +144,9 @@ class ModelTest extends TestCase
         $this->assertEquals($now, $instance->getField('date'));
 
         // Try some invalid values
-        $this->assertThrows(function () use ($instance) { $instance->version = "bar"; }, 'Invalid value for INT');
-        $this->assertThrows(function () use ($instance, $now) { $instance->version = $now; }, 'Invalid value for INT');
-        $this->assertThrows(function () use ($instance, $now) { $instance->module = $now; }, 'Invalid value for VARCHAR');
+        $this->assertThrows(function () use ($instance) { $instance->version = "bar"; }, 'Integral value required');
+        $this->assertThrows(function () use ($instance, $now) { $instance->version = $now; }, 'Integral value required');
+        $this->assertThrows(function () use ($instance, $now) { $instance->module = $now; }, 'String required');
 
         $rec = $instance->getRecord();
         $this->assertTrue(is_array($rec));
@@ -203,7 +190,7 @@ class ModelTest extends TestCase
         {
             $fn();
         }
-        catch (InvalidValueException $e)
+        catch (ValidationException $e)
         {
             $this->assertContains($msg, $e->getMessage());
             $thrown = true;

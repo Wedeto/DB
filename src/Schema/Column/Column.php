@@ -29,6 +29,7 @@ use DateTime;
 
 use Wedeto\Util\Functions as WF;
 use Wedeto\Util\Hook;
+use Wedeto\Util\Validation\ValidationException;
 use Wedeto\DB\Schema\Table;
 use Wedeto\DB\Exception\InvalidTypeException;
 use Wedeto\DB\Exception\InvalidValueException;
@@ -205,7 +206,7 @@ abstract class Column implements \Serializable, \JSONSerializable
     public function validate($value)
     {
         if ($value === null && !$this->is_nullable)
-            throw new InvalidValueException("Column must not be null: {$this->name}");
+            throw new ValidationException(['msg' => 'Column must not be null: {name}', 'context' => ['name' => $this->name]]);
 
         return true;
     }
@@ -220,7 +221,7 @@ abstract class Column implements \Serializable, \JSONSerializable
         if ($value === null)
         {
             if (!$this->isNullable())
-                throw new InvalidValueException("Column must not be null: {$this->name}");
+                throw new ValidationException(['msg' => 'Column must not be null: {name}', 'context' => ['name' => $this->name]]);
             return null;
         }
 

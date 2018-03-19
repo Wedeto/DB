@@ -26,7 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
-use Wedeto\DB\Exception\InvalidValueException;
+use Wedeto\Util\ValidationException;
 
 class TEnum extends Column
 {
@@ -40,8 +40,16 @@ class TEnum extends Column
     {
         parent::validate($value);
 
-        if ($value !== null && !in_array($value, $this->enum_valueS))
-            throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));
+        if ($value !== null && !in_array($value, $this->enum_values))
+        {
+            throw new ValidationException([
+                'msg' => "{type} required",
+                'context' => [
+                    'type' => 'Enum value',
+                    'value' => $value
+                ]
+            ]);
+        }
 
         return true;
     }

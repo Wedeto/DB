@@ -26,7 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
-use Wedeto\DB\Exception\InvalidValueException;
+use Wedeto\Util\Validation\ValidationException;
 
 class TInt extends Column
 {
@@ -44,12 +44,29 @@ class TInt extends Column
             return true;
 
         if (!WF::is_int_val($value))
-            throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));
+        {
+            throw new ValidationException([
+                'msg' => '{type} required',
+                'context' => [
+                    'type' => 'Integral value',
+                    'value' => $value
+                ]
+            ]);
+        }
 
         $precision = $this->numeric_precision;
         $str = (string)$value;
         if (strlen($str) > $precision)
-            throw new InvalidValueException("Value out of range for " . $this->type . ": " . $value);
+        {
+            throw new ValidationException([
+                'msg' => 'Value out of range for {type} with precision {precision}',
+                'context' => [  
+                    'type' => 'int',
+                    'precision' => $precision,
+                    'value' => $value
+                ]
+            ]);
+        }
 
         return true;
     }

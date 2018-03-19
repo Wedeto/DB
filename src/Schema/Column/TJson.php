@@ -26,7 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
-use Wedeto\DB\Exception\InvalidValueException;
+use Wedeto\Util\Validation\ValidationException;
 
 use JsonSerializable;
 
@@ -41,7 +41,15 @@ class TJson extends Column
     {
         parent::validate($value);
         if ($value !== null && !is_scalar($value) && !is_array($value) && (!is_object($value) || !($value instanceof JsonSerializable)))
-            throw new InvalidValueException("Invalid value for " . $this->type . ": " . WF::str($value));
+        {
+            throw new ValidationException([
+                'msg' => 'Invalid value for {type}: {value}',
+                'context' => [
+                    'type' => 'JSON',
+                    'value' => WF::str($value)
+                ]
+            ]);
+        }
 
         return true;
     }
