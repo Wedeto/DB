@@ -25,11 +25,42 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class TBigserial extends TBigint
+use Wedeto\Util\Functions as WF;
+use Wedeto\Util\Validation\ValidationException;
+use DateTime;
+
+class Date extends Column
 {
-    public function __construct(string $name)
+    public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, false, null);
-        $this->setSerial();
+        parent::__construct($name, Column::DATE, $default, $nullable);
+    }
+
+    public function validate($value)
+    {
+        parent::validate($value);
+
+        if ($value !== null && !($value instanceof DateTime))
+        {
+            throw new ValidationException([
+                'msg' => "{type} required",
+                'context' => [
+                    'type' => 'Date'
+                ]
+            ]);
+        }
+
+        return true;
+    }
+
+    public function afterFetchFilter($value)
+    {
+        return $value !== null ? new DateTime($value) : null;
+    }
+
+    public function beforeInsertFilter($value)
+    {
+        $value = parent::beforeInsertFilter($value);
+        return $value !== null ? $value->format("Y-m-d") : null;
     }
 }

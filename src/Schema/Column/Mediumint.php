@@ -25,12 +25,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class TText extends TVarchar
+class Mediumint extends Integer
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, 100, $default, $nullable);
-        $this->type = Column::TEXT;
-        $this->setMaxLength(null);
+        parent::__construct($name, $default, $nullable);
+        $this->type = Column::MEDIUMINT;
+        $this->setNumericPrecision(8);
     }
 }

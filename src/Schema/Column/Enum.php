@@ -26,41 +26,31 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
-use Wedeto\Util\Validation\ValidationException;
-use DateTime;
+use Wedeto\Util\ValidationException;
 
-class TDate extends Column
+class Enum extends Column
 {
-    public function __construct(string $name, $default = null, bool $nullable = false)
+    public function __construct(string $name, array $values = [], $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::DATE, $default, $nullable);
+        parent::__construct($name, Column::ENUM, $default, $nullable);
+        $this->setEnumValues($values);
     }
 
     public function validate($value)
     {
         parent::validate($value);
 
-        if ($value !== null && !($value instanceof DateTime))
+        if ($value !== null && !in_array($value, $this->enum_values))
         {
             throw new ValidationException([
                 'msg' => "{type} required",
                 'context' => [
-                    'type' => 'Date'
+                    'type' => 'Enum value',
+                    'value' => $value
                 ]
             ]);
         }
 
         return true;
-    }
-
-    public function afterFetchFilter($value)
-    {
-        return $value !== null ? new DateTime($value) : null;
-    }
-
-    public function beforeInsertFilter($value)
-    {
-        $value = parent::beforeInsertFilter($value);
-        return $value !== null ? $value->format("Y-m-d") : null;
     }
 }

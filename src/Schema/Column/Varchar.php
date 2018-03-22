@@ -28,42 +28,39 @@ namespace Wedeto\DB\Schema\Column;
 use Wedeto\Util\Functions as WF;
 use Wedeto\Util\Validation\ValidationException;
 
-class TInt extends Column
+class Varchar extends Column
 {
-    public function __construct(string $name, $default = null, bool $nullable = false)
+    public function __construct(string $name, int $max_length = 100, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::INT, $default, $nullable);
-        $this->setNumericPrecision(10);
+        parent::__construct($name, Column::VARCHAR, $default, $nullable);
+        $this->setMaxLength($max_length);
     }
 
     public function validate($value)
     {
         parent::validate($value);
-
         if ($value === null)
             return true;
 
-        if (!WF::is_int_val($value))
+        if (!is_string($value) && !is_numeric($value))
         {
             throw new ValidationException([
                 'msg' => '{type} required',
                 'context' => [
-                    'type' => 'Integral value',
+                    'type' => 'String',
                     'value' => $value
                 ]
             ]);
         }
 
-        $precision = $this->numeric_precision;
-        $str = (string)$value;
-        if (strlen($str) > $precision)
+        if (strlen($value) > $this->max_length)
         {
             throw new ValidationException([
-                'msg' => 'Value out of range for {type} with precision {precision}',
-                'context' => [  
-                    'type' => 'int',
-                    'precision' => $precision,
-                    'value' => $value
+                'msg' => 'String shorter than {length} required',
+                'contxt' => [
+                    'type' => 'String',
+                    'value' => $value,
+                    'length' => $this->max_length
                 ]
             ]);
         }

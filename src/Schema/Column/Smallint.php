@@ -25,32 +25,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-use Wedeto\Util\Functions as WF;
-use Wedeto\Util\Validation\ValidationException;
-
-class TFloat extends Column
+class Smallint extends Integer
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::FLOAT, $default, $nullable);
-        $this->setNumericPrecision(53);
-    }
-
-    public function validate($value)
-    {
-        parent::validate($value);
-
-        if ($value !== null && !is_numeric($value))
-        {
-            throw new ValidationException([
-                'msg' => "{type} required",
-                'context' => [
-                    'type' => 'Float',
-                    'value' => $value
-                ]
-            ]);
-        }
-
-        return true;
+        parent::__construct($name, $default, $nullable);
+        $this->type = Column::SMALLINT;
+        $this->setNumericPrecision(5);
     }
 }

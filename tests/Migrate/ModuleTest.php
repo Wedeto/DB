@@ -60,8 +60,8 @@ class ModuleTest extends TestCase
 
     public function setUp()
     {
-        $version_column = new Column\TInt('version');
-        $mod_column = new Column\TVarchar('module', 128);
+        $version_column = new Column\Integer('version');
+        $mod_column = new Column\Varchar('module', 128);
 
         $this->result_mocker = $this->prophesize(\PDOStatement::class);
         $this->result_mocker->fetch()->willReturn(['version' => 1, 'module' => 'wedeto.db']);
@@ -70,7 +70,6 @@ class ModuleTest extends TestCase
         $this->drv_mocker->select(Argument::any())->willReturn($this->result_mocker->reveal());
 
         $this->db_mocker = $this->prophesize(DB::class);
-        //$this->db_mocker->getDriver()->willReturn($this->drv_mocker->reveal());
 
         $this->module_mocker = $this->prophesize(Module::class);
 
@@ -220,14 +219,14 @@ class ModuleTest extends TestCase
     private function setupVersionDAO($mocker)
     {
         $mocker->getColumns()->willReturn([
-            "id" => new Column\TSerial('id'),
-            "module" => new Column\TVarchar('module', 128),
-            "version" => new Column\TInt('version'),
-            "date_upgraded" => new Column\TDateTime('date_upgraded'),
+            "id" => new Column\Serial('id'),
+            "module" => new Column\Varchar('module', 128),
+            "version" => new Column\Integer('version'),
+            "date_upgraded" => new Column\DateTime('date_upgraded'),
         ]);
 
         $mocker->getPrimaryKey()->willReturn([
-            "id" => new Column\TSerial('id')
+            "id" => new Column\Serial('id')
         ]);
     }
 

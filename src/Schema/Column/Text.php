@@ -25,30 +25,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-use Wedeto\Util\Functions as WF;
-use Wedeto\Util\Validation\ValidationException;
-
-class TBinary extends Column
+class TText extends Varchar
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::BINARY, $default, $nullable);
-    }
-
-    public function validate($value)
-    {
-        parent::validate($value);
-
-        if ($value !== null && is_string($value) && !is_resource($value))
-        {
-            throw new ValidationException([
-                'msg' => '{type} required',
-                'context' => [
-                    'type' => $this->type, 
-                    'value' => WF::str($value)
-                ]
-            ]);
-        }
-        return true;
+        parent::__construct($name, 100, $default, $nullable);
+        $this->type = Column::TEXT;
+        $this->setMaxLength(null);
     }
 }

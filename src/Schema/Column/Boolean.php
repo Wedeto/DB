@@ -28,25 +28,25 @@ namespace Wedeto\DB\Schema\Column;
 use Wedeto\Util\Functions as WF;
 use Wedeto\Util\Validation\ValidationException;
 
-use JsonSerializable;
-
-class TJson extends Column
+class Boolean extends Column
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::JSON, $default, $nullable);
+        parent::__construct($name, Column::BOOLEAN, $default, $nullable);
+        $this->setNumericPrecision(1);
     }
 
     public function validate($value)
     {
         parent::validate($value);
-        if ($value !== null && !is_scalar($value) && !is_array($value) && (!is_object($value) || !($value instanceof JsonSerializable)))
+
+        if ($value !== null && !is_bool($value))
         {
             throw new ValidationException([
-                'msg' => 'Invalid value for {type}: {value}',
+                'msg' => '{type} required',
                 'context' => [
-                    'type' => 'JSON',
-                    'value' => WF::str($value)
+                    'value' => $value,
+                    'type' => 'Boolean'
                 ]
             ]);
         }
@@ -54,14 +54,12 @@ class TJson extends Column
         return true;
     }
 
-    public function afterFetchFilter($value)
-    {
-        return $value !== null ? json_decode($value, true) : null;
-    }
-
     public function beforeInsertFilter($value)
     {
         $value = parent::beforeInsertFilter($value);
-        return $value !== null ? json_encode($value) : null;
+        if ($value === null)
+            return null;
+        
+        return $value ? 1 : 0;
     }
 }

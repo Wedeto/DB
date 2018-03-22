@@ -25,39 +25,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-use Wedeto\Util\Functions as WF;
-use Wedeto\Util\Validation\ValidationException;
-
-class TChar extends Column
+class Decimal extends Float32
 {
-    public function __construct(string $name, int $max_length = 16, $default = null, bool $nullable = false)
+    public function __construct(string $name, int $precision = 10, int $scale = 5, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::CHAR, $default, $nullable);
-        $this->setMaxLength($max_length);
-    }
-
-    public function validate($value)
-    {
-        parent::validate($value);
-        if ($value === null)
-            return true;
-
-        if (!is_string($value) && !is_numeric($value))
-        {
-            throw new ValidationException([
-                'msg' => 'Exactly {length} characters required',
-                'context' => ['length' => $this->max_length, 'value' => $value]
-            ]);
-        }
-
-        if (strlen($value) !== $this->max_length)
-        {
-            throw new ValidationException([
-                'msg' => 'Exactly {length} characters required',
-                'context' => ['length' => $this->max_length, 'value' > $value]
-            ]);
-        }
-
-        return true;
+        parent::__construct($name, $default, $nullable);
+        $this->type = Column::DECIMAL;
+        $this->setNumericPrecision($precision)
+            ->setNumericScale($scale);
     }
 }

@@ -25,11 +25,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class TSerial extends TInt
+class Tinyint extends Integer
 {
-    public function __construct(string $name)
+    public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, null, false);
-        $this->setSerial();
+        parent::__construct($name, $default, $nullable);
+        $this->type = Column::TINYINT;
     }
 }

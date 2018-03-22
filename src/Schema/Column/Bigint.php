@@ -25,23 +25,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class TDatetime extends TDate
+use Wedeto\Util\Functions as WF;
+
+class Bigint extends Integer
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
         parent::__construct($name, $default, $nullable);
-        $this->type = Column::DATETIME;
-    }
-
-    public function beforeInsertFilter($value)
-    {
-        if ($value === null)
-        {
-            if (!$this->isNullabe())
-                throw new DBException("Column must not be null: {$this->name}");
-            return null;
-        }
-
-        return $value->format("Y-m-d\TH:i:s");
+        $this->type = Column::BIGINT;
+        $this->setNumericPrecision(19);
     }
 }

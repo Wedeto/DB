@@ -26,26 +26,43 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
-use Wedeto\Util\ValidationException;
+use Wedeto\Util\Validation\ValidationException;
 
-class TEnum extends Column
+class Integer extends Column
 {
-    public function __construct(string $name, array $values = [], $default = null, bool $nullable = false)
+    public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::ENUM, $default, $nullable);
-        $this->setEnumValues($values);
+        parent::__construct($name, Column::INT, $default, $nullable);
+        $this->setNumericPrecision(10);
     }
 
     public function validate($value)
     {
         parent::validate($value);
 
-        if ($value !== null && !in_array($value, $this->enum_values))
+        if ($value === null)
+            return true;
+
+        if (!WF::is_int_val($value))
         {
             throw new ValidationException([
-                'msg' => "{type} required",
+                'msg' => '{type} required',
                 'context' => [
-                    'type' => 'Enum value',
+                    'type' => 'Integral value',
+                    'value' => $value
+                ]
+            ]);
+        }
+
+        $precision = $this->numeric_precision;
+        $str = (string)$value;
+        if (strlen($str) > $precision)
+        {
+            throw new ValidationException([
+                'msg' => 'Value out of range for {type} with precision {precision}',
+                'context' => [  
+                    'type' => 'int',
+                    'precision' => $precision,
                     'value' => $value
                 ]
             ]);

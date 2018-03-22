@@ -117,15 +117,15 @@ class ModelTest extends TestCase
         $this->db_mocker->getDAO(DBVersion::class)->willReturn($this->dao);
         $this->dao_mocker->getColumns()->willReturn(
             [
-                'id' => new Column\TSerial('id'),
-                'module' => new Column\TVarchar('module', 128),
-                'version' => new Column\TInt('version'),
-                'date' => new Column\TDateTime('date')
+                'id' => new Column\Serial('id'),
+                'module' => new Column\Varchar('module', 128),
+                'version' => new Column\Integer('version'),
+                'date' => new Column\DateTime('date')
             ]
         );
         $this->dao_mocker->getPrimaryKey()->willReturn(
             [
-                'id' => new Column\TSerial('id'),
+                'id' => new Column\Serial('id'),
             ]
         );
 

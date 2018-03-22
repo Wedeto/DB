@@ -25,12 +25,39 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class TSmallint extends TInt
+use Wedeto\Util\Functions as WF;
+use Wedeto\Util\Validation\ValidationException;
+
+class Char extends Column
 {
-    public function __construct(string $name, $default = null, bool $nullable = false)
+    public function __construct(string $name, int $max_length = 16, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, $default, $nullable);
-        $this->type = Column::SMALLINT;
-        $this->setNumericPrecision(5);
+        parent::__construct($name, Column::CHAR, $default, $nullable);
+        $this->setMaxLength($max_length);
+    }
+
+    public function validate($value)
+    {
+        parent::validate($value);
+        if ($value === null)
+            return true;
+
+        if (!is_string($value) && !is_numeric($value))
+        {
+            throw new ValidationException([
+                'msg' => 'Exactly {length} characters required',
+                'context' => ['length' => $this->max_length, 'value' => $value]
+            ]);
+        }
+
+        if (strlen($value) !== $this->max_length)
+        {
+            throw new ValidationException([
+                'msg' => 'Exactly {length} characters required',
+                'context' => ['length' => $this->max_length, 'value' > $value]
+            ]);
+        }
+
+        return true;
     }
 }

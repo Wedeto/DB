@@ -26,13 +26,42 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
+use Wedeto\Util\Validation\ValidationException;
 
-class TBigint extends TInt
+use JsonSerializable;
+
+class Json extends Column
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, $default, $nullable);
-        $this->type = Column::BIGINT;
-        $this->setNumericPrecision(19);
+        parent::__construct($name, Column::JSON, $default, $nullable);
+    }
+
+    public function validate($value)
+    {
+        parent::validate($value);
+        if ($value !== null && !is_scalar($value) && !is_array($value) && (!is_object($value) || !($value instanceof JsonSerializable)))
+        {
+            throw new ValidationException([
+                'msg' => 'Invalid value for {type}: {value}',
+                'context' => [
+                    'type' => 'JSON',
+                    'value' => WF::str($value)
+                ]
+            ]);
+        }
+
+        return true;
+    }
+
+    public function afterFetchFilter($value)
+    {
+        return $value !== null ? json_decode($value, true) : null;
+    }
+
+    public function beforeInsertFilter($value)
+    {
+        $value = parent::beforeInsertFilter($value);
+        return $value !== null ? json_encode($value) : null;
     }
 }

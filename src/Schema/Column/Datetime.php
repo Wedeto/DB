@@ -25,12 +25,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class TDatetimetz extends TDatetime
+class Datetime extends Date
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
         parent::__construct($name, $default, $nullable);
-        $this->type = Column::DATETIMETZ;
+        $this->type = Column::DATETIME;
     }
 
     public function beforeInsertFilter($value)
@@ -42,6 +42,6 @@ class TDatetimetz extends TDatetime
             return null;
         }
 
-        return $value->format(\DateTime::ATOM);
+        return $value->format("Y-m-d\TH:i:s");
     }
 }

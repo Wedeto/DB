@@ -25,28 +25,29 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-use Wedeto\Util\Functions as WF;
 use Wedeto\Util\Validation\ValidationException;
 
-class TBoolean extends Column
+class Time extends Column
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::BOOLEAN, $default, $nullable);
-        $this->setNumericPrecision(1);
+        parent::__construct($name, Column::TIME, $default, $nullable);
     }
 
     public function validate($value)
     {
-        parent::validate($value);
+        parent::validate($time);
 
-        if ($value !== null && !is_bool($value))
+        if ($value === null)
+            return true;
+
+        if (!$value instanceof DateTime)
         {
             throw new ValidationException([
                 'msg' => '{type} required',
                 'context' => [
-                    'value' => $value,
-                    'type' => 'Boolean'
+                    'type' => 'Time',
+                    'value' => $value
                 ]
             ]);
         }
@@ -54,12 +55,14 @@ class TBoolean extends Column
         return true;
     }
 
+    public function afterFetchFilter($value)
+    {
+        return $value !== null ? new DateTime($value) : null;
+    }
+
     public function beforeInsertFilter($value)
     {
         $value = parent::beforeInsertFilter($value);
-        if ($value === null)
-            return null;
-        
-        return $value ? 1 : 0;
+        return $value !== null ? $value->format("H:i:s") : null;
     }
 }

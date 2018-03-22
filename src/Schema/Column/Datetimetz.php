@@ -25,46 +25,23 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-use Wedeto\Util\Functions as WF;
-use Wedeto\Util\Validation\ValidationException;
-
-class TVarchar extends Column
+class Datetimetz extends Datetime
 {
-    public function __construct(string $name, int $max_length = 100, $default = null, bool $nullable = false)
+    public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, Column::VARCHAR, $default, $nullable);
-        $this->setMaxLength($max_length);
+        parent::__construct($name, $default, $nullable);
+        $this->type = Column::DATETIMETZ;
     }
 
-    public function validate($value)
+    public function beforeInsertFilter($value)
     {
-        parent::validate($value);
         if ($value === null)
-            return true;
-
-        if (!is_string($value) && !is_numeric($value))
         {
-            throw new ValidationException([
-                'msg' => '{type} required',
-                'context' => [
-                    'type' => 'String',
-                    'value' => $value
-                ]
-            ]);
+            if (!$this->isNullabe())
+                throw new DBException("Column must not be null: {$this->name}");
+            return null;
         }
 
-        if (strlen($value) > $this->max_length)
-        {
-            throw new ValidationException([
-                'msg' => 'String shorter than {length} required',
-                'contxt' => [
-                    'type' => 'String',
-                    'value' => $value,
-                    'length' => $this->max_length
-                ]
-            ]);
-        }
-
-        return true;
+        return $value->format(\DateTime::ATOM);
     }
 }

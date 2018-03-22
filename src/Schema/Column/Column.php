@@ -324,7 +324,7 @@ abstract class Column implements \Serializable, \JSONSerializable
         $args = self::parseArray($data);
 
         // Execute hook to allow for additional column types or modifications
-        $classname = __NAMESPACE__ . "\\T" . ucfirst(strtolower($args['type']));
+        $classname = __NAMESPACE__ . "\\" . ucfirst(strtolower($args['type']));
         $params = Hook::execute(
             'Wedeto.DB.Schema.Column.Column.FindClass', 
             ['column_defition' => $args, 'input_data' => $data, 'classname' => $classname, 'instance' => null]

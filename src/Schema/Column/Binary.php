@@ -25,12 +25,30 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class TMediumint extends TInt
+use Wedeto\Util\Functions as WF;
+use Wedeto\Util\Validation\ValidationException;
+
+class Binary extends Column
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, $default, $nullable);
-        $this->type = Column::MEDIUMINT;
-        $this->setNumericPrecision(8);
+        parent::__construct($name, Column::BINARY, $default, $nullable);
+    }
+
+    public function validate($value)
+    {
+        parent::validate($value);
+
+        if ($value !== null && is_string($value) && !is_resource($value))
+        {
+            throw new ValidationException([
+                'msg' => '{type} required',
+                'context' => [
+                    'type' => $this->type, 
+                    'value' => WF::str($value)
+                ]
+            ]);
+        }
+        return true;
     }
 }

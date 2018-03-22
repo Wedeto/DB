@@ -25,13 +25,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class TDecimal extends TFloat
+class Bigserial extends Bigint
 {
-    public function __construct(string $name, int $precision = 10, int $scale = 5, $default = null, bool $nullable = false)
+    public function __construct(string $name)
     {
-        parent::__construct($name, $default, $nullable);
-        $this->type = Column::DECIMAL;
-        $this->setNumericPrecision($precision)
-            ->setNumericScale($scale);
+        parent::__construct($name, false, null);
+        $this->setSerial();
     }
 }
