@@ -25,11 +25,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class Tinyint extends Integer
+class Tinyint extends Column
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, $default, $nullable);
-        $this->type = Column::TINYINT;
+        parent::__construct($name, Column::TINYINT, $default, $nullable);
+        $this->setNumericPrecision(3);
+        $max = pow(2, 7);
+        $this->validator = new Type(Type::INT, ['nullable' => $nullable, 'max_range' => $max - 1, 'min_range' => -$max]);
     }
 }

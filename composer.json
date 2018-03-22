@@ -5,7 +5,7 @@
     "homepage": "https://wedeto.net/",
     "type": "library",
     "require": {
-        "Wedeto/Util": "~0.9.28", 
+        "Wedeto/Util": "~0.9.31", 
         "php": ">=7.0.0"
     },
     "suggest": {

@@ -37,7 +37,7 @@ class Json extends Column
         parent::__construct($name, Column::JSON, $default, $nullable);
     }
 
-    public function validate($value)
+    public function validate($value, &$filtered = null)
     {
         parent::validate($value);
         if ($value !== null && !is_scalar($value) && !is_array($value) && (!is_object($value) || !($value instanceof JsonSerializable)))
@@ -50,6 +50,7 @@ class Json extends Column
                 ]
             ]);
         }
+        $filtered = $value;
 
         return true;
     }

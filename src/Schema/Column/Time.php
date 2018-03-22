@@ -32,27 +32,7 @@ class Time extends Column
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
         parent::__construct($name, Column::TIME, $default, $nullable);
-    }
-
-    public function validate($value)
-    {
-        parent::validate($time);
-
-        if ($value === null)
-            return true;
-
-        if (!$value instanceof DateTime)
-        {
-            throw new ValidationException([
-                'msg' => '{type} required',
-                'context' => [
-                    'type' => 'Time',
-                    'value' => $value
-                ]
-            ]);
-        }
-
-        return true;
+        $this->validator = new Type(Type::DATE, ['nullable' => $nullable]);
     }
 
     public function afterFetchFilter($value)

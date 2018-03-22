@@ -25,12 +25,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class Smallint extends Integer
+class Smallint extends Column
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, $default, $nullable);
-        $this->type = Column::SMALLINT;
+        parent::__construct($name, Column::SMALLINT, $default, $nullable);
         $this->setNumericPrecision(5);
+        $max = pow(2, 15);
+        $this->validator = new Type(Type::SMALLINT, ['nullable' => $nullable, 'max_range' => $max - 1, 'min_range' => -$max]);
     }
 }

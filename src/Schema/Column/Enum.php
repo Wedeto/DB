@@ -36,20 +36,23 @@ class Enum extends Column
         $this->setEnumValues($values);
     }
 
-    public function validate($value)
+    public function validate($value, &$filtered = null)
     {
         parent::validate($value);
 
         if ($value !== null && !in_array($value, $this->enum_values))
         {
+            $values = '"' . implode("', '", $this->enum_values) . "'";
             throw new ValidationException([
-                'msg' => "{type} required",
+                'msg' => "One of {values} required",
                 'context' => [
                     'type' => 'Enum value',
-                    'value' => $value
+                    'value' => $value,
+                    'values' => $values
                 ]
             ]);
         }
+        $filtered = $value;
 
         return true;
     }

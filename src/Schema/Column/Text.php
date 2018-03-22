@@ -25,12 +25,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class TText extends Varchar
+class Text extends Column
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, 100, $default, $nullable);
-        $this->type = Column::TEXT;
+        parent::__construct($name, Column::TEXT, $default, $nullable);
         $this->setMaxLength(null);
+        $this->validator = new Type(Type::STRING, ['nullable' => $nullable]);
     }
 }

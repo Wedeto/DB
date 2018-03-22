@@ -26,6 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
+use Wedeto\Util\Validation\Type;
 use Wedeto\Util\Validation\ValidationException;
 
 class Boolean extends Column
@@ -34,24 +35,7 @@ class Boolean extends Column
     {
         parent::__construct($name, Column::BOOLEAN, $default, $nullable);
         $this->setNumericPrecision(1);
-    }
-
-    public function validate($value)
-    {
-        parent::validate($value);
-
-        if ($value !== null && !is_bool($value))
-        {
-            throw new ValidationException([
-                'msg' => '{type} required',
-                'context' => [
-                    'value' => $value,
-                    'type' => 'Boolean'
-                ]
-            ]);
-        }
-
-        return true;
+        $this->validator = new Type(Type::BOOL, ['nullable' => $nullable]);
     }
 
     public function beforeInsertFilter($value)

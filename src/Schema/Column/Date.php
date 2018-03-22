@@ -26,6 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
+use Wedeto\Util\Validation\Type;
 use Wedeto\Util\Validation\ValidationException;
 use DateTime;
 
@@ -34,23 +35,7 @@ class Date extends Column
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
         parent::__construct($name, Column::DATE, $default, $nullable);
-    }
-
-    public function validate($value)
-    {
-        parent::validate($value);
-
-        if ($value !== null && !($value instanceof DateTime))
-        {
-            throw new ValidationException([
-                'msg' => "{type} required",
-                'context' => [
-                    'type' => 'Date'
-                ]
-            ]);
-        }
-
-        return true;
+        $this->validator = new Type(Type::DATE, ['nullable' => $nullable]);
     }
 
     public function afterFetchFilter($value)

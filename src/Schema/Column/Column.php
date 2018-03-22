@@ -30,6 +30,7 @@ use DateTime;
 use Wedeto\Util\Functions as WF;
 use Wedeto\Util\Hook;
 use Wedeto\Util\Validation\ValidationException;
+use Wedeto\Util\Validation\Validator;
 use Wedeto\DB\Schema\Table;
 use Wedeto\DB\Exception\InvalidTypeException;
 use Wedeto\DB\Exception\InvalidValueException;
@@ -73,13 +74,15 @@ abstract class Column implements \Serializable, \JSONSerializable
 
     protected $serial = null;
     protected $enum_values = null;
+    protected $validator = null;
 
     public function __construct(string $name, string $type, $default, bool $nullable)
     {
         $this->name = $name;
         $this->type = $type;
-        $this->is_nullable = WF::parse_bool($nullable);
+        $this->is_nullable = $nullable;
         $this->default = $default;
+        $this->validator = new Validator(Validator::EXISTS, ['nullable' => $nullable]);
     }
 
     public function setSerial(bool $serial = true)
@@ -175,10 +178,11 @@ abstract class Column implements \Serializable, \JSONSerializable
     {
         return $this->is_nullable;
     }
-
+    
     public function setNullable($nullable)
     {
         $this->is_nullable = $nullable == true;
+        $this->validator->setNullable($nullable);
     }
 
     public function getDefault()
@@ -203,10 +207,18 @@ abstract class Column implements \Serializable, \JSONSerializable
         return $this->enum_values;
     }
 
-    public function validate($value)
+    /**
+     * Validate the value for this column.
+     *
+     * @param mixed $value The value to set
+     * @param mixed &$filtered The corrected, filtered value
+     * @return bool True when validates. False is never returned.
+     * @throws ValidationException when validation fails.
+     */
+    public function validate($value, &$filtered = null)
     {
-        if ($value === null && !$this->is_nullable)
-            throw new ValidationException(['msg' => 'Column must not be null: {name}', 'context' => ['name' => $this->name]]);
+        if (!$this->validator->validate($value, $filtered))
+            throw new ValidationException($this->validator->getErrorMessage($value));
 
         return true;
     }

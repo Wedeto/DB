@@ -27,12 +27,13 @@ namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
 
-class Bigint extends Integer
+class Bigint extends Column
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, $default, $nullable);
-        $this->type = Column::BIGINT;
+        parent::__construct($name, Column::BIGINT, $default, $nullable);
         $this->setNumericPrecision(19);
+        $max = pow(2, 63);
+        $this->validator = new Type(Type::INT, ['nullable' => $nullable, 'max_range' => $max - 1, 'min_range' => -$max]);
     }
 }

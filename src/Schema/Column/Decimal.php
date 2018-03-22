@@ -32,6 +32,6 @@ class Decimal extends Float32
         parent::__construct($name, $default, $nullable);
         $this->type = Column::DECIMAL;
         $this->setNumericPrecision($precision)
-            ->setNumericScale($scale);
+             ->setNumericScale($scale);
     }
 }

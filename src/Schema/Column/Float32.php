@@ -27,6 +27,7 @@ namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
 use Wedeto\Util\Validation\ValidationException;
+use Wedeto\Util\Validation\Type;
 
 class Float32 extends Column
 {
@@ -34,23 +35,6 @@ class Float32 extends Column
     {
         parent::__construct($name, Column::FLOAT, $default, $nullable);
         $this->setNumericPrecision(53);
-    }
-
-    public function validate($value)
-    {
-        parent::validate($value);
-
-        if ($value !== null && !is_numeric($value))
-        {
-            throw new ValidationException([
-                'msg' => "{type} required",
-                'context' => [
-                    'type' => 'Float',
-                    'value' => $value
-                ]
-            ]);
-        }
-
-        return true;
+        $this->validator = new Type(Type::FLOAT, ['nullable' => $nullable, 'unstrict' => true]);
     }
 }

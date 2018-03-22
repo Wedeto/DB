@@ -25,12 +25,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace Wedeto\DB\Schema\Column;
 
-class Mediumint extends Integer
+class Mediumint extends Column
 {
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
-        parent::__construct($name, $default, $nullable);
-        $this->type = Column::MEDIUMINT;
+        parent::__construct($name, Column::MEDIUMINT, $default, $nullable);
         $this->setNumericPrecision(8);
+        $max = pow(2, 23);
+        $this->validator = new Type(Type::INT, ['nullable' => $nullable, 'max_range' => $max - 1, 'min_range' => -$max]);
     }
 }

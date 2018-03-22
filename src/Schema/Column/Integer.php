@@ -27,6 +27,7 @@ namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
 use Wedeto\Util\Validation\ValidationException;
+use Wedeto\Util\Validation\Type;
 
 class Integer extends Column
 {
@@ -34,40 +35,7 @@ class Integer extends Column
     {
         parent::__construct($name, Column::INT, $default, $nullable);
         $this->setNumericPrecision(10);
-    }
-
-    public function validate($value)
-    {
-        parent::validate($value);
-
-        if ($value === null)
-            return true;
-
-        if (!WF::is_int_val($value))
-        {
-            throw new ValidationException([
-                'msg' => '{type} required',
-                'context' => [
-                    'type' => 'Integral value',
-                    'value' => $value
-                ]
-            ]);
-        }
-
-        $precision = $this->numeric_precision;
-        $str = (string)$value;
-        if (strlen($str) > $precision)
-        {
-            throw new ValidationException([
-                'msg' => 'Value out of range for {type} with precision {precision}',
-                'context' => [  
-                    'type' => 'int',
-                    'precision' => $precision,
-                    'value' => $value
-                ]
-            ]);
-        }
-
-        return true;
+        $max = pow(2, 31);
+        $this->validator = new Type(Type::INT, ['nullable' => $nullable, 'max_range' => $max - 1, 'min_range' => -$max]);
     }
 }

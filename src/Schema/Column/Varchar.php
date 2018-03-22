@@ -26,6 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
+use Wedeto\Util\Validation\Type;
 use Wedeto\Util\Validation\ValidationException;
 
 class Varchar extends Column
@@ -34,37 +35,6 @@ class Varchar extends Column
     {
         parent::__construct($name, Column::VARCHAR, $default, $nullable);
         $this->setMaxLength($max_length);
-    }
-
-    public function validate($value)
-    {
-        parent::validate($value);
-        if ($value === null)
-            return true;
-
-        if (!is_string($value) && !is_numeric($value))
-        {
-            throw new ValidationException([
-                'msg' => '{type} required',
-                'context' => [
-                    'type' => 'String',
-                    'value' => $value
-                ]
-            ]);
-        }
-
-        if (strlen($value) > $this->max_length)
-        {
-            throw new ValidationException([
-                'msg' => 'String shorter than {length} required',
-                'contxt' => [
-                    'type' => 'String',
-                    'value' => $value,
-                    'length' => $this->max_length
-                ]
-            ]);
-        }
-
-        return true;
+        $this->validator = new Type(Type::STRING, ['max_length' => $max_length, 'nullable' => $nullable]);
     }
 }

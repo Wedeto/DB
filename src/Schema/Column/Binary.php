@@ -33,22 +33,18 @@ class Binary extends Column
     public function __construct(string $name, $default = null, bool $nullable = false)
     {
         parent::__construct($name, Column::BINARY, $default, $nullable);
-    }
 
-    public function validate($value)
-    {
-        parent::validate($value);
-
-        if ($value !== null && is_string($value) && !is_resource($value))
-        {
-            throw new ValidationException([
-                'msg' => '{type} required',
-                'context' => [
-                    'type' => $this->type, 
-                    'value' => WF::str($value)
-                ]
-            ]);
-        }
-        return true;
+        $this->validator = new Validator(Validator::VALIDATE_CUSTOM, ['nullable' => $nullable, 'custom' => function ($value) {
+            if ($value !== null && is_string($value) && !is_resource($value))
+            {
+                throw new ValidationException([
+                    'msg' => '{type} required',
+                    'context' => [
+                        'type' => $this->type, 
+                        'value' => WF::str($value)
+                    ]
+                ]);
+            }
+        }]);
     }
 }
