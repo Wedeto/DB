@@ -7,10 +7,10 @@ use Wedeto\DB\Schema\Index;
 
 $table = new Table(
     "db_version",
-    new Column\TSerial('id'),
-    new Column\TVarchar('module', 128),
-    new Column\TInt('version'),
-    new Column\TDatetime('date_upgraded'),
+    new Column\Serial('id'),
+    new Column\Varchar('module', 128),
+    new Column\Integer('version'),
+    new Column\Datetime('date_upgraded'),
     new Index(Index::PRIMARY, 'id'),
     new Index(Index::UNIQUE, 'module', 'version')
 );
