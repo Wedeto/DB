@@ -113,7 +113,7 @@ class ModuleTest extends TestCase
     public function testSetupCoreSucceeds()
     {
         $root = dirname(dirname(__DIR__ ));
-        $sql = $root . DIRECTORY_SEPARATOR . 'sql';
+        $sql = $root . DIRECTORY_SEPARATOR . 'migrations';
 
         $this->db_mocker->getDAO(DBVersion::class)->willReturn($this->dao);
         $this->dao_mocker
@@ -141,7 +141,7 @@ class ModuleTest extends TestCase
     public function testSetupOtherTableWithoutCoreFails()
     {
         $root = dirname(dirname(__DIR__ ));
-        $sql = $root . DIRECTORY_SEPARATOR . 'sql';
+        $sql = $root . DIRECTORY_SEPARATOR . 'migrations';
 
         $this->db_mocker->getDAO(DBVersion::class)->willReturn($this->dao);
         $this->dao_mocker
