@@ -181,6 +181,10 @@ abstract class Model
                 continue;
 
             $this->_record[$name] = $def->afterFetchFilter($this->_record[$name]);
+            
+            // Synchronize local variables
+            if (property_exists($this, $name))
+                $this->$name = $this->_record[$name];
         }
         return $this;
     }
@@ -318,6 +322,10 @@ abstract class Model
 
             if (isset($pkey[$field]))
                 $this->_id[$field] = $value;
+
+            // Synchronize value of local properties
+            if (property_exists($this, $field))
+                $this->$field = $value;
         }
 
         return $this;

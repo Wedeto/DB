@@ -183,6 +183,33 @@ class ModelTest extends TestCase
 
     }
 
+    public function testValueSynchronization()
+    {
+        $model = new MockDBModel();
+
+        $db_mock = $this->prophesize(DB::class);
+        $dao_mock = $this->prophesize(DAO::class);
+        $dao = $dao_mock->reveal();
+
+        $db_mock->getDAO(MockDBModel::class)->willReturn($dao);
+        $dao_mock->getColumns()->willReturn([
+            'id' => new Column\Serial('id'),
+            'name' => new Column\Varchar('name', 64),
+            'age' => new Column\Integer('age')
+        ]);
+        $dao_mock->getPrimaryKey()->willReturn([
+            'id' => new Column\Serial('id'),
+        ]);
+
+        $db = $db_mock->reveal();
+        DI::getInjector()->setInstance(DB::class, $db);
+        
+        $model->setField('age', 25);
+        
+        $values = $model->validateProperty();
+        $this->assertEquals($values[0], $values[1]);
+    }
+
     protected function assertThrows($fn, $msg)
     {
         $thrown = false;
@@ -196,5 +223,15 @@ class ModelTest extends TestCase
             $thrown = true;
         }
         $this->assertTrue($thrown, "Exception should be thrown");
+    }
+}
+
+class MockDBModel extends Model
+{
+    public $age;
+
+    public function validateProperty()
+    {
+        return [$this->age, $this->_record['age']];
     }
 }
