@@ -27,7 +27,6 @@ namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Functions as WF;
 use Wedeto\Util\Validation\Type;
-use Wedeto\Util\Validation\ValidationException;
 
 class Char extends Column
 {
