@@ -40,7 +40,7 @@ class DBConfig extends Configuration
     const WDI_REUSABLE = true;
 
     /** It can be auto instantiated, as the dependent Configuration must be present */
-    const WDI_NOAUTO = false;
+    const WDI_NO_AUTO = false;
 
     /**
      * Create a new DBConfig instance. Suitable for use with DI.
