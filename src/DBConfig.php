@@ -76,6 +76,6 @@ class DBConfig extends Configuration
             'prefix' => Type::STRING
         ];
 
-        parent::__construct($allowed, $config);
+        parent::__construct($config, $allowed);
     }
 }
