@@ -47,7 +47,7 @@ abstract class Column implements \Serializable, \JSONSerializable
     const TINYINT    = "TINYINT";
     const SMALLINT   = "SMALLINT";
     const MEDIUMINT  = "MEDIUMINT";
-    const INT        = "INT";
+    const INTEGER    = "INTEGER";
     const BIGINT     = "BIGINT";
     const FLOAT      = "FLOAT";
     const DECIMAL    = "DECIMAL";
@@ -90,7 +90,7 @@ abstract class Column implements \Serializable, \JSONSerializable
         $serial = $serial == true;
         if (
             $serial && 
-            $this->type !== Column::INT && 
+            $this->type !== Column::INTEGER && 
             $this->type !== Column::BIGINT && 
             $this->type !== Column::MEDIUMINT && 
             $this->type !== Column::SMALINT

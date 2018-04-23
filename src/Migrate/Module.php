@@ -87,10 +87,9 @@ class Module
      */
     private function loadVersion()
     {
-        $this->dao = $this->db->getDAO(DBVersion::class);
-
         try
         {
+            $this->dao = $this->db->getDAO(DBVersion::class);
             $this->db_version = 
                 $this->dao->get(
                     QB::where(["module" => $this->module]), 
@@ -100,7 +99,7 @@ class Module
         }
         catch (TableNotExistsException $e)
         {
-            if ($this->module !== "Wedeto.DB")
+            if ($this->module !== "wedeto.db")
             {
                 throw new NoMigrationTableException(); 
             }
@@ -270,9 +269,14 @@ class Module
                 // If no exceptions were thrown, we're going to assume that the
                 // upgrade succeeded, so update the version number in the
                 // database and commit the changes.
+
+                // Clear the database schema cache
+                $db->clearCache();
+                $this->dao = $this->db->getDAO(DBVersion::class);
+
                 $version = new DBVersion;
                 $version->module = $this->module;
-                $version->version = $migration['to'];
+                $version->version = (int)$migration['to'];
                 $version->date_upgraded = new \DateTime();
 
                 $this->dao->save($version);

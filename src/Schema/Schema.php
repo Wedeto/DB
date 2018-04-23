@@ -26,7 +26,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Schema;
 
 use Wedeto\Util\Dictionary;
+use Wedeto\Util\DI\DI;
 use Wedeto\Util\Cache;
+use Wedeto\Util\Cache\Manager as CacheManager;
 use Wedeto\DB\DBException;
 use Wedeto\DB\Driver\Driver;
 
@@ -78,7 +80,18 @@ class Schema
         if (empty($this->name))
             throw new DBException("Please provide a name for the schema when using the cache");
 
-        $this->tables = new Cache('dbschema_' . $this->name);
+        $cachemgr = CacheManager::getInstance();
+        $this->tables = $cachemgr->getCache('dbschema_' . $this->name);
+    }
+
+    /**
+     * Clear the cache.
+     * @return Schema provides fluent interface
+     */
+    public function clearCache()
+    {
+        $this->tables->set('tables', []);
+        return $this;
     }
     
     /**

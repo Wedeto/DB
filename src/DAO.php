@@ -446,9 +446,9 @@ class DAO
                 throw new DAOException("No value generated for serial column {$colname}");
 
             if ($is_model)
-                $model->setField($colname, $pkey_values[$colname]);
+                $model->setField($colname, (int)$pkey_values[$colname]);
             else
-                $model[$colname] = $pkey_values[$colname];
+                $model[$colname] = (int)$pkey_values[$colname];
         }
 
         if ($is_model)

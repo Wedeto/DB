@@ -33,7 +33,7 @@ use Wedeto\DB\Exception\ConfigurationException;
 use Wedeto\DB\Exception\QueryException;
 use Wedeto\DB\Exception\InvalidTypeException;
 use Wedeto\DB\Exception\InvalidValueException;
-use Wedeto\DB\Excpetion\TableNotExists;
+use Wedeto\DB\Excpetion\TableNotExistsException;
 
 use Wedeto\DB\Schema\Table;
 use Wedeto\DB\Schema\Index;
@@ -64,7 +64,7 @@ class PGSQL extends Driver
         Column::BOOLEAN => 'boolean',
         Column::SMALLINT => 'smallint',
         Column::TINYINT => 'smallint',
-        Column::INT => 'integer',
+        Column::INTEGER => 'integer',
         Column::MEDIUMINT => 'int',
         Column::BIGINT => 'bigint',
         Column::FLOAT => 'double precision',
@@ -89,7 +89,7 @@ class PGSQL extends Driver
         'tinyint' => Column::TINYINT,
         'smallint' => Column::SMALLINT,
         'bigint' => Column::BIGINT,
-        'integer' => Column::INT,
+        'integer' => Column::INTEGER,
         'double precision' => Column::FLOAT,
         'numeric' => Column::DECIMAL,
 
@@ -312,13 +312,13 @@ class PGSQL extends Driver
             $q->execute(array("table" => $table_name, "schema" => $this->schema));
 
             if ($q->rowCount() === 0)
-                throw new TableNotExists();
+                throw new TableNotExistsException();
 
             return $q->fetchAll();
         }
         catch (PDOException $e)
         {
-            throw new TableNotExists();
+            throw new TableNotExistsException();
         }
     }
 
@@ -531,7 +531,7 @@ class PGSQL extends Driver
             case Column::VARCHAR:
                 $coldef .= "(" . $col->getMaxLength() . ")";
                 break;
-            case Column::INT:
+            case Column::INTEGER:
             case Column::BIGINT:
                 $coldef .= "(" . $col->getNumericPrecision() . ")";
                 break;
@@ -561,7 +561,7 @@ class PGSQL extends Driver
         $q->execute(array('schema' => $this->schema, 'table' => $table_name));
 
         if ($q->rowCount() === 0)
-            throw new TableNotExists("Table does not exist: " . $table_name);
+            throw new TableNotExistsException("Table does not exist: " . $table_name);
 
         $table = new Table($table_name);
 

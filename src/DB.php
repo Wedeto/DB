@@ -158,7 +158,7 @@ class DB
         $pdo = DI::getInjector()
             ->newInstance(
                 PDO::class,
-                ['dsn' => $this->dsn, 'username' => $username, 'password' => $password]
+                ['dsn' => $this->dsn, 'username' => $username, 'passwd' => $password]
             )
         ;
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -235,6 +235,23 @@ class DB
         }
 
         return $this->dao[$class];
+    }
+
+    /**
+     * Flush all cached DAOs and schema - useful after a schema alteration
+     * @return DB Provides fluent interface
+     */
+    public function clearCache()
+    {
+        if (!empty($this->schema))
+        {
+            echo "CLEARING CACHE!\n";
+            $this->schema->clearCache();
+        }
+
+        $this->dao = [];
+        $this->schema = null;
+        return $this;
     }
 
     /** 

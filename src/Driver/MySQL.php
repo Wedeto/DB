@@ -28,7 +28,7 @@ namespace Wedeto\DB\Driver;
 use Wedeto\Util\LoggerAwareStaticTrait;
 
 use Wedeto\DB\DB;
-use Wedeto\DB\Exception\TableNotExists;
+use Wedeto\DB\Exception\TableNotExistsException;
 use Wedeto\DB\Exception\ConfigurationException;
 use Wedeto\DB\Exception\ImplementationException;
 
@@ -63,7 +63,7 @@ class MySQL extends Driver
         Column::TINYINT => 'TINYINT',
         Column::SMALLINT => 'SMALLINT',
         Column::MEDIUMINT => 'MEDIUMINT',
-        Column::INT => 'INT',
+        Column::INTEGER => 'INT',
         Column::BIGINT => 'BIGINT',
         Column::FLOAT => 'FLOAT',
         Column::DECIMAL => 'DECIMAL',
@@ -89,7 +89,7 @@ class MySQL extends Driver
         'TINYINT' => Column::TINYINT,
         'SMALLINT' => Column::SMALLINT,
         'MEDIUMINT' => Column::MEDIUMINT,
-        'INT' => Column::INT,
+        'INT' => Column::INTEGER,
         'BIGINT' => Column::BIGINT,
         'FLOAT' => Column::FLOAT,
         'DOUBLE' => Column::FLOAT,
@@ -215,7 +215,7 @@ class MySQL extends Driver
         $q->execute(array("table" => $table_name, "schema" => $this->schema));
 
         if ($q->rowCount() === 0)
-            throw new TableNotExists();
+            throw new TableNotExistsException();
 
         return $q->fetchAll();
     }
@@ -410,7 +410,7 @@ class MySQL extends Driver
                 $coldef .= "(" . $col->getMaxLength() . ")";
                 break;
             case Column::SMALLINT:
-            case Column::INT:
+            case Column::INTEGER:
             case Column::BIGINT:
                 $coldef .= "(" . $col->getNumericPrecision() . ")";
                 break;
