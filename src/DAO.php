@@ -224,7 +224,7 @@ class DAO
         if (!$record)
             return null;
         $obj = new $this->model_class;
-        $obj->assignRecord($record);
+        $obj->assignRecord($record, $this->db);
         return $obj;
     }
 

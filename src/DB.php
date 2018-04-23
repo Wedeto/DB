@@ -149,7 +149,7 @@ class DB
         if (!$this->dsn)
         {
             $this->dsn = $this->driver->generateDSN($this->config->toArray());
-            self::$logger->info("Generated DSN: {0}", [$this->dsn]);
+            self::$logger->debug("Generated DSN: {0}", [$this->dsn]);
             $this->config->set('dsn', $this->dsn);
         }
             
@@ -245,7 +245,6 @@ class DB
     {
         if (!empty($this->schema))
         {
-            echo "CLEARING CACHE!\n";
             $this->schema->clearCache();
         }
 
@@ -280,9 +279,9 @@ class DB
             $this->connect();
 
         if ($func === "exec")
-            self::$logger->info("Executing query: {0}", [$args[0]]);
+            self::$logger->debug("Executing query: {0}", [$args[0]]);
         elseif ($func === "prepare")
-            self::$logger->info("Preparing query: {0}", [$args[0]]);
+            self::$logger->debug("Preparing query: {0}", [$args[0]]);
             
         if (!method_exists($this->pdo, $func))
             throw new \RuntimeException("Function $func does not exist");
@@ -375,7 +374,7 @@ class DB
 
             if (substr($trimmed, -1) === ';')
             {
-                $statement = str_replace('%PREFIX%', $prefix, $trimmed);
+                $statement = str_replace('%PREFIX%', $prefix, $statement);
                 $this->exec($statement);
                 $statement = '';
             }
