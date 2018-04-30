@@ -9,10 +9,13 @@ $table = new Table(
     "db_version",
     new Column\Serial('id'),
     new Column\Varchar('module', 128),
-    new Column\Integer('version'),
-    new Column\Datetime('date_upgraded'),
+    new Column\Integer('from_version'),
+    new Column\Integer('to_version'),
+    new Column\Datetime('migration_date'),
+    new Column\Varchar('filename', 255),
+    new Column\Varchar('md5sum', 32),
     new Index(Index::PRIMARY, 'id'),
-    new Index(Index::UNIQUE, 'module', 'version')
+    new Index(Index::INDEX, 'module', 'migration_date')
 );
 
 $db->getDriver()->createTable($table);

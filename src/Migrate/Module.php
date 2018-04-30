@@ -93,7 +93,7 @@ class Module
             $this->db_version = 
                 $this->dao->get(
                     QB::where(["module" => $this->module]), 
-                    QB::order(['version' => 'DESC'])
+                    QB::order(['migration_date' => 'DESC'])
                 ) 
                 ?: new NullVersion;
         }
@@ -150,7 +150,7 @@ class Module
         if (null === $this->db_version)
             $this->loadVersion();
 
-        return $this->db_version instanceof NullVersion ? 0 : (int)$this->db_version->version;
+        return $this->db_version instanceof NullVersion ? 0 : (int)$this->db_version->to_version;
     }
 
     /**
@@ -276,8 +276,11 @@ class Module
 
                 $version = new DBVersion;
                 $version->module = $this->module;
-                $version->version = (int)$migration['to'];
-                $version->date_upgraded = new \DateTime();
+                $version->from_version = (int)$migration['from'];
+                $version->to_version = (int)$migration['to'];
+                $version->migration_date = new \DateTime();
+                $version->filename = $filename;
+                $version->md5sum = md5(file_get_contents($filename));
 
                 $this->dao->save($version);
                 static::$logger->info("Succesfully migrated module {module} from {from} to {to} using file {file}", $migration);

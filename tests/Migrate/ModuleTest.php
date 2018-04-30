@@ -60,11 +60,11 @@ class ModuleTest extends TestCase
 
     public function setUp()
     {
-        $version_column = new Column\Integer('version');
+        $version_column = new Column\Integer('to_version');
         $mod_column = new Column\Varchar('module', 128);
 
         $this->result_mocker = $this->prophesize(\PDOStatement::class);
-        $this->result_mocker->fetch()->willReturn(['version' => 1, 'module' => 'wedeto.db']);
+        $this->result_mocker->fetch()->willReturn(['to_version' => 1, 'module' => 'wedeto.db']);
 
         $this->drv_mocker = $this->prophesize(Driver::class);
         $this->drv_mocker->select(Argument::any())->willReturn($this->result_mocker->reveal());
@@ -98,7 +98,7 @@ class ModuleTest extends TestCase
     public function testGetLatestVersion()
     {
         $version_mock = $this->prophesize(DBVersion::class);
-        $version_mock->getField('version')->willReturn(1);
+        $version_mock->getField('to_version')->willReturn(1);
         $version = $version_mock->reveal();
 
         $this->db_mocker->getDAO(DBVersion::class)->willReturn($this->dao);
@@ -159,7 +159,7 @@ class ModuleTest extends TestCase
     public function testUpgradeToLatest()
     {
         $version_mock = $this->prophesize(DBVersion::class);
-        $version_mock->getField('version')->willReturn(1);
+        $version_mock->getField('to_version')->willReturn(1);
         $version = $version_mock->reveal();
         $this->db_mocker->getDAO(DBVersion::class)->willReturn($this->dao);
         $this->setupVersionDAO($this->dao_mocker);
@@ -221,8 +221,8 @@ class ModuleTest extends TestCase
         $mocker->getColumns()->willReturn([
             "id" => new Column\Serial('id'),
             "module" => new Column\Varchar('module', 128),
-            "version" => new Column\Integer('version'),
-            "date_upgraded" => new Column\DateTime('date_upgraded'),
+            "to_version" => new Column\Integer('version'),
+            "migration_date" => new Column\DateTime('migration_date'),
         ]);
 
         $mocker->getPrimaryKey()->willReturn([
@@ -296,7 +296,7 @@ class ModuleTest extends TestCase
     {
         // Set the module to version 10
         $version_mock = $this->prophesize(DBVersion::class);
-        $version_mock->getField('version')->willReturn(10);
+        $version_mock->getField('to_version')->willReturn(10);
         $version = $version_mock->reveal();
 
         $this->db_mocker->getDAO(DBVersion::class)->willReturn($this->dao);
