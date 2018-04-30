@@ -74,7 +74,7 @@ class DBTest extends TestCase
     public function testConstruction()
     {
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) {
-            return new MockPDO($args['dsn'], $args['username'], $args['password']);
+            return new MockPDO($args['dsn'], $args['username'], $args['passwd']);
         }));
 
         $db = new DB($this->config);
@@ -95,7 +95,7 @@ class DBTest extends TestCase
     {
         $this->config->set('lazy', true);
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) {
-            return new MockPDO($args['dsn'], $args['username'], $args['password']);
+            return new MockPDO($args['dsn'], $args['username'], $args['passwd']);
         }));
 
         $db = new DB($this->config);
@@ -112,7 +112,7 @@ class DBTest extends TestCase
     {
         $this->config->set('lazy', true);
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) {
-            return new MockPDO($args['dsn'], $args['username'], $args['password']);
+            return new MockPDO($args['dsn'], $args['username'], $args['passwd']);
         }));
 
         $db = new DB($this->config);
@@ -125,7 +125,7 @@ class DBTest extends TestCase
     {
         $this->config->set('type', MockDriver::class);
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) {
-            return new MockPDO($args['dsn'], $args['username'], $args['password']);
+            return new MockPDO($args['dsn'], $args['username'], $args['passwd']);
         }));
 
         $db = new DB($this->config);
@@ -341,7 +341,7 @@ class MockPDO extends \PDO
 {
     public $args;
 
-    public function __construct($dsn, $username, $password)
+    public function __construct($dsn, $username, $passwd)
     {
         $this->args = func_get_args();
     }

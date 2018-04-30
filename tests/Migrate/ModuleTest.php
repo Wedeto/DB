@@ -116,11 +116,12 @@ class ModuleTest extends TestCase
         $sql = $root . DIRECTORY_SEPARATOR . 'migrations';
 
         $this->db_mocker->getDAO(DBVersion::class)->willReturn($this->dao);
+        $this->db_mocker->clearCache()->shouldBeCalled();
         $this->dao_mocker
             ->get(Argument::type(Query\WhereClause::class), Argument::type(Query\OrderClause::class))
             ->willThrow(new TableNotExistsException());
         
-        $module = new Module('Wedeto.DB', $sql, $this->db);
+        $module = new Module('wedeto.db', $sql, $this->db);
         $this->assertSame($this->db, $module->getDB());
         $this->assertEquals($sql, $module->getPath());
         $this->assertEquals(0, $module->getCurrentVersion());
@@ -161,6 +162,7 @@ class ModuleTest extends TestCase
         $version_mock = $this->prophesize(DBVersion::class);
         $version_mock->getField('to_version')->willReturn(1);
         $version = $version_mock->reveal();
+        $version_mock->setField('from_version', 1)->willReturn($version_mock);
         $this->db_mocker->getDAO(DBVersion::class)->willReturn($this->dao);
         $this->setupVersionDAO($this->dao_mocker);
 
@@ -173,6 +175,7 @@ class ModuleTest extends TestCase
         unset($GLOBALS['_wedeto_db_test_args']);
         $this->db_mocker->beginTransaction()->shouldBeCalled();
         $this->db_mocker->commit()->shouldBeCalled();
+        $this->db_mocker->clearCache()->shouldBeCalled();
 
         $this->assertEquals(2, $mod->getLatestVersion());
         $this->assertEquals(1, $mod->getCurrentVersion());
@@ -221,8 +224,11 @@ class ModuleTest extends TestCase
         $mocker->getColumns()->willReturn([
             "id" => new Column\Serial('id'),
             "module" => new Column\Varchar('module', 128),
-            "to_version" => new Column\Integer('version'),
+            "from_version" => new Column\Integer('from_version'),
+            "to_version" => new Column\Integer('to_version'),
             "migration_date" => new Column\DateTime('migration_date'),
+            "filename" => new Column\Varchar('filename', 255),
+            "md5sum" => new Column\Varchar('md5sum', 32)
         ]);
 
         $mocker->getPrimaryKey()->willReturn([
@@ -266,6 +272,7 @@ class ModuleTest extends TestCase
     public function testUpgradePathWithShortcuts()
     {
         $this->db_mocker->getDAO(DBVersion::class)->willReturn($this->dao);
+        $this->db_mocker->clearCache()->shouldBeCalled();
         $this->setupVersionDAO($this->dao_mocker);
         $this->dao_mocker->get(Argument::any(), Argument::any())->willReturn(null);
 
@@ -300,6 +307,7 @@ class ModuleTest extends TestCase
         $version = $version_mock->reveal();
 
         $this->db_mocker->getDAO(DBVersion::class)->willReturn($this->dao);
+        $this->db_mocker->clearCache()->shouldBeCalled();
         $this->setupVersionDAO($this->dao_mocker);
         $this->dao_mocker->get(Argument::any(), Argument::any())->willReturn($version);
 

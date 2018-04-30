@@ -291,6 +291,7 @@ class Module
                 // Upgrade failed, roll back to previous state
                 static::$logger->error("Migration of module {module} from {from} to {to} using file {file}", $migration);
                 static::$logger->error("Exception: {0}", [$e]);
+                //\Wedeto\Util\Functions::debug($e);
                 $db->rollback();
                 throw $e;
             }

@@ -295,7 +295,7 @@ class DB
     public function __debuginfo()
     {
         $drv = get_class($this->getDriver());
-        return array('dsn' => $this->dsn, 'driver' => $drv);
+        return ['dsn' => $this->dsn, 'driver' => $drv];
     }
 
     /**
@@ -374,7 +374,7 @@ class DB
 
             if (substr($trimmed, -1) === ';')
             {
-                $statement = str_replace('%PREFIX%', $prefix, $statement);
+                $statement = trim(str_replace('%PREFIX%', $prefix, $statement));
                 $this->exec($statement);
                 $statement = '';
             }
