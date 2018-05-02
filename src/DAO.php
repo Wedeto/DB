@@ -251,7 +251,7 @@ class DAO
         foreach ($records as $record)
         {
             $obj = new $this->model_class;
-            $obj->assignRecord($record, $db);
+            $obj->assignRecord($record, $this->db);
 
             if ($pkey_as_index)
                 $list[$obj->getField($pkey_as_index)] = $obj;
