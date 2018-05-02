@@ -93,7 +93,7 @@ abstract class Column implements \Serializable, \JSONSerializable
             $this->type !== Column::INTEGER && 
             $this->type !== Column::BIGINT && 
             $this->type !== Column::MEDIUMINT && 
-            $this->type !== Column::SMALINT
+            $this->type !== Column::SMALLINT
         )
         {
             throw new InvalidTypeException("A serial column must be of type integer");
