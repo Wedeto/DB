@@ -189,7 +189,7 @@ class Builder
         {
             throw new \RuntimeException(
                 "Builder::table takes exactly one argument. " .
-                "Use Builder::from or Builder::into to provide an alias"
+                "Use Builder::from, Builder::with or Builder::into to provide an alias"
             );
         }
 
