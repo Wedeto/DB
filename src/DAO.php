@@ -200,7 +200,7 @@ class DAO
         // single scalar, rather than an array
         if (count($pkey) === 1 && is_scalar($id))
             foreach ($pkey as $colname => $def)
-                $id[$col] = $id;
+                $id = [$colname => $id];
 
         $condition = $this->getSelector($pkey, $id);
         $rec = $this->fetchSingle(QB::where($condition));
