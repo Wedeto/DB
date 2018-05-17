@@ -215,7 +215,7 @@ class MySQL extends Driver
         $q->execute(array("table" => $table_name, "schema" => $this->schema));
 
         if ($q->rowCount() === 0)
-            throw new TableNotExistsException();
+            throw new TableNotExistsException($table_name);
 
         return $q->fetchAll();
     }

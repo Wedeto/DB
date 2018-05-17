@@ -93,7 +93,7 @@ abstract class Column implements \Serializable, \JSONSerializable
             $this->type !== Column::INTEGER && 
             $this->type !== Column::BIGINT && 
             $this->type !== Column::MEDIUMINT && 
-            $this->type !== Column::SMALINT
+            $this->type !== Column::SMALLINT
         )
         {
             throw new InvalidTypeException("A serial column must be of type integer");
@@ -137,7 +137,7 @@ abstract class Column implements \Serializable, \JSONSerializable
     public function set(string $field, $value)
     {
         if (property_exists($this, $field))
-            $this->field = $value;
+            $this->$field = $value;
         return $this;
     }
 
@@ -313,7 +313,7 @@ abstract class Column implements \Serializable, \JSONSerializable
         $data = unserialize($data);
         $args = self::parseArray($data);
         $this->__construct($args['name']);
-        
+
         foreach ($args as $property => $value)
         {
             if (!empty($value))
@@ -352,10 +352,10 @@ abstract class Column implements \Serializable, \JSONSerializable
             throw new InvalidTypeException("Unsupported column type: " . $args['type'] . " (class $classname not found)");
 
         $col = new $classname($args['name']);
-        foreach ($args as $property => $val)
+        foreach ($args as $property => $value)
         {
             if (!empty($value))
-                $this->set($property, $value);
+                $col->set($property, $value);
         }
 
         return $col;

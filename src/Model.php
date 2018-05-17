@@ -392,7 +392,7 @@ abstract class Model
      * the base field to match the column definition.
      *
      * @param Column $coldef The column
-     * @param string $field The name of the field
+     * @param mixed $value The value to validate
      * @return bool True if the value is valid
      * @throws InvalidValueException When the value is not acceptable
      */
