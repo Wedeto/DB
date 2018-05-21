@@ -152,10 +152,10 @@ class MySQL extends Driver
 
     public function delete(Query\Delete $query)
     {
-        $params = new Parameters($this);
-        $sql = $this->toSQL($params, $d);
+        $parameters = new Parameters($this);
+        $sql = $this->toSQL($parameters, $query);
 
-        $st = $this->db->prepare($q);
+        $st = $this->db->prepare($sql);
         foreach ($parameters as $key => $value)
             $st->bindValue($key, $value, $parameters->parameterType());
         $st->execute();
