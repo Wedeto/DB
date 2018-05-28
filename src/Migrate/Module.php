@@ -241,6 +241,9 @@ class Module
      */
     public function migrateTo(int $target_version)
     {
+        if ($this->max_version === null)
+            $this->scanMigrations();
+
         $current_version = $this->getCurrentVersion();
         $trajectory = $this->plan($current_version, $target_version);
 
@@ -291,7 +294,6 @@ class Module
                 // Upgrade failed, roll back to previous state
                 static::$logger->error("Migration of module {module} from {from} to {to} using file {file}", $migration);
                 static::$logger->error("Exception: {0}", [$e]);
-                //\Wedeto\Util\Functions::debug($e);
                 $db->rollback();
                 throw $e;
             }
