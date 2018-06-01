@@ -33,7 +33,7 @@ use Wedeto\DB\Exception\ConfigurationException;
 use Wedeto\DB\Exception\QueryException;
 use Wedeto\DB\Exception\InvalidTypeException;
 use Wedeto\DB\Exception\InvalidValueException;
-use Wedeto\DB\Excpetion\TableNotExistsException;
+use Wedeto\DB\Exception\TableNotExistsException;
 
 use Wedeto\DB\Schema\Table;
 use Wedeto\DB\Schema\Index;
@@ -473,7 +473,7 @@ class PGSQL extends Driver
         // Change the column type to use the sequence
         $q = "ALTER TABLE {$tablename}"
             . " ALTER COLUMN {$colname} SET DEFAULT nextval('{$seqname}'), "
-            . " ALTER COLUMN {$seqname} SET NOT NULL;";
+            . " ALTER COLUMN {$colname} SET NOT NULL;";
         $this->db->exec($q);
 
         // Make the sequence owned by the column so it will be automatically
@@ -530,13 +530,6 @@ class PGSQL extends Driver
             case Column::CHAR:
             case Column::VARCHAR:
                 $coldef .= "(" . $col->getMaxLength() . ")";
-                break;
-            case Column::INTEGER:
-            case Column::BIGINT:
-                $coldef .= "(" . $col->getNumericPrecision() . ")";
-                break;
-            case Column::BOOLEAN:
-                $coldef .= "(1)";
                 break;
             case Column::DECIMAL:
                 $coldef .= "(" . $col->getNumericPrecision() . "," . $col->getNumericScale() . ")";
