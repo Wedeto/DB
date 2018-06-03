@@ -202,6 +202,7 @@ class DAO
             foreach ($pkey as $colname => $def)
                 $id = [$colname => $id];
 
+
         $condition = $this->getSelector($pkey, $id);
         $rec = $this->fetchSingle(QB::where($condition));
         if (empty($rec))
@@ -346,7 +347,7 @@ class DAO
             throw new DAOException("No update provided");
 
         // Check if there's anything to update
-        if (count($records) === 0)
+        if (count($record) === 0)
             return 0;
 
         $table = $this->table;
@@ -358,7 +359,7 @@ class DAO
 
         if (is_scalar($id) && count($pkey) === 1)
             foreach ($pkey as $colname => $def)
-                $id = [$colname => $def];
+                $id = [$colname => $id];
 
         $condition = $this->getSelector($pkey, $id);
 
