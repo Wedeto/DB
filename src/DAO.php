@@ -478,13 +478,15 @@ class DAO
         if (!$is_model && !is_a($where, Query\WhereClause::class))
             throw new InvalidTypeException("Must provide a WhereClause or an instance of {$this->model_class} to delete");
 
+        $modelInstance = null;
         if ($is_model)
         {
             $database = $where->getSourceDB();
             if ($database === null || $database !== $this->db)
                 throw new DAOException("Cannot remove this record - it did not originate in this database");
 
-            $where = $this->getSelector($this->getPrimaryKey(), $where);
+            $modelInstance = $where;
+            $where = $this->getSelector($this->getPrimaryKey(), $modelInstance->getRecord());
         }
 
         $delete = new Query\Delete($this->tablename, $where);
@@ -492,7 +494,7 @@ class DAO
 
         $rows = $drv->delete($delete);
         if ($is_model)
-            $where->destruct();
+            $modelInstance->destruct();
 
         return $rows;
     }
