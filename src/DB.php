@@ -154,15 +154,19 @@ class DB
         }
             
         // Create the PDO and connect it to the database, setting default options
-        //$pdo = new PDO($this->dsn, $username, $password);
-        $pdo = DI::getInjector()
-            ->newInstance(
-                PDO::class,
-                ['dsn' => $this->dsn, 'username' => $username, 'passwd' => $password]
-            )
-        ;
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        try {
+            $pdo = DI::getInjector()
+                ->newInstance(
+                    PDO::class,
+                    ['dsn' => $this->dsn, 'username' => $username, 'passwd' => $password]
+                )
+            ;
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        }
+        catch (\PDOException $e) {
+            throw new DriverException("Could not connect to the database", $e->getCode(), $e);
+        }
             
         $this->pdo = $pdo;
     }
