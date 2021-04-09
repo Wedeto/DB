@@ -65,7 +65,7 @@ class DBTest extends TestCase
         $config->set('sql', 'default', 'password', 'bar');
         $config->set('sql', 'default', 'hostname', 'localhost');
         $config->set('sql', 'default', 'database', 'foobardb');
-        $config->set('sql', 'default', 'type', 'mysql');
+        $config->set('sql', 'default', 'type', 'MySQL');
 
         $this->config = new DBConfig($config);
     }
@@ -219,7 +219,7 @@ class DBTest extends TestCase
 
         $schema = $db->getSchema();
         $this->assertSame($schema_mock,$schema);
-        $expectedName = "mysql_localhost_foobardb_foobardb";
+        $expectedName = "MySQL_localhost_foobardb_foobardb";
         $this->assertEquals($expectedName, $received_args['schema_name']);
     }
 

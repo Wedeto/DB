@@ -28,7 +28,7 @@ namespace Wedeto\DB\Schema;
 use Wedeto\Util\Functions as WF;
 use Wedeto\DB\Exception\DBException;
 
-class ForeignKeyException extensd Exception implements DBException
+class ForeignKeyException extends \Exception implements DBException
 {}
 
 class ForeignKey implements \Serializable, \JSONSerializable
@@ -81,7 +81,7 @@ class ForeignKey implements \Serializable, \JSONSerializable
                 $this->on_delete = $on_delete;
             }
             else
-                throw new DBException("Invalid arguments specified: first argument is not a suitable array");
+                throw new ForeignKeyException("Invalid arguments specified: first argument is not a suitable array");
         }
         else
         {
@@ -103,7 +103,7 @@ class ForeignKey implements \Serializable, \JSONSerializable
     public function getName()
     {
         if ($this->table === null)
-            throw new DBException("No table set for foreign key");
+            throw new ForeignKeyException("No table set for foreign key");
 
         if ($this->name === null)
         {
@@ -128,14 +128,14 @@ class ForeignKey implements \Serializable, \JSONSerializable
         foreach ($args as $arg)
         {
             if (!($arg instanceof Column))
-                throw new DBException("Invalid column");
+                throw new ForeignKeyException("Invalid column");
             $t = $arg->getTable();
 
             if ($t === null)
-                throw new DBException("Column does not belong to a table");
+                throw new ForeignKeyException("Column does not belong to a table");
 
             if ($this->table !== null && $this->table !== $t)
-                throw new DBException("All referring columns must be in the same table");
+                throw new ForeignKeyException("All referring columns must be in the same table");
 
             $this->table = $t;
             $this->columns[] = $arg->getName();
@@ -163,7 +163,7 @@ class ForeignKey implements \Serializable, \JSONSerializable
             elseif ($arg instanceof Column)
                 $this->referred_columns[] = $column->getName();
             else
-                throw new DBException("Invalid column type");
+                throw new ForeignKeyException("Invalid column type");
         }
         return $this;
     }
@@ -173,7 +173,7 @@ class ForeignKey implements \Serializable, \JSONSerializable
         if ($action !== ForeignKey::DO_UPDATE &&
             $action !== ForeignKey::DO_RESTRICT &&
             $action !== ForeignKey::DO_DELETE)
-            throw new DBException("Invalid on update policy: $action");
+            throw new ForeignKeyException("Invalid on update policy: $action");
         $this->on_update = $action;
         return $this;
     }
@@ -183,7 +183,7 @@ class ForeignKey implements \Serializable, \JSONSerializable
         if ($action !== ForeignKey::DO_UPDATE &&
             $action !== ForeignKey::DO_RESTRICT &&
             $action !== ForeignKey::DO_DELETE)
-            throw new DBException("Invalid on update policy: $action");
+            throw new ForeignKeyException("Invalid on update policy: $action");
         $this->on_delete = $action;
         return $this;
     }
@@ -252,15 +252,15 @@ class ForeignKey implements \Serializable, \JSONSerializable
             return $str;
         if ($str === "CASCADE") return self::DO_CASCADE;
         if ($str === "RESTRICT") return self::DO_RESTRICT;
-        if ($str === "NULL") return self::DO_NULL;
-        throw new DBException("Invalid policy: $str");
+        if ($str === "SET NULL") return self::DO_NULL;
+        throw new ForeignKeyException("Invalid policy: $str");
     }
 
     public static function policyToStr($policy)
     {
         if ($policy === self::DO_CASCADE) return "CASCADE";
         if ($policy === self::DO_RESTRICT) return "RESTRICT";
-        if ($policy === self::DO_NULL) return "NULL";
-        throw new DBException("Invalid policy: $policy");
+        if ($policy === self::DO_NULL) return "SET NULL";
+        throw new ForeignKeyException("Invalid policy: $policy");
     }
 }

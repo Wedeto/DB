@@ -32,7 +32,7 @@ use Wedeto\Util\Cache\Manager as CacheManager;
 use Wedeto\DB\Exception\DBException;
 use Wedeto\DB\Driver\Driver;
 
-class SchemaException extends Exception implements DBException
+class SchemaException extends \Exception implements DBException
 {}
 
 class Schema

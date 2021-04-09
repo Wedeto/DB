@@ -26,6 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Schema\Column;
 
 use Wedeto\Util\Validation\Type;
+use Wedeto\Util\Functions as WF;
 
 class Mediumint extends Column
 {
@@ -34,6 +35,18 @@ class Mediumint extends Column
         parent::__construct($name, Column::MEDIUMINT, $default, $nullable);
         $this->setNumericPrecision(8);
         $max = pow(2, 23);
-        $this->validator = new Type(Type::INT, ['nullable' => $nullable, 'max_range' => $max - 1, 'min_range' => -$max]);
+        $this->validator = new Type(Type::INT, ['nullable' => $nullable, 'max_range' => $max - 1, 'min_range' => -$max, 'unstrict' => true]);
+    }
+
+    public function afterFetchFilter($value)
+    {
+        if (null == $value) {
+            return null;
+        } else if (is_int($value)) {
+            return $value;
+        } else if (WF::is_int_val($value)) {
+            return (int)$value;
+        }
+        return $value;
     }
 }

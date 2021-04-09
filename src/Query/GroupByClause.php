@@ -90,10 +90,10 @@ class GroupByClause extends Clause
      */
     public function toSQL(Parameters $params, bool $inner_clause)
     {
-        $groups = $this->getGroups();
-        $having = $this->getHaving();
+        $groups = $this->getGroups() ?? array();
+        $having = $this->getHaving() ?? array();
 
-        if (count($groups) === 0)
+        if (empty($groups))
             throw new QueryException("No groups in GROUP BY clause");
             
         $drv = $params->getDriver();
