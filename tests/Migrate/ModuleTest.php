@@ -226,7 +226,7 @@ class ModuleTest extends TestCase
             "module" => new Column\Varchar('module', 128),
             "from_version" => new Column\Integer('from_version'),
             "to_version" => new Column\Integer('to_version'),
-            "migration_date" => new Column\DateTime('migration_date'),
+            "migration_date" => new Column\Datetime('migration_date'),
             "filename" => new Column\Varchar('filename', 255),
             "md5sum" => new Column\Varchar('md5sum', 32)
         ]);

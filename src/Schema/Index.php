@@ -29,7 +29,7 @@ use Wedeto\Util\Functions as WF;
 use Wedeto\DB\Schema\Column\Column;
 use Wedeto\DB\Exception\DBException;
 
-class IndexException extends Exception implements DBException
+class IndexException extends \Exception implements DBException
 {}
 
 class Index implements \Serializable, \JSONSerializable

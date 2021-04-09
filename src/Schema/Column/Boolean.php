@@ -34,7 +34,7 @@ class Boolean extends Column
     {
         parent::__construct($name, Column::BOOLEAN, $default, $nullable);
         $this->setNumericPrecision(1);
-        $this->validator = new Type(Type::BOOL, ['nullable' => $nullable]);
+        $this->validator = new Type(Type::BOOL, ['nullable' => $nullable, 'unstrict' => true]);
     }
 
     public function beforeInsertFilter($value)

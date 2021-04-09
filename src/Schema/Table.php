@@ -33,7 +33,7 @@ use Wedeto\DB\Schema\ForeignKey;
 
 use Wedeto\Util\LoggerAwareStaticTrait;
 
-class TableException extends Exception implements DBException
+class TableException extends \Exception implements DBException
 {}
 
 class Table implements \Serializable, \JSONSerializable

@@ -28,7 +28,7 @@ namespace Wedeto\DB\Schema;
 use Wedeto\Util\Functions as WF;
 use Wedeto\DB\Exception\DBException;
 
-class ForeignKeyException extensd Exception implements DBException
+class ForeignKeyException extends \Exception implements DBException
 {}
 
 class ForeignKey implements \Serializable, \JSONSerializable

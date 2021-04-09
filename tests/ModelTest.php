@@ -140,7 +140,7 @@ class ModelTest extends TestCase
         $this->assertEquals('foo', $instance->getField('module'));
 
         $now = new \DateTime('now');
-        $instance->date = new \DateTime('now');
+        $instance->date = $now;
         $this->assertEquals($now, $instance->getField('date'));
 
         // Try some invalid values

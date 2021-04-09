@@ -35,6 +35,18 @@ class Integer extends Column
         parent::__construct($name, Column::INTEGER, $default, $nullable);
         $this->setNumericPrecision(10);
         $max = pow(2, 31);
-        $this->validator = new Type(Type::INTEGER, ['nullable' => $nullable, 'max_range' => $max - 1, 'min_range' => -$max]);
+        $this->validator = new Type(Type::INTEGER, ['nullable' => $nullable, 'max_range' => $max - 1, 'min_range' => -$max, 'unstrict' => true]);
+    }
+
+    public function afterFetchFilter($value)
+    {
+        if (null == $value) {
+            return null;
+        } else if (is_int($value)) {
+            return $value;
+        } else if (WF::is_int_val($value)) {
+            return (int)$value;
+        }
+        return $value;
     }
 }
