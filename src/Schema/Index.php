@@ -27,7 +27,10 @@ namespace Wedeto\DB\Schema;
 
 use Wedeto\Util\Functions as WF;
 use Wedeto\DB\Schema\Column\Column;
-use Wedeto\DB\DBException;
+use Wedeto\DB\Exception\DBException;
+
+class IndexException extends Exception implements DBException
+{}
 
 class Index implements \Serializable, \JSONSerializable
 {
@@ -80,7 +83,7 @@ class Index implements \Serializable, \JSONSerializable
             if (is_string($column))
                 $this->columns[] = $column;
             else
-                throw new DBException("Invalid column for index");
+                throw new SchemaException("Invalid column for index");
         }
     }
 
@@ -154,7 +157,7 @@ class Index implements \Serializable, \JSONSerializable
         $name = get_called_class() . "::" . $str;
         if (defined($name))
             return constant($name);
-        throw new DBException("Invalid type: $str ($name)");
+        throw new SchemaException("Invalid type: $str ($name)");
     }
 
     public static function typeToStr($type)
@@ -168,7 +171,7 @@ class Index implements \Serializable, \JSONSerializable
             case Index::UNIQUE:
                 return "UNIQUE";
             default:
-                throw new DBException("Invalid index type: $type");
+                throw new SchemaException("Invalid index type: $type");
         }
     }
 }

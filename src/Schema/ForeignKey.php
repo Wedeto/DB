@@ -26,7 +26,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Schema;
 
 use Wedeto\Util\Functions as WF;
-use Wedeto\DB\DBException;
+use Wedeto\DB\Exception\DBException;
+
+class ForeignKeyException extensd Exception implements DBException
+{}
 
 class ForeignKey implements \Serializable, \JSONSerializable
 {

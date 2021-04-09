@@ -26,12 +26,15 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB\Schema;
 
 use Wedeto\Util\Functions as WF;
-use Wedeto\DB\DBException;
+use Wedeto\DB\Exception\DBException;
 use Wedeto\DB\Schema\Column\Column;
 use Wedeto\DB\Schema\Index;
 use Wedeto\DB\Schema\ForeignKey;
 
 use Wedeto\Util\LoggerAwareStaticTrait;
+
+class TableException extends Exception implements DBException
+{}
 
 class Table implements \Serializable, \JSONSerializable
 {
@@ -67,7 +70,7 @@ class Table implements \Serializable, \JSONSerializable
             elseif ($arg instanceof ForeignKey)
                 $this->addForeignKey($arg);
             else
-                throw new DBException("Invalid argument: " . WF::str($arg));
+                throw new TableException("Invalid argument: " . WF::str($arg));
         }
     }
 
@@ -102,7 +105,7 @@ class Table implements \Serializable, \JSONSerializable
     public function addColumn(Column $column)
     {
         if (isset($this->columns[$column->getName()]))
-            throw new DBException("Duplicate column name '" . $column->getName() . "'");
+            throw new TableException("Duplicate column name '" . $column->getName() . "'");
 
         $this->columns[$column->getName()] = $column;
         $column->setTable($this);
@@ -113,14 +116,14 @@ class Table implements \Serializable, \JSONSerializable
     {
         if (isset($this->columns[$name]))
             return $this->columns[$name];
-        throw new DBException("Unknown column: " . $name);
+        throw new TableException("Unknown column: " . $name);
     }
 
     public function removeColumn(Column $column)
     {
         // Check if it exists
         if (!isset($this->columns[$column->getName()]))
-            throw new DBException("Column is not part of this table");
+            throw new TableException("Column is not part of this table");
 
         // Check if it's used in any index
         $remain = array();
@@ -129,7 +132,7 @@ class Table implements \Serializable, \JSONSerializable
             foreach ($idx->getColumns() as $c)
             {
                 if ($c->getName() === $column->getName())
-                    throw new DBException("Cannot remove column that is in an index");
+                    throw new TableException("Cannot remove column that is in an index");
             }
         }
 
@@ -140,7 +143,7 @@ class Table implements \Serializable, \JSONSerializable
             foreach ($fk->getColumns() as $c)
             {
                 if ($c->getName() === $column->getName())
-                    throw new DBException("Cannot remove column that is in a foreign key");
+                    throw new TableException("Cannot remove column that is in a foreign key");
             }
         }
 
@@ -162,7 +165,7 @@ class Table implements \Serializable, \JSONSerializable
         foreach ($this->foreign_keys as $fk)
             if ($fk->getName() === $name)
                 return $fk;
-        throw new DBException("Unknown foreign key: " . $name);
+        throw new TableException("Unknown foreign key: " . $name);
     }
 
     public function removeForeignKey(ForeignKey $fkey)
@@ -198,7 +201,7 @@ class Table implements \Serializable, \JSONSerializable
         if ($idx->getType() === Index::PRIMARY)
         {
             if ($this->primary !== null)
-                throw new DBException("A table can have only one primary key");
+                throw new TableException("A table can have only one primary key");
             $this->primary = $idx;
         }
 
@@ -211,7 +214,7 @@ class Table implements \Serializable, \JSONSerializable
         foreach ($this->indexes as $idx)
             if ($idx->getName() === $name)
                 return $idx;
-        throw new DBException("Unknown index: " . $name);
+        throw new TableException("Unknown index: " . $name);
     }
 
     public function removeIndex(Index $index)
@@ -219,7 +222,7 @@ class Table implements \Serializable, \JSONSerializable
         if ($index->getType() === Index::PRIMARY)
         {
             if ($this->primary !== $index)
-                throw new DBException("Cannot remove primary - it is not");
+                throw new TableException("Cannot remove primary - it is not");
             $this->primary = null;
         }
 
@@ -297,7 +300,7 @@ class Table implements \Serializable, \JSONSerializable
             if ($col->getSerial())
             {
                 if ($serial !== false)
-                    throw new DBException("Duplicate serial column");
+                    throw new TableException("Duplicate serial column");
                 $serial = $name;
             }
         }
@@ -309,7 +312,7 @@ class Table implements \Serializable, \JSONSerializable
             if ($idx->getType() === Index::PRIMARY && $serial)
             {
                 if (count($cols) > 1 || $cols[0] !== $serial)
-                    throw new DBException("The serial column must be the primary key");
+                    throw new TableException("The serial column must be the primary key");
                 $pkey = true;
             }
             foreach ($cols as $col)
@@ -325,19 +328,19 @@ class Table implements \Serializable, \JSONSerializable
                 }
 
                 if (!isset($this->columns[$col]))
-                    throw new DBException("Index {$idx->getName()} used unknown column {$col}");
+                    throw new TableException("Index {$idx->getName()} used unknown column {$col}");
             }
         }
 
         if ($serial && !$pkey)
-            throw new DBException("The serial column must be the primary key");
+            throw new TableException("The serial column must be the primary key");
 
         foreach ($this->foreign_keys as $fk)
         {
             $cols = $fk->getColumns();
             foreach ($cols as $col)
                 if (!isset($this->columns[$col]))
-                    throw new DBException("The foreign key {$fk->getName()} used unknown column {$col}");
+                    throw new TableException("The foreign key {$fk->getName()} used unknown column {$col}");
         }
 
     }

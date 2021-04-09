@@ -29,8 +29,11 @@ use Wedeto\Util\Dictionary;
 use Wedeto\Util\DI\DI;
 use Wedeto\Util\Cache;
 use Wedeto\Util\Cache\Manager as CacheManager;
-use Wedeto\DB\DBException;
+use Wedeto\DB\Exception\DBException;
 use Wedeto\DB\Driver\Driver;
+
+class SchemaException extends Exception implements DBException
+{}
 
 class Schema
 {
@@ -78,7 +81,7 @@ class Schema
     public function loadCache()
     {
         if (empty($this->name))
-            throw new DBException("Please provide a name for the schema when using the cache");
+            throw new SchemaException("Please provide a name for the schema when using the cache");
 
         $cachemgr = CacheManager::getInstance();
         $this->tables = $cachemgr->getCache('dbschema_' . $this->name);
@@ -115,7 +118,7 @@ class Schema
                 $this->tables->set('tables', $table_name, $table);
             }
             else
-                throw new DBException("Table $table not ofund");
+                throw new SchemaException("Table $table not ofund");
         }
 
         return $this->tables->get('tables', $table_name);
