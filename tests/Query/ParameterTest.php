@@ -40,6 +40,8 @@ use Wedeto\DB\MockDB;
  */
 class ParameterTest extends TestCase
 {
+    use \Prophecy\PhpUnit\ProphecyTrait;
+
     public function testParameters()
     {
         $p = new Parameters();

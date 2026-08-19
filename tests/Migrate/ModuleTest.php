@@ -49,6 +49,8 @@ use Prophecy\Argument;
  */
 class ModuleTest extends TestCase
 {
+    use \Prophecy\PhpUnit\ProphecyTrait;
+
     private $result_mocker;
     private $drv_mocker;
     private $db_mocker;
@@ -58,7 +60,7 @@ class ModuleTest extends TestCase
     private $db;
     private $dao;
 
-    public function setUp()
+    public function setUp(): void
     {
         $version_column = new Column\Integer('to_version');
         $mod_column = new Column\Varchar('module', 128);
@@ -84,7 +86,7 @@ class ModuleTest extends TestCase
         unset($GLOBALS['MIGRATE_VERSION_FILES']);
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         DI::destroyContext('dbtest');
     }

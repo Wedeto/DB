@@ -109,7 +109,7 @@ class Repository implements Iterator
     /**
      * Rewind the iterator to the beginning
      */
-    public function rewind()
+    public function rewind(): void
     {
         $this->iterator = $this->getIterator();
     }
@@ -118,6 +118,7 @@ class Repository implements Iterator
      * Retrieve the module that the iterator currently points to
      * @return A migation module
      */
+    #[\ReturnTypeWillChange]
     public function current()
     {
         return $this->iterator->current();
@@ -126,16 +127,16 @@ class Repository implements Iterator
     /**
      * Move the iterator to the next position
      */
-    public function next()
+    public function next(): void
     {
-        return $this->iterator->next();
+        $this->iterator->next();
     }
 
     /**
      * @return boolean True if the iterator is valid, such that a call to
      * current will return a valid object
      */
-    public function valid()
+    public function valid(): bool
     {
         return null != $this->iterator && $this->iterator->valid();
     }
@@ -143,6 +144,7 @@ class Repository implements Iterator
     /**
      * @return string the key of the iterator: the module name
      */
+    #[\ReturnTypeWillChange]
     public function key()
     {
         return $this->iterator->key();

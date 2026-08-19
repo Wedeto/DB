@@ -291,6 +291,7 @@ abstract class Column implements \Serializable, \JSONSerializable
     /** 
      * @return array A JSON-serializable version of this column
      */
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return $this->toArray();
@@ -321,6 +322,16 @@ abstract class Column implements \Serializable, \JSONSerializable
         }
             
         return $col;
+    }
+
+    public function __serialize(): array
+    {
+        return $this->toArray();
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->unserialize(serialize($data));
     }
 
     /**

@@ -39,7 +39,9 @@ use Prophecy\Argument;
  */
 class ModelTest extends TestCase
 {
-    public function setUp()
+    use \Prophecy\PhpUnit\ProphecyTrait;
+
+    public function setUp(): void
     {
         $this->db_mocker = $this->prophesize(DB::class);
         $this->db = $this->db_mocker->reveal();
@@ -50,7 +52,7 @@ class ModelTest extends TestCase
         $this->dao = $this->dao_mocker->reveal();
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         DI::destroyContext('test');
     }
@@ -219,7 +221,7 @@ class ModelTest extends TestCase
         }
         catch (ValidationException $e)
         {
-            $this->assertContains($msg, $e->getMessage());
+            $this->assertStringContainsString($msg, $e->getMessage());
             $thrown = true;
         }
         $this->assertTrue($thrown, "Exception should be thrown");

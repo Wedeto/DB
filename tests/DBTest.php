@@ -53,9 +53,11 @@ use Prophecy\Argument;
  */
 class DBTest extends TestCase
 {
+    use \Prophecy\PhpUnit\ProphecyTrait;
+
     private $config;
 
-    public function setUp()
+    public function setUp(): void
     {
         $config = new Configuration();
         $config->setType('sql', Type::ARRAY);
@@ -159,6 +161,7 @@ class DBTest extends TestCase
     {
         $this->config->set('lazy', true);
         $pdo_mocker = $this->prophesize(\PDO::class);
+        $pdo_mocker->setAttribute(Argument::any(), Argument::any())->willReturn(true);
         $pdo = $pdo_mocker->reveal();
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
             return $pdo;
@@ -198,6 +201,7 @@ class DBTest extends TestCase
     public function testGetSchemaReturnsSchema()
     {
         $pdo_mocker = $this->prophesize(\PDO::class);
+        $pdo_mocker->setAttribute(Argument::any(), Argument::any())->willReturn(true);
         $pdo = $pdo_mocker->reveal();
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
             return $pdo;
@@ -226,6 +230,7 @@ class DBTest extends TestCase
     public function testGetDAOReturnsProperDAO()
     {
         $pdo_mocker = $this->prophesize(\PDO::class);
+        $pdo_mocker->setAttribute(Argument::any(), Argument::any())->willReturn(true);
         $pdo = $pdo_mocker->reveal();
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
             return $pdo;
@@ -252,6 +257,7 @@ class DBTest extends TestCase
     public function testGetDAOWithInvalidClass()
     {
         $pdo_mocker = $this->prophesize(\PDO::class);
+        $pdo_mocker->setAttribute(Argument::any(), Argument::any())->willReturn(true);
         $pdo = $pdo_mocker->reveal();
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
             return $pdo;
@@ -266,6 +272,7 @@ class DBTest extends TestCase
     public function testSetDAOWithInvalidClass()
     {
         $pdo_mocker = $this->prophesize(\PDO::class);
+        $pdo_mocker->setAttribute(Argument::any(), Argument::any())->willReturn(true);
         $pdo = $pdo_mocker->reveal();
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
             return $pdo;
@@ -284,8 +291,8 @@ class DBTest extends TestCase
     {
         $this->config->set('lazy', true);
         $pdo_mocker = $this->prophesize(\PDO::class);
-        $pdo_mocker->setAttribute(3, 2)->shouldBeCalledTimes(1);
-        $pdo_mocker->setAttribute(19, 2)->shouldBeCalledTimes(1);
+        $pdo_mocker->setAttribute(3, 2)->willReturn(true)->shouldBeCalledTimes(1);
+        $pdo_mocker->setAttribute(19, 2)->willReturn(true)->shouldBeCalledTimes(1);
         $pdo = $pdo_mocker->reveal();
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
             return $pdo;
@@ -293,6 +300,7 @@ class DBTest extends TestCase
         $db = new DB($this->config);
 
         $drv_mocker = $this->prophesize(Driver\PGSQL::class);
+        $drv_mocker->toSQL(Argument::any(), Argument::any())->willReturn('SELECT 1');
         $drv = $drv_mocker->reveal();
 
         DI::getInjector()->registerFactory(Driver\PGSQL::class, new BasicFactory(function (array $args) use ($drv) {
@@ -306,6 +314,7 @@ class DBTest extends TestCase
         $pdo_mocker->prepare(Argument::any())->willReturn($st);
 
         $query_mocker = $this->prophesize(Query\Query::class);
+        $query_mocker->toSQL(Argument::any(), false)->willReturn('SELECT 1');
         $statement = $db->prepareQuery($query_mocker->reveal());
 
         $this->assertSame($st, $statement);
@@ -315,6 +324,7 @@ class DBTest extends TestCase
     {
         $this->config->set('lazy', false);
         $pdo_mocker = $this->prophesize(\PDO::class);
+        $pdo_mocker->setAttribute(Argument::any(), Argument::any())->willReturn(true);
         $pdo = $pdo_mocker->reveal();
         DI::getInjector()->registerFactory(\PDO::class, new BasicFactory(function (array $args) use ($pdo) {
             return $pdo;

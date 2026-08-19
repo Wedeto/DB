@@ -33,6 +33,8 @@ use Wedeto\DB\MockDB;
 
 class ConstantValueTest extends TestCase
 {
+    use \Prophecy\PhpUnit\ProphecyTrait;
+
     public function testConstruct()
     {
         $a = new ConstantValue(3);

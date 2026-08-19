@@ -230,6 +230,7 @@ class ForeignKey implements \Serializable, \JSONSerializable
         );
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return $this->toArray();
@@ -244,6 +245,16 @@ class ForeignKey implements \Serializable, \JSONSerializable
     {
         $args = unserialize($data);
         $this->__construct($args);
+    }
+
+    public function __serialize(): array
+    {
+        return $this->toArray();
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->__construct($data);
     }
 
     public static function strToPolicy($str)

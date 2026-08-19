@@ -276,6 +276,7 @@ class Table implements \Serializable, \JSONSerializable
         return $arr;
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return $this->toArray();
@@ -290,6 +291,16 @@ class Table implements \Serializable, \JSONSerializable
     {
         $arr = unserialize($data);
         $this->initFromArray($arr);
+    }
+
+    public function __serialize(): array
+    {
+        return $this->toArray();
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->initFromArray($data);
     }
 
     public function validate()

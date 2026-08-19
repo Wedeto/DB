@@ -61,7 +61,7 @@ class Parameters implements \Iterator
      *
      * @param Driver $driver The driver to bind to
      */
-    public function __construct(Driver $driver = null)
+    public function __construct(?Driver $driver = null)
     {
         if ($driver !== null)
             $this->setDriver($driver);
@@ -274,6 +274,7 @@ class Parameters implements \Iterator
     /**
      * @return mixed The current query parameter value
      */
+    #[\ReturnTypeWillChange]
     public function current()
     {
         return $this->iterator->current();
@@ -282,6 +283,7 @@ class Parameters implements \Iterator
     /**
      * @return string The current query parameter key
      */
+    #[\ReturnTypeWillChange]
     public function key()
     {
         return $this->iterator->key();
@@ -290,7 +292,7 @@ class Parameters implements \Iterator
     /**
      * Move the internal pointer to the next query parameter
      */
-    public function next()
+    public function next(): void
     {
         $this->iterator->next();
     }
@@ -298,7 +300,7 @@ class Parameters implements \Iterator
     /**
      * Reset the internal pointer to the first query parameter
      */
-    public function rewind()
+    public function rewind(): void
     {
         $this->iterator = new ArrayIterator($this->params);
         $this->iterator->rewind();
@@ -307,7 +309,7 @@ class Parameters implements \Iterator
     /**
      * @return bool True if the iterator is in a valid position, false if not
      */
-    public function valid()
+    public function valid(): bool
     {
         return $this->iterator->valid();
     }
@@ -398,7 +400,7 @@ class Parameters implements \Iterator
      * @param int $num The scope level
      * @return Parameters A nested parameters object
      */
-    public function getSubScope(int $num = null)
+    public function getSubScope(?int $num = null)
     {
         // Resolve an existing scope
         if ($num !== null)
@@ -429,4 +431,3 @@ class Parameters implements \Iterator
         return $scope;
     }
 }
-

@@ -35,6 +35,8 @@ use Prophecy\Argument;
  */
 class QueryTest extends TestCase
 {
+    use \Prophecy\PhpUnit\ProphecyTrait;
+
     public function testSelectQuery()
     {
         $st_mock = $this->prophesize(\PDOStatement::class);

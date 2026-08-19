@@ -76,7 +76,7 @@ class DAO
      * @param string $tablename The name of the table 
      * @param DB $db The database to query. Omit to use the default instance
      */
-    public function __construct(string $classname, string $tablename, DB $db = null)
+    public function __construct(string $classname, string $tablename, ?DB $db = null)
     {
         if (!class_exists($classname) || !is_subclass_of($classname, Model::class))
             throw new DAOException("$classname is not a valid Model");
@@ -328,7 +328,7 @@ class DAO
      *                      When providing a Model as $id, this should be omitted.
      * @return int The number of updated records
      */
-    public function update($id, array $record = null)
+    public function update($id, ?array $record = null)
     {
         $model = is_a($id, $this->model_class) ? $id : null;
         if (null !== $model)

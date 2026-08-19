@@ -263,7 +263,7 @@ class DB
      * @param DAO $dao The DAO to set. Omit to reset - a new one will be instantiated on request
      * @return DB Provides fluent interface
      */
-    public function setDAO(string $class, DAO $dao = null)
+    public function setDAO(string $class, ?DAO $dao = null)
     {
         if (!is_subclass_of($class, Model::class))
             throw new DAOException("$class is not a valid Model");

@@ -75,7 +75,7 @@ abstract class Model
      * @param DB $database The DB for which to obtain the DAO. When omitted, the default DB is used.
      * @return DAO The DAO managing insertion / extraction of this object
      */
-    public static function getDAO(DB $database = null)
+    public static function getDAO(?DB $database = null)
     {
         $db = $database ?: DI::getInjector()->getInstance(DB::class);
         return $db->getDAO(static::class);

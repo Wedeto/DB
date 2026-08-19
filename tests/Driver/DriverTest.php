@@ -34,7 +34,9 @@ use Wedeto\DB\Exception\InvalidTypeException;
  */
 class DriverTest extends TestCase
 {
-    public function setUp()
+    use \Prophecy\PhpUnit\ProphecyTrait;
+
+    public function setUp(): void
     {
         $this->db_prophet = $this->prophesize(\PDO::class);
         $this->db = $this->db_prophet->reveal();

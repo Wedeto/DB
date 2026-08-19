@@ -30,7 +30,7 @@ use Wedeto\DB\Exception\InvalidTypeException;
 
 abstract class Clause
 {
-    public function toExpression($var, bool $constant)
+    public static function toExpression($var, bool $constant)
     {
         if ($var === "*")
             return new Wildcard();

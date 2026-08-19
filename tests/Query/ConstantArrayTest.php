@@ -32,6 +32,8 @@ use Wedeto\DB\MockDB;
 
 class ConstantArrayTest extends TestCase
 {
+    use \Prophecy\PhpUnit\ProphecyTrait;
+
     public function testConstruct()
     {
         $a = new ConstantArray([]);

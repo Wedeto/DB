@@ -133,6 +133,7 @@ class Index implements \Serializable, \JSONSerializable
         return $arr;
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return $this->toArray();
@@ -146,7 +147,17 @@ class Index implements \Serializable, \JSONSerializable
     public function unserialize($data)
     {
         $arr = unserialize($data);
-        
+        $this->initFromArray($arr);
+    }
+
+    public function __serialize(): array
+    {
+        return $this->toArray();
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->initFromArray($data);
     }
 
     public static function strToType($str)

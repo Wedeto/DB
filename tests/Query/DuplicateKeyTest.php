@@ -35,6 +35,8 @@ use Wedeto\DB\MockDB;
  */
 class DupicateKeyTest extends TestCase
 {
+    use \Prophecy\PhpUnit\ProphecyTrait;
+
     public function testDuplicateKeys()
     {
         $field1 = new FieldName('foo');

@@ -38,6 +38,8 @@ use Wedeto\DB\Query\Builder as QB;
  */
 class InsertTest extends TestCase
 {
+    use \Prophecy\PhpUnit\ProphecyTrait;
+
     public function testInsert()
     {
         $table = "test_table";

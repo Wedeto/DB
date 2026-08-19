@@ -34,6 +34,8 @@ use Wedeto\DB\Exception\MigrationException;
  */
 class RepositoryTest extends TestCase
 {
+    use \Prophecy\PhpUnit\ProphecyTrait;
+
     public function testNormalize()
     {
         $normalized = Repository::normalizeModule('Foo/Bar\\Bar');

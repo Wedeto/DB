@@ -48,7 +48,7 @@ class DBConfig extends Configuration
      * @param Configuration $config The complete configuration object
      * @param string $wdiSelector The default selector provided by DI. Omit to use default
      */
-    public function __construct(Configuration $config = null, string $wdiSelector = Injector::DEFAULT_SELECTOR)
+    public function __construct(?Configuration $config = null, string $wdiSelector = Injector::DEFAULT_SELECTOR)
     {
         if (null === $config)
             $config = new Dictionary;
