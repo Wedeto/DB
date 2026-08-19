@@ -26,6 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Wedeto\DB;
 
 use Wedeto\Util\Configuration;
+use Wedeto\Util\Dictionary;
 use Wedeto\Util\DI\Injector;
 use Wedeto\Util\Validation\Type;
 
